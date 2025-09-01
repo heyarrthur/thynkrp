@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="light">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rota Motos | Oficina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css">
+
+  <!-- ...conteúdo... -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/print.js"></script>
+  <style>
+    .rounded-xl {
+      border-radius: 1rem
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle
+    }
+
+    .icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center
+    }
+
+    .status-badge {
+      font-weight: 600;
+      font-size: .75rem;
+      padding: .25rem .5rem;
+      border-radius: .5rem
+    }
+
+    .st-rev {
+      background: var(--bs-info-bg-subtle);
+      color: var(--bs-info-text)
+    }
+
+    .st-man {
+      background: var(--bs-warning-bg-subtle);
+      color: var(--bs-warning-text)
+    }
+
+    .st-agu {
+      background: var(--bs-secondary-bg-subtle);
+      color: var(--bs-secondary-text)
+    }
+
+    .st-ok {
+      background: var(--bs-success-bg-subtle);
+      color: var(--bs-success-text)
+    }
+
+    /* Peças no modal */
+    .parts-panel {
+      border: 1px dashed var(--bs-border-color);
+      border-radius: .75rem;
+      padding: 1rem
+    }
+
+    .parts-scroll {
+      max-height: 240px;
+      overflow: auto
+    }
+
+    .selected-scroll {
+      max-height: 200px;
+      overflow: auto
+    }
+
+    .sticky-subhead {
+      position: sticky;
+      top: 0;
+      background: var(--bs-body-bg);
+      z-index: 2
+    }
+
+    .qty-input {
+      width: 76px
+    }
+
+    /* garante scroll do modal como um todo, além das listas */
+    .modal-dialog-scrollable .modal-body {
+      max-height: 75vh
+    }
+  </style>
+</head>
+
+<body>
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top bg-body">
+    <div class="container-xxl">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <span class="d-inline-grid place-items-center rounded-3 bg-warning text-dark shadow-sm"
+          style="width:34px;height:34px;font-size:.7rem"></span>
+        <span class="fw-semibold">Rota Motos</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span
+          class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Oficina</a></li>
+          <li class="nav-item"><a class="nav-link" href="pedidos.html">Pedidos</a></li>
+          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
+        </ul>
+        <button id="btnTema" class="btn btn-outline-secondary"><i class="bi bi-moon-stars"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-xxl py-4">
+    <!-- KPIs -->
+    <section class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm rounded-xl">
+          <div class="card-body d-flex gap-3 align-items-center">
+            <div class="icon-wrap bg-primary-subtle text-primary"><i class="bi bi-tools"></i></div>
+            <div>
+              <div class="small text-body-secondary">Consertos</div>
+              <div id="kpiConsertos" class="h4 mb-0">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm rounded-xl">
+          <div class="card-body d-flex gap-3 align-items-center">
+            <div class="icon-wrap bg-info-subtle text-info"><i class="bi bi-motorbike"></i></div>
+            <div>
+              <div class="small text-body-secondary">Motos em Oficina</div>
+              <div id="kpiMotos" class="h4 mb-0">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm rounded-xl">
+          <div class="card-body d-flex gap-3 align-items-center">
+            <div class="icon-wrap bg-success-subtle text-success"><i class="bi bi-currency-dollar"></i></div>
+            <div>
+              <div class="small text-body-secondary">Valor Total</div>
+              <div id="kpiValor" class="h4 mb-0">R$ 0,00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm rounded-xl">
+          <div class="card-body d-flex gap-3 align-items-center">
+            <div class="icon-wrap bg-warning-subtle text-warning"><i class="bi bi-graph-up"></i></div>
+            <div>
+              <div class="small text-body-secondary">Lucro</div>
+              <div id="kpiLucro" class="h4 mb-0">R$ 0,00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LISTAGEM / AÇÕES -->
+    <section class="card border-0 shadow-sm rounded-xl">
+      <div class="card-header bg-body">
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+          <div class="input-group" style="max-width:360px">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="busca" class="form-control" type="search" placeholder="Buscar por cliente, modelo, mecânico...">
+          </div>
+          <div>
+            <label class="form-label small mb-1">Filtrar por cliente</label>
+            <select id="filtroCliente" class="form-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="ms-auto">
+            <button id="btnNovaMoto" class="btn btn-warning text-dark"><i class="bi bi-plus-lg me-1"></i>Adicionar
+              moto</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Cliente</th>
+                <th>Modelo Moto</th>
+                <th class="text-end">Ano</th>
+                <th>Entrada na Oficina</th>
+                <th>Saída da Oficina</th>
+                <th>Mecânico</th>
+                <th>Status</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL CADASTRO/EDIÇÃO -->
+  <div class="modal fade" id="motoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content rounded-xl">
+        <form id="formMoto" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title" id="tituloModal">Adicionar moto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="registroId">
+
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+                <input id="cliente" class="form-control" required>
+                <div class="invalid-feedback">Informe o cliente.</div>
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Modelo Moto <span class="text-danger">*</span></label>
+                <input id="modelo" class="form-control" required>
+                <div class="invalid-feedback">Informe o modelo.</div>
+              </div>
+              <div class="col-sm-2">
+                <label class="form-label">Ano Moto <span class="text-danger">*</span></label>
+                <input id="ano" type="number" min="1900" max="2100" step="1" class="form-control" required>
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Data de Entrada <span class="text-danger">*</span></label>
+                <input id="entrada" type="datetime-local" class="form-control" required>
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Data de Saída</label>
+                <input id="saida" type="datetime-local" class="form-control">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Mecânico</label>
+                <input id="mecanico" class="form-control">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Status</label>
+                <select id="status" class="form-select">
+                  <option>Revisando</option>
+                  <option>Em Manutenção</option>
+                  <option>Aguardando Cliente</option>
+                  <option>OK</option>
+                </select>
+              </div>
+
+              <div class="col-sm-4">
+                <label class="form-label">Valor do serviço (R$)</label>
+                <input id="valor" type="number" min="0" step="0.01" class="form-control" value="0">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">Custo/Peças (R$)</label>
+                <input id="custo" type="number" min="0" step="0.01" class="form-control" value="0" readonly>
+                <div class="form-text">Somado automaticamente das peças.</div>
+              </div>
+
+              <!-- ===== CUSTO/PEÇAS ===== -->
+              <div class="col-12">
+                <div class="mb-2 fw-semibold">CUSTO/PEÇAS</div>
+                <div class="parts-panel">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                      <label class="form-label small mb-1">Buscar no estoque</label>
+                      <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input id="buscaPeca" class="form-control" placeholder="SKU, nome, local...">
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1">Categoria</label>
+                      <select id="filtroPecaCat" class="form-select">
+                        <option value="">Todas</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="parts-scroll mt-3">
+                    <table class="table table-sm align-middle mb-0">
+                      <thead class="sticky-subhead">
+                        <tr class="table-light">
+                          <th>SKU</th>
+                          <th>Item</th>
+                          <th>Categoria</th>
+                          <th class="text-end">Preço</th>
+                          <th class="text-end">Qtd disp.</th>
+                          <th class="text-end">Adicionar</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbodyEstoque"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="mt-3">
+                    <div class="fw-semibold mb-2">Peças selecionadas</div>
+                    <div class="selected-scroll">
+                      <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th>SKU</th>
+                            <th>Item</th>
+                            <th class="text-end">Preço</th>
+                            <th class="text-end">Qtd</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-end">Remover</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tbodyPecasSel"></tbody>
+                        <tfoot>
+                          <tr>
+                            <th colspan="4" class="text-end">Total peças</th>
+                            <th class="text-end" id="totalPecas">R$ 0,00</th>
+                            <th></th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- ===== /CUSTO/PEÇAS ===== -->
+
+              <div class="col-12">
+                <label class="form-label">Observações do cliente</label>
+                <textarea id="obs" class="form-control" rows="3"
+                  placeholder="Ex.: A moto apresenta falha ao frear"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button id="btnCancelarModal" class="btn btn-outline-secondary" type="button"
+              data-bs-dismiss="modal">Cancelar</button>
+            <button class="btn btn-warning text-dark" type="submit">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    'use strict';
+
+    // ========= Utils =========
+    const $ = (id) => document.getElementById(id);
+    const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    const TEMA_KEY = 'estoque_tema';
+    function aplicarTema(t) { document.documentElement.setAttribute('data-bs-theme', t); $('btnTema').innerHTML = (t === 'dark') ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon-stars"></i>'; }
+    $('btnTema').addEventListener('click', () => { const a = document.documentElement.getAttribute('data-bs-theme') || 'light'; const p = a === 'light' ? 'dark' : 'light'; aplicarTema(p); localStorage.setItem(TEMA_KEY, p); });
+    aplicarTema(localStorage.getItem(TEMA_KEY) || 'light');
+
+    function toast(msg, variant = 'success') {
+      const map = { success: 'text-bg-success', danger: 'text-bg-danger', warning: 'text-bg-warning text-dark', info: 'text-bg-info' };
+      const el = document.createElement('div'); el.className = `toast ${map[variant] || ''}`;
+      el.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+      $('toasts').appendChild(el); const t = new bootstrap.Toast(el, { delay: 2500, autohide: true }); el.addEventListener('hidden.bs.toast', () => el.remove()); t.show();
+    }
+    const nowISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('pt-BR') : '-';
+    const genId = () => 'OF-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+
+    // ========= Storage =========
+    const KEY = 'oficina_lista';
+    const ESTOQUE_KEY = 'estoque_itens';
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+    const loadEstoque = () => { try { return JSON.parse(localStorage.getItem(ESTOQUE_KEY) || '[]'); } catch { return []; } };
+    const saveEstoque = (arr) => localStorage.setItem(ESTOQUE_KEY, JSON.stringify(arr));
+
+    let REG = load();
+    let ESTOQUE = loadEstoque();
+
+    // Snapshot de estoque quando abrir modal (para desfazer se cancelar)
+    let SNAP_ESTOQUE = null;
+    let MODAL_SALVO = false;
+
+    // ========= KPIs =========
+    function renderKPIs() {
+      const total = REG.length;
+      const emOficina = REG.filter(r => r.status !== 'OK').length;
+      const valor = REG.reduce((s, r) => s + (+r.valor || 0), 0);
+      const lucro = REG.reduce((s, r) => s + ((+r.valor || 0) - (+r.custo || 0)), 0);
+      $('kpiConsertos').textContent = total;
+      $('kpiMotos').textContent = emOficina;
+      $('kpiValor').textContent = fmtBRL.format(valor);
+      $('kpiLucro').textContent = fmtBRL.format(lucro);
+    }
+
+    // ========= Filtro cliente =========
+    function fillClienteFilter() {
+      const set = new Set(REG.map(r => r.cliente).filter(Boolean));
+      const sel = $('filtroCliente'); const cur = sel.value;
+      sel.innerHTML = '<option value="">Todos</option>' + [...set].sort().map(c => `<option>${c}</option>`).join('');
+      if (cur && [...set].has(cur)) sel.value = cur;
+    }
+
+    // ========= Tabela =========
+    function statusBadge(s) {
+      const map = { 'Revisando': 'st-rev', 'Em Manutenção': 'st-man', 'Aguardando Cliente': 'st-agu', 'OK': 'st-ok' };
+      return `<span class="status-badge ${map[s] || 'st-rev'}">${s}</span>`;
+    }
+    function renderTabela() {
+      renderKPIs(); fillClienteFilter();
+      const q = $('busca').value.trim().toLowerCase();
+      const fCli = $('filtroCliente').value;
+      const lista = REG.filter(r => {
+        const okCli = !fCli || r.cliente === fCli;
+        const okQ = !q || [r.cliente, r.modelo, r.mecanico, r.status].join(' ').toLowerCase().includes(q);
+        return okCli && okQ;
+      });
+
+      const tb = $('tbody'); tb.innerHTML = '';
+      if (lista.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="8" class="text-center py-5 text-body-secondary">Nenhum registro.</td>';
+        tb.appendChild(tr); return;
+      }
+
+      for (const r of lista) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>${r.cliente || ''}</td>
+        <td>${r.modelo || ''}</td>
+        <td class="text-end">${r.ano || ''}</td>
+        <td>${fmtDate(r.entrada)}</td>
+        <td>${fmtDate(r.saida)}</td>
+        <td>${r.mecanico || ''}</td>
+        <td>${statusBadge(r.status || 'Revisando')}</td>
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-warning text-dark" data-acao="editar" data-id="${r.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger" data-acao="excluir" data-id="${r.id}" title="Excluir"><i class="bi bi-trash"></i></button>
+          </div>
+        </td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    // ========= Modal / Peças =========
+    const modalEl = document.getElementById('motoModal');
+    let PECAS_SEL = []; // {sku,nome,preco,qtd}
+
+    const $buscaPeca = () => $('buscaPeca').value.trim().toLowerCase();
+    const $catPeca = () => $('filtroPecaCat').value;
+
+    function pecasTotal() {
+      const total = PECAS_SEL.reduce((s, p) => s + (+p.preco || 0) * (+p.qtd || 0), 0);
+      $('totalPecas').textContent = fmtBRL.format(total);
+      $('custo').value = (total).toFixed(2);
+    }
+
+    function renderPecasSelecionadas() {
+      const tb = $('tbodyPecasSel'); tb.innerHTML = '';
+      if (PECAS_SEL.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="text-center text-body-secondary">Nenhuma peça selecionada.</td></tr>';
+        pecasTotal(); return;
+      }
+      for (const p of PECAS_SEL) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>${p.sku}</td>
+        <td>${p.nome || ''}</td>
+        <td class="text-end">${fmtBRL.format(+p.preco || 0)}</td>
+        <td class="text-end">
+          <input type="number" min="1" step="1" value="${p.qtd || 1}" class="form-control form-control-sm d-inline-block qty-input" data-qtd="${p.sku}">
+        </td>
+        <td class="text-end">${fmtBRL.format((+p.preco || 0) * (+p.qtd || 1))}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-danger" data-remover="${p.sku}"><i class="bi bi-x-lg"></i></button>
+        </td>`;
+        tb.appendChild(tr);
+      }
+      pecasTotal();
+    }
+
+    function categoriasEstoque() {
+      return [...new Set(ESTOQUE.map(i => i.categoria).filter(Boolean))].sort();
+    }
+
+    function fillCategoriasEstoque() {
+      const sel = $('filtroPecaCat'); const cur = sel.value;
+      const opts = ['<option value="">Todas</option>', ...categoriasEstoque().map(c => `<option>${c}</option>`)];
+      sel.innerHTML = opts.join('');
+      if (cur) sel.value = cur;
+    }
+
+    function renderEstoque() {
+      ESTOQUE = loadEstoque(); // recarrega caso outra aba mude
+      fillCategoriasEstoque();
+      const q = $buscaPeca();
+      const cat = $catPeca();
+      const lista = ESTOQUE.filter(p => {
+        const okCat = !cat || p.categoria === cat;
+        const okQ = !q || [p.sku, p.nome, p.local].join(' ').toLowerCase().includes(q);
+        return okCat && okQ;
+      });
+
+      const tb = $('tbodyEstoque'); tb.innerHTML = '';
+      if (lista.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="text-center text-body-secondary">Sem itens no estoque.</td></tr>';
+        return;
+      }
+      for (const p of lista) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>${p.sku}</td>
+        <td>${p.nome || ''}</td>
+        <td>${p.categoria || ''}</td>
+        <td class="text-end">${fmtBRL.format(+p.preco || 0)}</td>
+        <td class="text-end" id="disp-${p.sku}">${+p.qtd || 0}</td>
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <input type="number" min="1" step="1" value="1" class="form-control form-control-sm qty-input" data-qtd-add="${p.sku}">
+            <button class="btn btn-outline-primary" data-add="${p.sku}"><i class="bi bi-check2"></i> Selecionar</button>
+          </div>
+        </td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    function getStockItem(sku) { return ESTOQUE.find(x => x.sku === sku); }
+    function changeStock(sku, delta) {
+      const it = getStockItem(sku);
+      if (!it) return false;
+      it.qtd = Math.max(0, (+it.qtd || 0) + delta);
+      saveEstoque(ESTOQUE);
+      // atualiza célula "disp-<sku>" se existir
+      const cell = document.getElementById(`disp-${CSS.escape(sku)}`);
+      if (cell) cell.textContent = it.qtd;
+      return true;
+    }
+
+    function addPecaBySku(sku) {
+      const it = getStockItem(sku);
+      if (!it) { toast('Item não encontrado no estoque.', 'danger'); return; }
+      let disp = +it.qtd || 0;
+      if (disp <= 0) { toast('Sem estoque disponível para este item.', 'warning'); return; }
+
+      const qtdInput = document.querySelector(`[data-qtd-add="${CSS.escape(sku)}"]`);
+      let qtd = Math.max(1, parseInt(qtdInput?.value || '1', 10));
+      if (qtd > disp) { qtd = disp; qtdInput.value = String(qtd); toast('Quantidade ajustada ao disponível.', 'warning'); }
+      if (qtd <= 0) return;
+
+      const idx = PECAS_SEL.findIndex(x => x.sku === sku);
+      if (idx >= 0) { PECAS_SEL[idx].qtd += qtd; }
+      else { PECAS_SEL.push({ sku: it.sku, nome: it.nome, preco: +it.preco || 0, qtd }); }
+
+      changeStock(sku, -qtd); // baixa do estoque imediatamente
+      renderPecasSelecionadas();
+      toast('Peça adicionada à OS.', 'success');
+    }
+
+    // Eventos da área de peças
+    document.addEventListener('click', (e) => {
+      const add = e.target.closest('[data-add]');
+      if (add) { addPecaBySku(add.dataset.add); return; }
+
+      const rem = e.target.closest('[data-remover]');
+      if (rem) {
+        const sku = rem.dataset.remover;
+        const p = PECAS_SEL.find(x => x.sku === sku);
+        if (p) { changeStock(sku, +p.qtd); } // devolve ao estoque
+        PECAS_SEL = PECAS_SEL.filter(p => p.sku !== sku);
+        renderPecasSelecionadas();
+        toast('Peça removida e estoque devolvido.', 'warning');
+        return;
+      }
+    });
+
+    document.addEventListener('input', (e) => {
+      const qAttr = e.target.getAttribute('data-qtd');
+      if (qAttr) {
+        const sku = qAttr;
+        const p = PECAS_SEL.find(x => x.sku === sku);
+        if (!p) return;
+        const novo = Math.max(1, parseInt(e.target.value || '1', 10));
+        const delta = novo - p.qtd; // + aumenta consumo, - devolve
+        if (delta === 0) return;
+
+        if (delta > 0) {
+          // precisa consumir mais do estoque
+          const it = getStockItem(sku); const disp = +it?.qtd || 0;
+          const pode = Math.min(delta, disp);
+          if (pode > 0) { p.qtd += pode; changeStock(sku, -pode); }
+          if (pode < delta) {
+            toast('Estoque insuficiente. Ajustado ao máximo disponível.', 'danger');
+          }
+          e.target.value = String(p.qtd);
+        } else {
+          // devolve ao estoque
+          p.qtd += delta; // delta é negativo
+          changeStock(sku, -delta); // -delta é positivo
+          e.target.value = String(p.qtd);
+        }
+        renderPecasSelecionadas();
+      }
+    });
+
+    $('buscaPeca').addEventListener('input', renderEstoque);
+    $('filtroPecaCat').addEventListener('change', renderEstoque);
+
+    // ========= Modal open/close =========
+    function abrirNovo() {
+      $('tituloModal').textContent = 'Adicionar moto';
+      $('registroId').value = genId();
+      $('cliente').value = ''; $('modelo').value = ''; $('ano').value = '';
+      $('entrada').value = nowISO(); $('saida').value = '';
+      $('mecanico').value = ''; $('status').value = 'Revisando';
+      $('valor').value = '0'; $('custo').value = '0'; $('obs').value = '';
+      PECAS_SEL = [];
+
+      // snapshot de estoque
+      ESTOQUE = loadEstoque();
+      SNAP_ESTOQUE = JSON.parse(JSON.stringify(ESTOQUE));
+      MODAL_SALVO = false;
+
+      renderEstoque();
+      renderPecasSelecionadas();
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+    function abrirEditar(id) {
+      const r = REG.find(x => x.id === id); if (!r) return;
+      $('tituloModal').textContent = 'Editar registro';
+      $('registroId').value = r.id;
+      $('cliente').value = r.cliente || ''; $('modelo').value = r.modelo || ''; $('ano').value = r.ano || '';
+      $('entrada').value = r.entrada || ''; $('saida').value = r.saida || '';
+      $('mecanico').value = r.mecanico || ''; $('status').value = r.status || 'Revisando';
+      $('valor').value = r.valor || 0; $('custo').value = r.custo || 0; $('obs').value = r.obs || '';
+      PECAS_SEL = Array.isArray(r.pecas) ? r.pecas.map(p => ({ sku: p.sku, nome: p.nome, preco: +p.preco || 0, qtd: +p.qtd || 1 })) : [];
+
+      // snapshot de estoque
+      ESTOQUE = loadEstoque();
+      SNAP_ESTOQUE = JSON.parse(JSON.stringify(ESTOQUE));
+      MODAL_SALVO = false;
+
+      renderEstoque();
+      renderPecasSelecionadas();
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    // Reverter estoque se fechar sem salvar
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      if (!MODAL_SALVO && SNAP_ESTOQUE) {
+        saveEstoque(SNAP_ESTOQUE);
+        ESTOQUE = loadEstoque();
+        renderEstoque();
+        PECAS_SEL = []; // descarta seleção não salva
+        toast('Alterações canceladas. Estoque restaurado.', 'info');
+      }
+    });
+
+    $('formMoto').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const form = e.target; form.classList.add('was-validated');
+      if (!form.checkValidity()) return;
+
+      const obj = {
+        id: $('registroId').value || genId(),
+        cliente: $('cliente').value.trim(),
+        modelo: $('modelo').value.trim(),
+        ano: +$('ano').value || '',
+        entrada: $('entrada').value,
+        saida: $('saida').value || '',
+        mecanico: $('mecanico').value.trim(),
+        status: $('status').value,
+        valor: +$('valor').value || 0,
+        custo: +$('custo').value || 0, // auto da soma
+        pecas: PECAS_SEL.map(p => ({ sku: p.sku, nome: p.nome, preco: +p.preco || 0, qtd: +p.qtd || 1 })),
+        obs: $('obs').value.trim()
+      };
+
+      const idx = REG.findIndex(x => x.id === obj.id);
+      if (idx >= 0) REG[idx] = obj; else REG.unshift(obj);
+      save(REG); renderTabela();
+
+      MODAL_SALVO = true; // não reverter o estoque
+      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      form.classList.remove('was-validated');
+      toast(idx >= 0 ? 'Registro atualizado.' : 'Moto adicionada.', 'success');
+    });
+
+    // ========= Ações lista =========
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-acao]'); if (!btn) return;
+      const id = btn.dataset.id, ac = btn.dataset.acao;
+      if (ac === 'editar') abrirEditar(id);
+      if (ac === 'excluir') {
+        if (!confirm('Excluir este registro?')) return;
+        REG = REG.filter(x => x.id !== id); save(REG); renderTabela(); toast('Registro excluído.', 'danger');
+      }
+    });
+
+    // ========= Filtros / Botões =========
+    $('busca').addEventListener('input', renderTabela);
+    $('filtroCliente').addEventListener('change', renderTabela);
+    $('btnNovaMoto').addEventListener('click', abrirNovo);
+
+    // ========= Atualizações externas =========
+    window.addEventListener('storage', (e) => {
+      if (e.key === ESTOQUE_KEY) { ESTOQUE = loadEstoque(); renderEstoque(); }
+      if (e.key === KEY) { REG = load(); renderTabela(); }
+    });
+
+    // ========= Init =========
+    renderTabela();
+  </script>
+</body>
+
+</html>
