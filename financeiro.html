@@ -10,6 +10,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
+  <!-- jsPDF + AutoTable (para exportar PDF) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
   <!-- Fonte -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,7 +61,7 @@
   <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-      <a class="navbar-brand brand" href="rotamotos.jpg"><span class="logo">RM</span><span>Rota Motos</span></a>
+      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="topnav">
         <ul class="navbar-nav ms-auto">
@@ -100,6 +104,8 @@
         <div class="col-md-3 d-grid d-md-flex gap-2 justify-content-md-end">
           <button id="btnAdd" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalMov"><i class="bi bi-plus-lg"></i> Adicionar movimento</button>
           <button id="btnAtualizar" class="btn btn-ghost"><i class="bi bi-arrow-repeat"></i> Atualizar</button>
+          <!-- NOVO: Exportar PDF -->
+          <button id="btnExportPDF" class="btn btn-ghost"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
         </div>
       </div>
     </div>
@@ -204,7 +210,7 @@
     addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
 
     /* ===== Data sources (localStorage) ===== */
-    // Vendas: usa preço, se 0 usa custo (como na página Vendas)
+    // Vendas: usa preço; se faltar, cai para custo (como na página Vendas)
     const SALE_KEY = "vendas.orders.v1";
     function loadVendas(){
       try{ const arr = JSON.parse(localStorage.getItem(SALE_KEY))||[]; return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
@@ -354,6 +360,77 @@
       ch3 = new Chart($("chSaidas"),   { type:"doughnut", data:{ labels:labels3, datasets:[{ data:data3 }] }, options:opt });
     }
 
+    /* ===== Exportar PDF (entradas e saídas) ===== */
+    function exportPDF(){
+      const rows = buildMovements();
+      const ent = rows.filter(r=>r.tipo==="entrada").reduce((s,r)=>s+r.valor,0);
+      const sai = rows.filter(r=>r.tipo==="saida").reduce((s,r)=>s+r.valor,0);
+      const saldo = ent - sai;
+
+      const dtIni = clampDate($("fIni").value) || "—";
+      const dtFim = clampDate($("fFim").value) || "—";
+      const statusTxt = $("fStatus").value==="conc" ? "Somente Concluído" : "Todos";
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+
+      // Cabeçalho
+      doc.setFont('helvetica','bold'); doc.setFontSize(16);
+      doc.text("Rota Motos — Financeiro (Entradas e Saídas)", 40, 40);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text("Gerado em: " + new Date().toLocaleString('pt-BR'), 40, 58);
+      doc.text(`Período: ${dtIni} a ${dtFim} • Status: ${statusTxt}`, 40, 72);
+
+      // Tabela
+      const head = [['Data','Tipo','Origem/Categoria','Descrição','Pagamento','Valor']];
+      const body = rows.map(r=>[
+        r.data || '',
+        r.tipo==='entrada'?'Entrada':'Saída',
+        r.categoria || r.fonte || '',
+        r.descricao || '',
+        r.pagamento || '',
+        (r.tipo==='saida' ? '- ' : '') + new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(r.valor||0)
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: 88,
+        styles: { font:'helvetica', fontSize:9, cellPadding:4, overflow:'linebreak' },
+        headStyles: { fillColor:[238,242,255], textColor:[30,27,75] },
+        columnStyles: {
+          0:{cellWidth:70},
+          1:{cellWidth:70},
+          2:{cellWidth:160},
+          3:{cellWidth:260},
+          4:{cellWidth:110},
+          5:{halign:'right', cellWidth:110}
+        },
+        didParseCell: function(dataCell){
+          if(dataCell.section==='body' && dataCell.column.index===5){
+            const row = rows[dataCell.row.index];
+            if(row.tipo==='saida'){
+              dataCell.cell.styles.textColor = [185,28,28]; // vermelho
+            } else {
+              dataCell.cell.styles.textColor = [4,120,87];  // verde
+            }
+          }
+        }
+      });
+
+      // Resumo
+      const y = doc.lastAutoTable.finalY + 18;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11);
+      doc.text('Resumo', 40, y);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(`Entradas:  ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(ent)}`, 40, y+18);
+      doc.text(`Saídas:    ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(sai)}`, 40, y+34);
+      doc.text(`Saldo:     ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(saldo)}`, 40, y+50);
+
+      // Nome do arquivo
+      const fname = `financeiro_${dtIni}_a_${dtFim}.pdf`.replace(/[^a-zA-Z0-9_.-]/g,'_');
+      doc.save(fname);
+    }
+
     /* ===== Modal movimentos extras ===== */
     function resetModal(){
       $("formMov").reset();
@@ -396,6 +473,9 @@
     $("fFim").addEventListener("change", render);
     $("fStatus").addEventListener("change", render);
 
+    // Exportar PDF
+    $("btnExportPDF").addEventListener("click", exportPDF);
+
     /* ===== Init ===== */
     (function init(){
       document.documentElement.style.setProperty("--nav-h", (document.querySelector(".navbar.fixed-top")?.offsetHeight||64)+"px");
@@ -406,4 +486,3 @@
   </script>
 </body>
 </html>
-
