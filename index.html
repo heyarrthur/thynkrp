@@ -57,17 +57,35 @@
     .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700;position:sticky;top:0;z-index:2;border-bottom:1px solid #e5e7eb}
     .nowrap{white-space:nowrap}
     .empty{color:#6b7280;text-align:center;padding:2rem 0}
-    .row-low{background:#fee2e2 !important}      /* alerta de estoque baixo */
-    .row-low td{border-top-color:#fecaca !important}
 
-    .badge-cat{background:#f1f5f9;border:1px solid #e5e7eb;font-weight:600}
+    /* ALERTA VISUAL (somente UI) */
+    .table tbody tr.is-alert { background:#ffe1e1 !important; }
+    .table tbody tr.is-alert td { border-top-color:#f7bdbd !important; }
+
+    /* Badge da categoria com texto escuro (sem Bootstrap .badge) */
+    .badge-cat{
+      display:inline-block;
+      padding:.22rem .6rem;
+      border-radius:9999px;
+      background:#f1f5f9;
+      border:1px solid #e5e7eb;
+      color:#0f172a;
+      font-weight:700;
+      font-size:.78rem;
+      line-height:1;
+    }
+    .table tbody tr.is-alert .badge-cat{
+      background:#ffe8e8;
+      border-color:#f7bdbd;
+      color:#7f1d1d;
+    }
   </style>
 </head>
 <body>
   <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-      <a class="navbar-brand brand" href="rotamotos.jpg"><span class="logo">RM</span><span>Rota Motos</span></a>
+      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="topnav">
         <ul class="navbar-nav ms-auto">
@@ -104,12 +122,26 @@
           <select id="fCategoria" class="form-select"><option value="">Todas</option></select>
         </div>
         <div class="col-lg-5 d-grid d-lg-flex gap-2 justify-content-lg-end">
-          <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalItem"><i class="bi bi-plus-lg"></i> Novo item</button>
-          <button id="btnImportXLSX" class="btn btn-ghost"><i class="bi bi-file-earmark-arrow-up"></i> Importar Excel</button>
-          <button id="btnImportXML" class="btn btn-ghost"><i class="bi bi-filetype-xml"></i> Importar XML</button>
-          <button id="btnExportXLSX" class="btn btn-ghost"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
-          <button id="btnExportXML" class="btn btn-ghost"><i class="bi bi-filetype-xml"></i> Exportar XML</button>
-          <button id="btnExportPDF" class="btn btn-ghost"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
+          <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalItem">
+            <i class="bi bi-plus-lg"></i> Novo item
+          </button>
+
+          <!-- Dropdown Ferramentas -->
+          <div class="btn-group">
+            <button class="btn btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-tools"></i> Ferramentas
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6 class="dropdown-header">Importar / Exportar</h6></li>
+              <li><a class="dropdown-item" id="btnImportXLSX"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Excel</a></li>
+              <li><a class="dropdown-item" id="btnImportXML"><i class="bi bi-filetype-xml me-2"></i>Importar XML</a></li>
+              <li><a class="dropdown-item" id="btnExportXLSX"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Excel</a></li>
+              <li><a class="dropdown-item" id="btnExportXML"><i class="bi bi-filetype-xml me-2"></i>Exportar XML</a></li>
+              <li><a class="dropdown-item" id="btnExportPDF"><i class="bi bi-filetype-pdf me-2"></i>Exportar PDF (listados)</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" id="btnMerge"><i class="bi bi-collection me-2"></i>Somar itens repetidos (SKU)</a></li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -174,6 +206,7 @@
     const money = n => BRL.format(+n||0);
     const safe = s => String(s??"");
     const toNum = v => Number(v??0) || 0;
+    const isAlert = (it) => (+it.qtd || 0) <= (+it.alerta || 0); // somente efeito visual
 
     function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
     addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
@@ -189,12 +222,26 @@
     }
     function saveStock(){ localStorage.setItem(estoque.key, JSON.stringify(estoque.items)); }
 
+    // Backup rápido antes de operações destrutivas
+    function backupStock(){
+      try{
+        localStorage.setItem("estoque.backup.last", JSON.stringify({
+          ts: Date.now(), key: estoque.key, items: estoque.items
+        }));
+      }catch(e){}
+    }
+
     let estoque = loadStock();
     // normaliza campos
     estoque.items = (estoque.items||[]).map(it=>({
-      sku: safe(it.sku), nome: safe(it.nome), categoria: safe(it.categoria),
-      local: safe(it.local), qtd: toNum(it.qtd), alerta: toNum(it.alerta),
-      preco: toNum(it.preco), custo: toNum(it.custo)
+      sku: safe(it.sku).trim(),
+      nome: safe(it.nome),
+      categoria: safe(it.categoria),
+      local: safe(it.local),
+      qtd: toNum(it.qtd),
+      alerta: toNum(it.alerta),
+      preco: toNum(it.preco),
+      custo: toNum(it.custo)
     }));
 
     /* ===== Estado/UI ===== */
@@ -222,12 +269,11 @@
       else {
         empty.style.display='none';
         tbody.innerHTML = data.map(it=>{
-          const low = (+it.qtd||0) <= (+it.alerta||0);
           const totalPreco = (+it.preco||0) * (+it.qtd||0);
-          return '<tr class="'+(low?'row-low':'')+'">'+
+          return '<tr class="'+(isAlert(it)?'is-alert':'')+'">'+
             '<td class="nowrap">'+safe(it.sku)+'</td>'+
             '<td>'+safe(it.nome)+'</td>'+
-            '<td><span class="badge badge-cat">'+(it.categoria||'-')+'</span></td>'+
+            '<td><span class="badge-cat">'+(it.categoria||'-')+'</span></td>'+
             '<td>'+safe(it.local||'-')+'</td>'+
             '<td class="text-end">'+(it.qtd||0)+'</td>'+
             '<td class="text-end">'+(it.alerta||0)+'</td>'+
@@ -246,7 +292,7 @@
 
       // métricas
       $('mItens').textContent = String(estoque.items.length||0);
-      $('mLow').textContent = String(estoque.items.filter(x=> (+x.qtd||0) <= (+x.alerta||0)).length);
+      $('mLow').textContent = String(estoque.items.filter(x=> isAlert(x)).length);
       const valor = estoque.items.reduce((s,x)=> s + (+x.preco||0) * (+x.qtd||0), 0);
       $('mValor').textContent = money(valor);
     }
@@ -275,9 +321,7 @@
 
       const idx = estoque.items.findIndex(x=>x.sku===sku);
       if(editingSku && editingSku!==sku){
-        // se trocou o SKU e o novo já existe, avisa
         if(idx>=0){ alert('Já existe um item com este SKU.'); return; }
-        // remove o antigo
         estoque.items = estoque.items.filter(x=>x.sku!==editingSku);
         estoque.items.push(obj);
       } else {
@@ -328,10 +372,9 @@
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
         const arr = XLSX.utils.sheet_to_json(ws, {defval:""});
-        // Espera colunas: sku, nome, categoria, local, qtd, alerta, preco, custo
         arr.forEach(r=>{
           const obj = {
-            sku: safe(r.sku||r.SKU||r.Sku),
+            sku: safe((r.sku||r.SKU||r.Sku||"")).trim(),
             nome: safe(r.nome||r.Nome),
             categoria: safe(r.categoria||r.Categoria),
             local: safe(r.local||r.Local),
@@ -377,7 +420,9 @@
           items.forEach(n=>{
             const get = tag => (n.getElementsByTagName(tag)[0]?.textContent||"").trim();
             const obj = {
-              sku: get("sku"), nome: get("nome"), categoria: get("categoria"),
+              sku: get("sku"),
+              nome: get("nome"),
+              categoria: get("categoria"),
               local: get("local"),
               qtd: toNum(get("quantidade")),
               alerta: toNum(get("alerta")),
@@ -422,15 +467,11 @@
       const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
 
       const now = new Date();
-      const title = "Rota Motos — Estoque (Itens listados)";
-      const subtitle = now.toLocaleString('pt-BR');
-
       doc.setFont('helvetica','bold'); doc.setFontSize(16);
-      doc.text(title, 40, 40);
+      doc.text("Rota Motos — Estoque (Itens listados)", 40, 40);
       doc.setFont('helvetica','normal'); doc.setFontSize(10);
-      doc.text(subtitle, 40, 58);
+      doc.text(now.toLocaleString('pt-BR'), 40, 58);
 
-      // dados da tabela
       const head = [['SKU','Nome','Categoria','Local','Qtd','Alerta','Preço','Custo','Total (Preço)']];
       const body = data.map(x=>[
         x.sku, x.nome, x.categoria||'-', x.local||'-',
@@ -438,14 +479,12 @@
         toBRL(x.preco), toBRL(x.custo), toBRL((x.preco||0)*(x.qtd||0))
       ]);
 
-      // totalizador
       const totalItens = data.length;
       const totalValor = data.reduce((s,x)=> s + (x.preco||0)*(x.qtd||0), 0);
-      const totalLow = data.filter(x=> (+x.qtd||0) <= (+x.alerta||0)).length;
+      const totalLow = data.filter(x=> isAlert(x)).length;
 
       doc.autoTable({
-        head, body,
-        startY: 72,
+        head, body, startY: 72,
         styles: { font:'helvetica', fontSize:9, cellPadding:4, overflow:'linebreak' },
         headStyles: { fillColor:[238,242,255], textColor:[30,27,75] },
         columnStyles: {
@@ -456,17 +495,15 @@
           8:{ halign:'right', cellWidth:90 }
         },
         didParseCell: function(dataCell){
-          // pinta linha com alerta (estoque baixo)
           if(dataCell.section==='body'){
             const row = data[dataCell.row.index];
-            if((+row.qtd||0) <= (+row.alerta||0)){
+            if(isAlert(row)){
               dataCell.cell.styles.fillColor = [255, 226, 226];
             }
           }
         }
       });
 
-      // resumo
       const y = doc.lastAutoTable.finalY + 18;
       doc.setFont('helvetica','bold'); doc.setFontSize(11);
       doc.text('Resumo', 40, y);
@@ -480,12 +517,65 @@
       function toBRL(n){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(+n||0); }
     });
 
+    /* ===== Somar itens repetidos (SKU) ===== */
+    function mergeDuplicatesBySKU(){
+      if(!estoque.items.length){ alert("Não há itens para mesclar."); return; }
+
+      // backup antes de alterar
+      backupStock();
+
+      const order=[], map=new Map();
+      const norm = s => safe(s).trim().toUpperCase();
+
+      for(const it of estoque.items){
+        const key = norm(it.sku);
+        if(!key){ continue; }
+
+        if(!map.has(key)){
+          map.set(key, {
+            sku: safe(it.sku).trim(),
+            nome: safe(it.nome),
+            categoria: safe(it.categoria),
+            local: safe(it.local),
+            qtd: toNum(it.qtd),
+            alerta: toNum(it.alerta),
+            preco: toNum(it.preco),
+            custo: toNum(it.custo)
+          });
+          order.push(key);
+        } else {
+          const base = map.get(key);
+          base.qtd += toNum(it.qtd);
+          base.alerta = Math.max(toNum(base.alerta), toNum(it.alerta));
+          if(!base.nome && it.nome) base.nome = safe(it.nome);
+          if(!base.categoria && it.categoria) base.categoria = safe(it.categoria);
+          if(!base.local && it.local) base.local = safe(it.local);
+          if(!(toNum(base.preco)>0) && (toNum(it.preco)>0)) base.preco = toNum(it.preco);
+          if(!(toNum(base.custo)>0) && (toNum(it.custo)>0)) base.custo = toNum(it.custo);
+        }
+      }
+
+      const merged = order.map(k=>map.get(k));
+      const before = estoque.items.length, after = merged.length, removed = before - after;
+      estoque.items = merged;
+      saveStock(); rebuildCats(); render();
+
+      alert(`Mesclagem concluída.\nSKU únicos: ${after}\nItens removidos (duplicados): ${removed}`);
+    }
+
+    // Botão do dropdown “Somar itens repetidos (SKU)”
+    $('btnMerge').addEventListener('click', ()=>{
+      if(confirm('Somar quantidades de itens com o mesmo SKU?\n(Um backup será salvo: "estoque.backup.last")')){
+        mergeDuplicatesBySKU();
+      }
+    });
+
     /* ===== Init ===== */
     function init(){
       rebuildCats(); render();
+      document.documentElement.style.setProperty("--nav-h", (document.querySelector(".navbar.fixed-top")?.offsetHeight||64)+"px");
     }
     init();
-
   })();
   </script>
 </body>
