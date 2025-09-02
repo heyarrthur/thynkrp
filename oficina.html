@@ -66,14 +66,14 @@
   <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
+      <a class="navbar-brand brand" href="rotamotos.jpg"><span class="logo">RM</span><span>Rota Motos</span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="topnav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-          <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
-          <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Estoque</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#">Oficina</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Vendas</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Financeiro</a></li>
         </ul>
       </div>
     </div>
@@ -90,19 +90,30 @@
 
     <!-- TOOLBAR -->
     <div class="toolbar mb-3">
-      <div class="row g-3 align-items-center">
-        <div class="col-xl-6 col-lg-7">
-          <label class="form-label mb-1">&nbsp;</label>
+      <div class="row g-3 align-items-end">
+        <div class="col-xl-4 col-lg-6">
+          <label class="form-label mb-1">Buscar</label>
           <div class="input-icon">
             <i class="bi bi-search"></i>
-            <input id="search" class="form-control" placeholder="Buscar por cliente, modelo, mecânico, placa...">
+            <input id="search" class="form-control" placeholder="Cliente, modelo, mecânico, placa...">
           </div>
         </div>
         <div class="col-xl-2 col-lg-3">
-          <label class="form-label mb-1">Filtrar por cliente</label>
+          <label class="form-label mb-1">Cliente</label>
           <select id="fCliente" class="form-select"><option value="">Todos</option></select>
         </div>
-        <div class="col-xl-4 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
+
+        <!-- NOVO: Filtro por dia/intervalo (Data de Entrada) -->
+        <div class="col-xl-2 col-lg-3">
+          <label class="form-label mb-1">Data inicial</label>
+          <input id="fIni" type="date" class="form-control">
+        </div>
+        <div class="col-xl-2 col-lg-3">
+          <label class="form-label mb-1">Data final</label>
+          <input id="fFim" type="date" class="form-control">
+        </div>
+
+        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
           <button id="btnNova" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalOS">
             <i class="bi bi-plus-lg"></i> Adicionar moto
           </button>
@@ -228,17 +239,16 @@
     const safeId = s => String(s).replace(/[^a-zA-Z0-9_-]/g,"_");
     const priceOf = it => +it.preco || 0;                 // SEMPRE PREÇO
     const itemTotal = it => priceOf(it) * (+it.qtd||0);
+    const clampDate = s => (s||"").slice(0,10);           // normaliza 'YYYY-MM-DD'
 
     // Ajuste navbar fixa
     function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
     addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
 
     /* ===== Impressão (Thermal 80mm) via IFRAME invisível ===== */
-    // Config padrão p/ Tomate MDK-080: bobina 80mm, largura útil ~72mm
     const PRINTER = { widthMM: 80, innerMM: 72, marginMM: 0, fontPX: 12, linePX: 18 };
 
     function buildReceiptInDoc(d, j){
-      // Reset
       d.head.innerHTML = ""; d.body.innerHTML = "";
       d.body.style.margin="0"; d.body.style.padding="0";
       d.documentElement.style.background="white";
@@ -295,9 +305,7 @@
       // Itens
       line("Dados de Compras","ctr mt");
       if(Array.isArray(j.pecas) && j.pecas.length){
-        j.pecas.forEach((p,i)=>{
-          line("Item " + (i+1) + ": " + p.nome + " (Qtd: " + p.qtd + ")");
-        });
+        j.pecas.forEach((p,i)=>{ line("Item " + (i+1) + ": " + p.nome + " (Qtd: " + p.qtd + ")"); });
       }else{
         line("Sem itens.");
       }
@@ -321,15 +329,12 @@
       iframe.onload = function(){
         const d = iframe.contentDocument || iframe.contentWindow.document;
         buildReceiptInDoc(d, j);
-        // dá um tick para o layout estabilizar
         setTimeout(function(){
           try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
-          // remove o iframe após a fila de impressão
           setTimeout(()=> iframe.remove(), 1200);
         }, 60);
       };
 
-      // Garantir carga do documento
       try{ iframe.src = "about:blank"; }catch(e){
         const d = iframe.contentDocument || iframe.contentWindow.document;
         d.open(); d.close();
@@ -368,17 +373,31 @@
       if(s==="Aguardando Cliente") return '<span class="badge badge-status st-agu">Aguardando</span>';
       return '<span class="badge badge-status st-rev">Revisando</span>';
     }
+
     function filterRows(list){
-      const q=($("search").value||"").toLowerCase(), fc=$("fCliente").value;
+      const q=($("search").value||"").toLowerCase();
+      const fc=$("fCliente").value;
+      const ini = clampDate($("fIni").value);
+      const fim = clampDate($("fFim").value);
+
       return list.filter(r=>{
         const mQ=!q||[r.cliente,r.modelo,r.mecanico,r.placa,r.status].join(" ").toLowerCase().includes(q);
-        const mC=!fc||r.cliente===fc; return mQ && mC;
+        const mC=!fc||r.cliente===fc;
+
+        // Filtro por data de ENTRADA
+        const d = clampDate(r.entrada||"");
+        const mIni = !ini || (d && d >= ini);
+        const mFim = !fim || (d && d <= fim);
+
+        return mQ && mC && mIni && mFim;
       });
     }
+
     function rebuildClientFilter(){
       const sel=$("fCliente"); const set=[...new Set(jobs.map(j=>j.cliente).filter(Boolean))].sort();
       sel.innerHTML='<option value="">Todos</option>'+set.map(c=>"<option>"+c+"</option>").join("");
     }
+
     function renderTable(){
       const data=filterRows(jobs);
       const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0),0);
@@ -477,9 +496,13 @@
     // Abrir modal
     $("btnNova").addEventListener("click", resetModal);
 
-    // Filtros / busca
+    // Filtros / busca / datas
     $("search").addEventListener("input", renderTable);
     $("fCliente").addEventListener("change", renderTable);
+    $("fIni").addEventListener("change", renderTable);
+    $("fFim").addEventListener("change", renderTable);
+
+    // Peças
     $("pSearch").addEventListener("input", renderParts);
     $("pCategoria").addEventListener("change", renderParts);
     $("cDesconto").addEventListener("input", renderCart);
@@ -589,10 +612,13 @@
 
     /* ===== Init ===== */
     (function init(){
-      rebuildClientFilter(); renderTable(); rebuildPartCats(); renderParts(); $("iEntrada").value=todayISO();
+      rebuildClientFilter(); renderTable(); rebuildPartCats(); renderParts();
+      $("iEntrada").value=todayISO();
+      // se quiser iniciar já no dia de hoje, descomente as 2 linhas abaixo:
+      // $("fIni").value = todayISO();
+      // $("fFim").value = todayISO();
     })();
   })();
   </script>
 </body>
 </html>
-
