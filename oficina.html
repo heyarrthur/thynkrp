@@ -66,14 +66,14 @@
   <!-- NAVBAR -->
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-      <a class="navbar-brand brand" href="rotamotos.jpg"><span class="logo">RM</span><span>Rota Motos</span></a>
+      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="topnav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-          <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
-          <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Estoque</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#">Oficina</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Vendas</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Financeiro</a></li>
         </ul>
       </div>
     </div>
@@ -245,79 +245,90 @@
     function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
     addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
 
-    /* ===== Impressão (Thermal 80mm) via IFRAME invisível ===== */
-    const PRINTER = { widthMM: 80, innerMM: 72, marginMM: 0, fontPX: 12, linePX: 18 };
+  function buildReceiptInDoc(d, j){
+    // limpa doc de impressão
+    d.head.innerHTML = ""; d.body.innerHTML = "";
+    d.body.style.margin="0"; d.body.style.padding="0";
+    d.documentElement.style.background="white";
 
-    function buildReceiptInDoc(d, j){
-      d.head.innerHTML = ""; d.body.innerHTML = "";
-      d.body.style.margin="0"; d.body.style.padding="0";
-      d.documentElement.style.background="white";
+    // folha térmica 80mm (Tomate MDK-080)
+    const css = `
+      @page { size: 80mm auto; margin: 0mm; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { width: 80mm; }
+      body { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 18px; color:#000; }
+      .wrap { width: 72mm; margin: 0 auto; }
+      .ctr { text-align:center }
+      .sep { text-align:center; letter-spacing:.5px; }
+      .mt { margin-top: 6px }
+      .blk { break-inside: avoid; page-break-inside: avoid; }
+    `;
+    const style = d.createElement("style");
+    style.textContent = css;
+    d.head.appendChild(style);
 
-      const css = `
-        @page { size: ${PRINTER.widthMM}mm auto; margin: ${PRINTER.marginMM}mm; }
-        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        html, body { width: ${PRINTER.widthMM}mm; }
-        body { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: ${PRINTER.fontPX}px; line-height: ${PRINTER.linePX}px; color:#000; }
-        .wrap { width: ${PRINTER.innerMM}mm; margin: 0 auto; }
-        .ctr { text-align:center }
-        .sep { text-align:center; letter-spacing:.5px; }
-        .mt { margin-top: 6px }
-        .blk { break-inside: avoid; page-break-inside: avoid; }
-      `;
-      const style = d.createElement("style");
-      style.textContent = css;
-      d.head.appendChild(style);
+    const wrap = d.createElement("div");
+    wrap.className = "wrap blk";
+    d.body.appendChild(wrap);
 
-      const wrap = d.createElement("div");
-      wrap.className = "wrap blk";
-      d.body.appendChild(wrap);
+    const nf = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
 
-      const nf = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-      const total = (+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0);
-
-      function line(text, cls){
-        const el = d.createElement("div");
-        el.textContent = String(text==null?"":text);
-        if(cls) el.className = cls + " blk";
-        wrap.appendChild(el);
-      }
-      function sep(){ line("-----------------------------------------------","sep"); }
-
-      // Cabeçalho
-      line("Rota Motos","ctr");
-      line("CNPJ 60.469.425/0001-76","ctr");
-      line("Ordem de Compra","ctr");
-      sep();
-
-      // Cliente
-      line("Dados do Cliente","ctr mt");
-      line("Nome Cliente: " + (j.cliente||"-"));
-      line("Moto Cliente: " + (j.modelo||"-"));
-      line("Placa da moto: " + (j.placa||"-"));
-      line("Entrada: " + (j.entrada||"-"));
-      sep();
-
-      // Mecânico
-      line("Dados do Mecânico","ctr mt");
-      line("Nome Mecânico: " + (j.mecanico||"-"));
-      sep();
-
-      // Itens
-      line("Dados de Compras","ctr mt");
-      if(Array.isArray(j.pecas) && j.pecas.length){
-        j.pecas.forEach((p,i)=>{ line("Item " + (i+1) + ": " + p.nome + " (Qtd: " + p.qtd + ")"); });
-      }else{
-        line("Sem itens.");
-      }
-      line("Forma de Pagamento: " + (j.pagamento||"-"));
-      line("Subtotal peças: " + nf.format(+j.subtotal||0)); // soma com PREÇO
-      line("Descontos: " + nf.format(+j.desconto||0));
-      line("Valor Total: " + nf.format(total));
-      sep();
-
-      line("Observações","ctr mt");
-      line("Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!");
+    function line(text, cls){
+      const el = d.createElement("div");
+      el.textContent = String(text==null?"":text);
+      if(cls) el.className = cls + " blk";
+      wrap.appendChild(el);
     }
+    function sep(){ line("-----------------------------------------------","sep"); }
+
+    // Totais
+    const subPecas = +j.subtotal || 0;                     // já vem somado com PREÇO
+    const total = (+j.valor||0) + subPecas - (+j.desconto||0);
+
+    // Cabeçalho
+    line("Rota Motos","ctr");
+    line("CNPJ 60.469.425/0001-76","ctr");
+    line("Ordem de Compra","ctr");
+    sep();
+
+    // Cliente
+    line("Dados do Cliente","ctr mt");
+    line("Nome Cliente: " + (j.cliente||"-"));
+    line("Moto Cliente: " + (j.modelo||"-"));
+    line("Placa da moto: " + (j.placa||"-"));
+    line("Entrada: " + (j.entrada||"-"));
+    sep();
+
+    // Mecânico
+    line("Dados do Mecânico","ctr mt");
+    line("Nome Mecânico: " + (j.mecanico||"-"));
+    sep();
+
+    // Itens (agora com valor por item NA FRENTE)
+    line("Dados de Compras","ctr mt");
+    if(Array.isArray(j.pecas) && j.pecas.length){
+      j.pecas.forEach((p,i)=>{
+        const nome = p.nome || "-";
+        const qtd  = +p.qtd   || 0;
+        const unit = +p.preco || 0;          // SEMPRE PREÇO
+        const tot  = qtd * unit;
+
+        // Ex.: 1) Pastilha   2x R$ 25,00 = R$ 50,00
+        line((i+1)+") "+nome+"  "+qtd+"x "+nf.format(unit)+" = "+nf.format(tot));
+      });
+    }else{
+      line("Sem itens.");
+    }
+
+    line("Forma de Pagamento: " + (j.pagamento||"-"));
+    line("Subtotal peças: " + nf.format(subPecas));
+    line("Descontos: " + nf.format(+j.desconto||0));
+    line("Valor Total: " + nf.format(total));
+    sep();
+
+    line("Observações","ctr mt");
+    line("Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!");
+  }
 
     function printReceiptInline(j){
       const iframe = document.createElement("iframe");
@@ -622,4 +633,3 @@
   </script>
 </body>
 </html>
-
