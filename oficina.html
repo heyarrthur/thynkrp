@@ -1,635 +1,824 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rota Motos — Oficina</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rota Motos — Oficina</title>
 
-  <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Fonte -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root{ --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b; --nav-h:64px; }
-    body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
-    .container{max-width:1180px}
+<style>
+:root{--ink:#0f172a;--muted:#6b7280;--border:#e6e8ef;--accent:#f59e0b;--nav-h:64px}
+*{box-sizing:border-box}
+body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
+.container{max-width:1180px}
 
-    /* NAVBAR */
-    .navbar{background:#fff;border-bottom:1px solid var(--border)}
-    .brand{display:flex;align-items:center;gap:.5rem;font-weight:700}
-    .brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800}
-    .nav-link{color:var(--ink);font-weight:600;border-radius:8px;padding:.5rem .75rem}
-    .nav-link:hover{background:#f2f4f8}
-    .nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+/* NAV */
+.navbar{background:#fff;border-bottom:1px solid var(--border)}
+.brand{display:flex;gap:.5rem;align-items:center;font-weight:800}
+.brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center}
+.nav-link{color:var(--ink);font-weight:600;border-radius:8px}
+.nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
 
-    /* CARDS */
-    .card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
-    .metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
-    .metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
-    .i-repair{background:#64748b}.i-garage{background:#0ea5e9}.i-value{background:#059669}.i-profit{background:#f59e0b}
-    .metric .label{color:var(--muted);font-size:.9rem}
-    .metric .value{font-weight:800;font-size:1.35rem}
+/* CARDS */
+.card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
+.metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
+.metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.i-wrench{background:#64748b}.i-bike{background:#0ea5e9}.i-cash{background:#059669}.i-profit{background:#f59e0b}
+.metric .label{color:var(--muted);font-size:.9rem}
+.metric .value{font-weight:800;font-size:1.35rem}
 
-    /* TOOLBAR */
-    .toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
-    .input-icon{position:relative}
-    .input-icon i{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#9aa1ad}
-    .input-icon input{padding-left:2.1rem}
-    .form-control,.form-select{border-radius:10px;border-color:var(--border)}
-    .form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
-    .btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
-    .btn-ghost:hover{background:#f9fafb}
-    .btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+/* TOOLBAR */
+.toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
+.form-control,.form-select{border-radius:10px;border-color:var(--border)}
+.form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
+.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
+.btn-ghost:hover{background:#f9fafb}
+.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
 
-    /* TABELA */
-    .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700;position:sticky;top:0;z-index:2;border-bottom:1px solid #e5e7eb}
-    .nowrap{white-space:nowrap}
-    .empty{color:#6b7280;text-align:center;padding:2rem 0}
-    .badge-status{font-weight:700;border:1px solid #e5e7eb}
-    .st-rev{background:#fff7ed;color:#b45309;border-color:#fed7aa}
-    .st-agu{background:#f1f5f9;color:#334155}
-    .st-conc{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+/* TABLE */
+.table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700;position:sticky;top:0;z-index:1}
+.empty{color:#6b7280;text-align:center;padding:2rem 0}
+.badge-status{font-weight:700}
+.badge-status.Revisando{background:#f1f5f9;border:1px solid #e5e7eb}
+.badge-status.Aguardando{background:#fff7ed;border:1px solid #fde68a}
+.badge-status.Concluído{background:#ecfdf5;border:1px solid #a7f3d0}
 
-    /* MODAL – peças & carrinho */
-    .parts-panel,.cart-panel{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem}
-    .parts-list{max-height:36vh;overflow:auto}
-    .cart-list{max-height:48vh;overflow:auto}
-    .cart-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .25rem;border-bottom:1px dashed #e5e7eb}
-    .cart-row:last-child{border-bottom:0}
-  </style>
+/* MODAL */
+.part-card{border:1px solid var(--border);border-radius:10px;padding:.6rem;background:#fff}
+.part-title{font-weight:600}
+.cart-card{border:1px dashed var(--border);border-radius:12px;padding:1rem;background:#fff}
+.small-muted{color:#6b7280;font-size:.85rem}
+</style>
 </head>
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container">
-      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="topnav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-          <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
-          <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
-        </ul>
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand brand" href="#"><span class="logo">RM</span>Rota Motos</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="topnav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Estoque</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Oficina</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Vendas</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Financeiro</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- Métricas -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-wrench"><i class="bi bi-tools"></i></div><div><div class="label">Consertos</div><div id="mConsertos" class="value">0</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-bike"><i class="bi bi-bicycle"></i></div><div><div class="label">Motos em Oficina</div><div id="mOficina" class="value">0</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-cash"><i class="bi bi-cash-coin"></i></div><div><div class="label">Valor Total</div><div id="mValor" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-profit"><i class="bi bi-graph-up-arrow"></i></div><div><div class="label">Lucro (ilustrativo)</div><div id="mLucro" class="value">R$ 0,00</div></div></div></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-5">
+        <label class="form-label mb-1">Buscar</label>
+        <input id="search" class="form-control" placeholder="cliente, modelo, mecânico, placa...">
       </div>
-    </div>
-  </nav>
-
-  <div class="container py-4">
-    <!-- MÉTRICAS -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-repair"><i class="bi bi-wrench"></i></div><div><div class="label">Consertos</div><div id="mConsertos" class="value">0</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-garage"><i class="bi bi-bicycle"></i></div><div><div class="label">Motos em Oficina</div><div id="mOficina" class="value">0</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-value"><i class="bi bi-cash-stack"></i></div><div><div class="label">Valor Total</div><div id="mValor" class="value">R$ 0,00</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-profit"><i class="bi bi-graph-up"></i></div><div><div class="label">Lucro</div><div id="mLucro" class="value">R$ 0,00</div></div></div></div>
-    </div>
-
-    <!-- TOOLBAR -->
-    <div class="toolbar mb-3">
-      <div class="row g-3 align-items-end">
-        <div class="col-xl-4 col-lg-6">
-          <label class="form-label mb-1">Buscar</label>
-          <div class="input-icon">
-            <i class="bi bi-search"></i>
-            <input id="search" class="form-control" placeholder="Cliente, modelo, mecânico, placa...">
-          </div>
-        </div>
-        <div class="col-xl-2 col-lg-3">
-          <label class="form-label mb-1">Cliente</label>
-          <select id="fCliente" class="form-select"><option value="">Todos</option></select>
-        </div>
-
-        <!-- NOVO: Filtro por dia/intervalo (Data de Entrada) -->
-        <div class="col-xl-2 col-lg-3">
-          <label class="form-label mb-1">Data inicial</label>
-          <input id="fIni" type="date" class="form-control">
-        </div>
-        <div class="col-xl-2 col-lg-3">
-          <label class="form-label mb-1">Data final</label>
-          <input id="fFim" type="date" class="form-control">
-        </div>
-
-        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
-          <button id="btnNova" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalOS">
-            <i class="bi bi-plus-lg"></i> Adicionar moto
-          </button>
-        </div>
+      <div class="col-lg-2">
+        <label class="form-label mb-1">Filtrar por cliente</label>
+        <select id="fCliente" class="form-select"><option value="">Todos</option></select>
       </div>
-    </div>
-
-    <!-- TABELA -->
-    <div class="card-soft p-0">
-      <div class="table-responsive" style="max-height:60vh;">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Cliente</th><th>Modelo Moto</th><th class="nowrap">Placa</th>
-              <th class="nowrap">Entrada na Oficina</th><th class="nowrap">Saída da Oficina</th>
-              <th>Mecânico</th><th>Status</th>
-              <th class="text-end nowrap">Valor do Serviço</th>
-              <th class="text-end nowrap">Valor Peças</th>
-              <th class="text-end nowrap">Total</th>
-              <th class="text-end nowrap">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-        <div id="empty" class="empty">Nenhum registro.</div>
+      <div class="col-lg-2">
+        <label class="form-label mb-1">Entrada de</label>
+        <input id="fDe" type="date" class="form-control">
+      </div>
+      <div class="col-lg-2">
+        <label class="form-label mb-1">até</label>
+        <input id="fAte" type="date" class="form-control">
+      </div>
+      <div class="col-lg-1 d-grid">
+        <button id="btnNova" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalOS">
+          <i class="bi bi-plus-lg"></i> Nova
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL OS -->
-  <div class="modal fade" id="modalOS" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="modalTitle">Nova OS</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
+  <!-- Tabela -->
+  <div class="card-soft p-0">
+    <div class="table-responsive" style="max-height:60vh;">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Modelo</th>
+            <th>Placa</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Mecânico</th>
+            <th>Status</th>
+            <th class="text-end">Serviço</th>
+            <th class="text-end">Peças</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty">Nenhum registro.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL OS -->
+<div class="modal fade" id="modalOS" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="modalTitle" class="modal-title fw-bold">Nova OS</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formOS" novalidate>
+          <!-- Linha 1 -->
           <div class="row g-3">
-            <!-- Form + Peças -->
+            <div class="col-lg-4">
+              <label class="form-label">Nome Cliente</label>
+              <input id="iCliente" class="form-control" required>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Modelo Moto</label>
+              <input id="iModelo" class="form-control" required>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Placa</label>
+              <input id="iPlaca" class="form-control" maxlength="10">
+            </div>
+          </div>
+
+          <!-- Linha 2 -->
+          <div class="row g-3 mt-1">
+            <div class="col-lg-4">
+              <label class="form-label">Data de Entrada</label>
+              <input id="iEntrada" type="date" class="form-control" required>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Data de Saída</label>
+              <input id="iSaida" type="date" class="form-control">
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Mecânico</label>
+              <input id="iMecanico" class="form-control">
+            </div>
+          </div>
+
+          <!-- Linha 3 -->
+          <div class="row g-3 mt-1">
+            <div class="col-lg-4">
+              <label class="form-label">Status</label>
+              <select id="iStatus" class="form-select">
+                <option>Revisando</option>
+                <option>Aguardando Cliente</option>
+                <option>Concluído</option>
+              </select>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Forma de Pagamento</label>
+              <select id="iPagamento" class="form-select">
+                <option>Dinheiro</option>
+                <option>PIX</option>
+                <option>Cartão Débito</option>
+                <option>Cartão de Crédito</option>
+              </select>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Desconto (R$)</label>
+              <input id="cDesconto" type="number" step="0.01" min="0" value="0" class="form-control">
+            </div>
+          </div>
+
+          <!-- Linha 4 (valores) -->
+          <div class="row g-3 mt-1">
+            <div class="col-lg-4">
+              <label class="form-label">Valor de Serviço (R$)</label>
+              <input id="iValor" type="number" step="0.01" min="0" value="0" class="form-control">
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Mão de Obra (R$) <span class="small-muted">(controle interno; não sai na nota)</span></label>
+              <input id="iMaoObra" type="number" step="0.01" min="0" value="0" class="form-control">
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Valor Peças (R$)</label>
+              <input id="iCustoPecas" class="form-control" value="R$ 0,00" readonly>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Peças + Carrinho -->
+          <div class="row g-4">
             <div class="col-lg-7">
-              <form id="formOS" class="row g-3" novalidate>
-                <div class="col-md-5"><label class="form-label">Nome Cliente</label><input id="iCliente" class="form-control" required></div>
-                <div class="col-md-5"><label class="form-label">Modelo Moto</label><input id="iModelo" class="form-control" required></div>
-                <div class="col-md-2"><label class="form-label">Placa</label><input id="iPlaca" class="form-control" style="text-transform:uppercase"></div>
-
-                <div class="col-md-4"><label class="form-label">Data de Entrada</label><input id="iEntrada" type="date" class="form-control" required></div>
-                <div class="col-md-4"><label class="form-label">Data de Saída</label><input id="iSaida" type="date" class="form-control"></div>
-                <div class="col-md-4"><label class="form-label">Mecânico</label><input id="iMecanico" class="form-control"></div>
-
-                <div class="col-md-4">
-                  <label class="form-label">Status</label>
-                  <select id="iStatus" class="form-select">
-                    <option>Revisando</option>
-                    <option>Aguardando Cliente</option>
-                    <option>Concluído</option>
+              <div class="d-flex align-items-end gap-2 mb-2">
+                <div class="flex-grow-1">
+                  <label class="form-label mb-1">Procurar peça</label>
+                  <input id="pSearch" class="form-control" placeholder="SKU, nome, categoria...">
+                </div>
+                <div style="width:220px">
+                  <label class="form-label mb-1">Categoria</label>
+                  <select id="pCategoria" class="form-select">
+                    <option value="">Todas</option>
                   </select>
                 </div>
-
-                <div class="col-md-4"><label class="form-label">Valor do Serviço</label><input id="iValor" type="number" step="0.01" class="form-control" value="0"></div>
-                <div class="col-md-4"><label class="form-label">Valor Peças (auto)</label><input id="iValorPecas" class="form-control" value="R$ 0,00" disabled></div>
-
-                <!-- Forma de pagamento -->
-                <div class="col-md-6">
-                  <label class="form-label">Forma de Pagamento</label>
-                  <select id="iPagamento" class="form-select">
-                    <option>Dinheiro</option>
-                    <option>PIX</option>
-                    <option>Cartão de Débito</option>
-                    <option>Cartão de Crédito</option>
-                  </select>
-                </div>
-              </form>
-
-              <div class="parts-panel mt-1">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <h6 class="m-0">Peças em estoque</h6>
-                  <small class="text-secondary">Ao adicionar, o modal não fecha</small>
-                </div>
-                <div class="row g-2 mb-2">
-                  <div class="col-8">
-                    <div class="input-icon">
-                      <i class="bi bi-search"></i>
-                      <input id="pSearch" class="form-control" placeholder="Buscar por SKU, nome, categoria...">
-                    </div>
-                  </div>
-                  <div class="col-4">
-                    <select id="pCategoria" class="form-select"><option value="">Todas as categorias</option></select>
-                  </div>
-                </div>
-                <div class="parts-list" id="partsList"></div>
               </div>
+              <div id="partsList" class="vstack gap-2"></div>
             </div>
 
-            <!-- Carrinho -->
             <div class="col-lg-5">
-              <div class="cart-panel">
-                <h5 class="fw-bold mb-2">Carrinho Rota Motos</h5>
-                <div id="cartList" class="cart-list mb-2"></div>
-                <div class="d-flex justify-content-between"><span class="text-secondary">Subtotal (peças)</span><strong id="cSubtotal">R$ 0,00</strong></div>
-                <div class="d-flex align-items-center justify-content-between mt-2">
-                  <label class="text-secondary m-0" for="cDesconto">Desconto</label>
-                  <input id="cDesconto" type="number" step="0.01" class="form-control" style="width:140px" value="0">
+              <div class="cart-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="m-0 fw-bold">Carrinho Rota Motos</h6>
+                  <span class="small-muted">Preço das peças</span>
                 </div>
-                <div class="d-flex justify-content-between mt-2"><span class="text-secondary">Valor Total</span><strong id="cTotal">R$ 0,00</strong></div>
-                <div class="d-grid mt-3"><button id="btnSalvarOS" class="btn btn-primary-clean" type="button">Salvar OS</button></div>
+                <div id="cartList" class="vstack gap-2 mb-2"></div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                  <span class="fw-semibold">Subtotal</span>
+                  <span id="cSubtotal" class="fw-bold">R$ 0,00</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <span>Desconto</span>
+                  <span class="small-muted">definido acima</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <span class="fw-semibold">Valor Total</span>
+                  <span id="cTotal" class="fw-bold">R$ 0,00</span>
+                </div>
+                <div class="d-grid mt-3">
+                  <button id="btnSalvarOS" type="button" class="btn btn-primary-clean">
+                    <i class="bi bi-check2-circle"></i> Salvar OS
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div><!-- body -->
+
+        </form>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-  (function(){
-    /* ===== Helpers ===== */
-    const BRL = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-    const $ = id => document.getElementById(id);
-    const money = n => BRL.format(+n||0);
-    const todayISO = () => { const d=new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); };
-    const safeId = s => String(s).replace(/[^a-zA-Z0-9_-]/g,"_");
-    const priceOf = it => +it.preco || 0;                 // SEMPRE PREÇO
-    const itemTotal = it => priceOf(it) * (+it.qtd||0);
-    const clampDate = s => (s||"").slice(0,10);           // normaliza 'YYYY-MM-DD'
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script defer>
+(function(){
+  /* ===== Helpers ===== */
+  var BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  function $(id){ return document.getElementById(id); }
+  function money(n){ return BRL.format(Number(n)||0); }
+  function num(v){ var n=Number(v); return isNaN(n)?0:n; }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
 
-    // Ajuste navbar fixa
-    function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
-    addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
-
-  function buildReceiptInDoc(d, j){
-    // limpa doc de impressão
-    d.head.innerHTML = ""; d.body.innerHTML = "";
-    d.body.style.margin="0"; d.body.style.padding="0";
-    d.documentElement.style.background="white";
-
-    // folha térmica 80mm (Tomate MDK-080)
-    const css = `
-      @page { size: 80mm auto; margin: 0mm; }
-      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      html, body { width: 80mm; }
-      body { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 18px; color:#000; }
-      .wrap { width: 72mm; margin: 0 auto; }
-      .ctr { text-align:center }
-      .sep { text-align:center; letter-spacing:.5px; }
-      .mt { margin-top: 6px }
-      .blk { break-inside: avoid; page-break-inside: avoid; }
-    `;
-    const style = d.createElement("style");
-    style.textContent = css;
-    d.head.appendChild(style);
-
-    const wrap = d.createElement("div");
-    wrap.className = "wrap blk";
-    d.body.appendChild(wrap);
-
-    const nf = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-
-    function line(text, cls){
-      const el = d.createElement("div");
-      el.textContent = String(text==null?"":text);
-      if(cls) el.className = cls + " blk";
-      wrap.appendChild(el);
+  /* ===== Estoque (preserva chaves) ===== */
+  var STOCK_KEYS_READ = [
+    "estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1",
+    "estoque.visualclean.v1","estoque.v1","estoque"
+  ];
+  function pickStock(){
+    for(var i=0;i<STOCK_KEYS_READ.length;i++){
+      try{
+        var k=STOCK_KEYS_READ[i];
+        var raw=localStorage.getItem(k);
+        if(!raw) continue;
+        var arr=JSON.parse(raw);
+        if(Object.prototype.toString.call(arr)==='[object Array]') return {key:k, items:arr};
+      }catch(e){}
     }
-    function sep(){ line("-----------------------------------------------","sep"); }
-
-    // Totais
-    const subPecas = +j.subtotal || 0;                     // já vem somado com PREÇO
-    const total = (+j.valor||0) + subPecas - (+j.desconto||0);
-
-    // Cabeçalho
-    line("Rota Motos","ctr");
-    line("CNPJ 60.469.425/0001-76","ctr");
-    line("Ordem de Compra","ctr");
-    sep();
-
-    // Cliente
-    line("Dados do Cliente","ctr mt");
-    line("Nome Cliente: " + (j.cliente||"-"));
-    line("Moto Cliente: " + (j.modelo||"-"));
-    line("Placa da moto: " + (j.placa||"-"));
-    line("Entrada: " + (j.entrada||"-"));
-    sep();
-
-    // Mecânico
-    line("Dados do Mecânico","ctr mt");
-    line("Nome Mecânico: " + (j.mecanico||"-"));
-    sep();
-
-    // Itens (agora com valor por item NA FRENTE)
-    line("Dados de Compras","ctr mt");
-    if(Array.isArray(j.pecas) && j.pecas.length){
-      j.pecas.forEach((p,i)=>{
-        const nome = p.nome || "-";
-        const qtd  = +p.qtd   || 0;
-        const unit = +p.preco || 0;          // SEMPRE PREÇO
-        const tot  = qtd * unit;
-
-        // Ex.: 1) Pastilha   2x R$ 25,00 = R$ 50,00
-        line((i+1)+") "+nome+"  "+qtd+"x "+nf.format(unit)+" = "+nf.format(tot));
+    return {key:null, items:[]};
+  }
+  function normalizeStock(s){
+    var out=[];
+    for(var i=0;i<(s.items||[]).length;i++){
+      var it=s.items[i]||{};
+      out.push({
+        sku:String(it.sku||''), nome:String(it.nome||''), categoria:String(it.categoria||''),
+        local:String(it.local||''), qtd:num(it.qtd), alerta:num(it.alerta),
+        preco:num(it.preco), custo:num(it.custo)
       });
-    }else{
-      line("Sem itens.");
     }
+    s.items=out; return s;
+  }
+  function saveStock(key,items){ if(key){ localStorage.setItem(key, JSON.stringify(items)); } }
+  var estoque = normalizeStock(pickStock());
 
-    line("Forma de Pagamento: " + (j.pagamento||"-"));
-    line("Subtotal peças: " + nf.format(subPecas));
-    line("Descontos: " + nf.format(+j.desconto||0));
-    line("Valor Total: " + nf.format(total));
-    sep();
+  /* ===== OS (preserva chaves) ===== */
+  var OS_KEYS_READ = ["oficina.jobs.v1","oficina.jobs","oficina"];
+  function pickOS(){
+    for(var i=0;i<OS_KEYS_READ.length;i++){
+      try{
+        var k=OS_KEYS_READ[i], raw=localStorage.getItem(k);
+        if(!raw) continue;
+        var arr=JSON.parse(raw);
+        if(Object.prototype.toString.call(arr)==='[object Array]') return {key:k, items:arr};
+      }catch(e){}
+    }
+    return {key:"oficina.jobs.v1", items:[]};
+  }
+  var osStore = pickOS();
+  var jobs = (osStore.items||[]).map(function(j){
+    j = j||{}; j.maoObra = num(j.maoObra); return j;
+  });
+  function saveJobs(){ localStorage.setItem(osStore.key, JSON.stringify(jobs)); }
 
-    line("Observações","ctr mt");
-    line("Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!");
+  /* ===== Estado ===== */
+  var editingId=null, cart=[];
+
+  /* ===== UI auxiliares ===== */
+  function td(text,cls){
+    var e=document.createElement('td');
+    if(cls) e.className=cls;
+    if(text!=null) e.textContent=text;
+    return e;
+  }
+  function badgeEl(text){
+    var span=document.createElement('span');
+    span.className='badge badge-status '+(text||'');
+    span.textContent=text||'';
+    return span;
   }
 
-    function printReceiptInline(j){
-      const iframe = document.createElement("iframe");
-      iframe.style.position="fixed"; iframe.style.right="0"; iframe.style.bottom="0";
-      iframe.style.width="0"; iframe.style.height="0"; iframe.style.border="0";
-      iframe.setAttribute("aria-hidden","true");
-      document.body.appendChild(iframe);
+  /* ===== Filtros ===== */
+  function filterRows(list){
+    var q=(($("search").value||"")+"").toLowerCase();
+    var fc=$("fCliente").value;
+    var de=$("fDe").value;
+    var ate=$("fAte").value;
+    return list.filter(function(r){
+      var hay=[r.cliente,r.modelo,r.mecanico,r.placa,r.status].join(" ").toLowerCase();
+      var mQ=!q||hay.indexOf(q)>=0;
+      var mC=!fc||r.cliente===fc;
+      var mD=(!de||r.entrada>=de)&&(!ate||r.entrada<=ate);
+      return mQ&&mC&&mD;
+    });
+  }
 
-      iframe.onload = function(){
-        const d = iframe.contentDocument || iframe.contentWindow.document;
-        buildReceiptInDoc(d, j);
+  function rebuildClientFilter(){
+    var sel=$("fCliente"); clear(sel);
+    var optAll=document.createElement('option'); optAll.value=''; optAll.textContent='Todos';
+    sel.appendChild(optAll);
+    var set={}, i, c;
+    for(i=0;i<jobs.length;i++){ c=jobs[i].cliente; if(c){ set[c]=true; } }
+    var arr=Object.keys(set).sort();
+    for(i=0;i<arr.length;i++){ var o=document.createElement('option'); o.textContent=arr[i]; sel.appendChild(o); }
+  }
+
+  function renderTable(){
+    var data=filterRows(jobs);
+    var total=0, i, j;
+    for(i=0;i<data.length;i++){ j=data[i]; total += num(j.valor)+num(j.subtotal)-num(j.desconto); }
+    var emOficina=0; for(i=0;i<data.length;i++){ if(data[i].status!=="Concluído") emOficina++; }
+
+    $("mConsertos").textContent=String(data.length);
+    $("mOficina").textContent=String(emOficina);
+    $("mValor").textContent=money(total);
+    $("mLucro").textContent=money(total);
+
+    var tbody=$("tbody"), empty=$("empty");
+    clear(tbody);
+    empty.style.display = data.length ? "none" : "block";
+    if(!data.length) return;
+
+    for(i=0;i<data.length;i++){
+      j=data[i];
+      var tr=document.createElement('tr');
+      tr.appendChild(td(j.cliente||""));
+      tr.appendChild(td(j.modelo||""));
+      tr.appendChild(td(j.placa||""));
+      tr.appendChild(td(j.entrada||""));
+      tr.appendChild(td(j.saida||""));
+      tr.appendChild(td(j.mecanico||""));
+      var tds=document.createElement('td'); tds.appendChild(badgeEl(j.status||"")); tr.appendChild(tds);
+      tr.appendChild(td(money(num(j.valor)),'text-end'));
+      tr.appendChild(td(money(num(j.subtotal)),'text-end'));
+      tr.appendChild(td(money(num(j.valor)+num(j.subtotal)-num(j.desconto)),'text-end'));
+
+      var tda=document.createElement('td'); tda.className='text-end';
+      var group=document.createElement('div'); group.className='btn-group btn-group-sm';
+
+      var bPrint=document.createElement('button'); bPrint.type='button'; bPrint.className='btn btn-outline-secondary'; bPrint.title='Imprimir';
+      var i1=document.createElement('i'); i1.className='bi bi-printer'; bPrint.appendChild(i1);
+      bPrint.setAttribute('data-action','print'); bPrint.setAttribute('data-id', j.id);
+
+      var bEdit=document.createElement('button'); bEdit.type='button'; bEdit.className='btn btn-outline-primary'; bEdit.title='Editar';
+      var i2=document.createElement('i'); i2.className='bi bi-pencil-square'; bEdit.appendChild(i2);
+      bEdit.setAttribute('data-action','edit'); bEdit.setAttribute('data-id', j.id);
+
+      var bDel=document.createElement('button'); bDel.type='button'; bDel.className='btn btn-outline-danger'; bDel.title='Excluir';
+      var i3=document.createElement('i'); i3.className='bi bi-trash'; bDel.appendChild(i3);
+      bDel.setAttribute('data-action','del'); bDel.setAttribute('data-id', j.id);
+
+      group.appendChild(bPrint); group.appendChild(bEdit); group.appendChild(bDel);
+      tda.appendChild(group); tr.appendChild(tda);
+      tbody.appendChild(tr);
+    }
+  }
+
+  /* ===== Peças (modal) ===== */
+  function rebuildPartCats(){
+    var sel=$("pCategoria"); clear(sel);
+    var oAll=document.createElement('option'); oAll.value=''; oAll.textContent='Todas';
+    sel.appendChild(oAll);
+    var set={}, i, cat;
+    for(i=0;i<estoque.items.length;i++){ cat=estoque.items[i].categoria; if(cat){ set[cat]=true; } }
+    var arr=Object.keys(set).sort();
+    for(i=0;i<arr.length;i++){ var o=document.createElement('option'); o.textContent=arr[i]; sel.appendChild(o); }
+  }
+
+  function renderParts(){
+    var list=$("partsList"); clear(list);
+    var q=(($("pSearch").value||"")+"").toLowerCase();
+    var cat=$("pCategoria").value;
+    var reserved={}, i;
+    for(i=0;i<cart.length;i++){ reserved[cart[i].sku]=cart[i].qtd; }
+
+    var items=[], it;
+    for(i=0;i<estoque.items.length;i++){
+      it=estoque.items[i];
+      var hay=(it.sku+" "+it.nome+" "+(it.categoria||"")).toLowerCase();
+      var mQ=!q || hay.indexOf(q)>=0;
+      var mC=!cat || (it.categoria||"")===cat;
+      if(mQ && mC) items.push(it);
+      if(items.length>=120){} /* limite visual */
+    }
+
+    if(!items.length){
+      var d=document.createElement('div'); d.className='small-muted'; d.textContent='Nada encontrado…';
+      list.appendChild(d); return;
+    }
+
+    items.forEach(function(it){
+      var disp=Math.max(0, num(it.qtd)-(reserved[it.sku]||0));
+      var card=document.createElement('div'); card.className='part-card';
+
+      var top=document.createElement('div'); top.className='d-flex justify-content-between';
+      var title=document.createElement('div'); title.className='part-title'; title.textContent=it.nome||"";
+      var price=document.createElement('div'); price.className='small-muted';
+      var b=document.createElement('strong'); b.textContent=money(num(it.preco));
+      price.appendChild(document.createTextNode('Preço: ')); price.appendChild(b);
+      top.appendChild(title); top.appendChild(price); card.appendChild(top);
+
+      var meta=document.createElement('div'); meta.className='small-muted';
+      meta.textContent='SKU: '+(it.sku||'')+' • Cat: '+(it.categoria||'-')+' • Em estoque: '+disp;
+      card.appendChild(meta);
+
+      var row=document.createElement('div'); row.className='d-flex gap-2 mt-2';
+      var qty=document.createElement('input'); qty.type='number'; qty.min='1'; qty.value='1'; qty.className='form-control'; qty.style.maxWidth='120px';
+      var add=document.createElement('button'); add.type='button'; add.className='btn btn-ghost';
+      var ic=document.createElement('i'); ic.className='bi bi-cart-plus'; add.appendChild(ic);
+      add.appendChild(document.createTextNode(' Adicionar'));
+      add.setAttribute('data-action','addPart'); add.setAttribute('data-sku', encodeURIComponent(it.sku));
+      add._qtyRef=qty;
+
+      row.appendChild(qty); row.appendChild(add); card.appendChild(row);
+      list.appendChild(card);
+    });
+  }
+
+  function renderCart(){
+    var list=$("cartList"); clear(list);
+    var subtotal=0, i;
+    for(i=0;i<cart.length;i++){ subtotal += cart[i].qtd*cart[i].preco; }
+
+    if(!cart.length){
+      var d=document.createElement('div'); d.className='small-muted'; d.textContent='Carrinho vazio…';
+      list.appendChild(d);
+    }
+
+    cart.forEach(function(it, idx){
+      var card=document.createElement('div'); card.className='d-flex align-items-center justify-content-between part-card';
+
+      var left=document.createElement('div'); left.className='me-2';
+      var name=document.createElement('div'); name.className='fw-semibold'; name.textContent=it.nome;
+      var small=document.createElement('div'); small.className='small-muted';
+      small.textContent='SKU: '+it.sku+' • Preço: '+money(it.preco);
+      left.appendChild(name); left.appendChild(small);
+
+      var right=document.createElement('div'); right.className='d-flex align-items-center gap-2';
+      var qty=document.createElement('input'); qty.type='number'; qty.min='1'; qty.value=String(it.qtd); qty.className='form-control'; qty.style.width='90px';
+      qty.setAttribute('data-action','changeQty'); qty.setAttribute('data-idx', String(idx));
+      var val=document.createElement('div'); val.style.width='110px'; val.className='text-end fw-semibold'; val.textContent=money(it.qtd*it.preco);
+      var rm=document.createElement('button'); rm.type='button'; rm.className='btn btn-outline-danger btn-sm';
+      rm.setAttribute('data-action','removePart'); rm.setAttribute('data-idx', String(idx));
+      var ix=document.createElement('i'); ix.className='bi bi-x-lg'; rm.appendChild(ix);
+
+      right.appendChild(qty); right.appendChild(val); right.appendChild(rm);
+      card.appendChild(left); card.appendChild(right);
+      list.appendChild(card);
+    });
+
+    $("cSubtotal").textContent=money(subtotal);
+    $("iCustoPecas").value=money(subtotal);
+    var total = num($("iValor").value) + subtotal - num($("cDesconto").value);
+    $("cTotal").textContent=money(Math.max(0,total));
+  }
+
+  /* ===== Modal helpers ===== */
+  function resetModal(){
+    editingId=null; cart=[];
+    $("formOS").reset();
+    $("iEntrada").value=todayISO();
+    $("iStatus").value="Revisando";
+    $("cDesconto").value=0;
+    $("iPagamento").value="Dinheiro";
+    $("iValor").value=0;
+    $("iMaoObra").value=0;
+    estoque = normalizeStock(pickStock()); /* lê sem limpar */
+    rebuildPartCats(); renderParts(); renderCart();
+  }
+
+  /* ===== Eventos ===== */
+  $("btnNova").addEventListener("click", resetModal);
+  $("search").addEventListener("input", renderTable);
+  $("fDe").addEventListener("input", renderTable);
+  $("fAte").addEventListener("input", renderTable);
+  $("fCliente").addEventListener("change", renderTable);
+  $("pSearch").addEventListener("input", renderParts);
+  $("pCategoria").addEventListener("change", renderParts);
+  $("cDesconto").addEventListener("input", renderCart);
+  $("iValor").addEventListener("input", renderCart);
+
+  /* Lista de peças - delegação */
+  $("partsList").addEventListener("click", function(ev){
+    var btn = ev.target.closest("[data-action='addPart']");
+    if(!btn) return;
+    var sku = decodeURIComponent(btn.getAttribute('data-sku')||"");
+    var it=null, i;
+    for(i=0;i<estoque.items.length;i++){ if(estoque.items[i].sku===sku){ it=estoque.items[i]; break; } }
+    if(!it){ alert("Peça não encontrada."); return; }
+    var q = Math.max(1, parseInt((btn._qtyRef && btn._qtyRef.value)||"1",10));
+    var reserved=0; for(i=0;i<cart.length;i++){ if(cart[i].sku===sku) reserved+=cart[i].qtd; }
+    var disp = Math.max(0, num(it.qtd)-reserved);
+    if(q>disp) q=disp;
+    if(q<=0){ alert("Sem quantidade disponível."); return; }
+    var idx=-1; for(i=0;i<cart.length;i++){ if(cart[i].sku===sku){ idx=i; break; } }
+    if(idx>=0) cart[idx].qtd += q; else cart.push({sku:sku, nome:it.nome, preco:num(it.preco), qtd:q});
+    renderCart(); renderParts();
+  });
+
+  /* Carrinho - delegação */
+  $("cartList").addEventListener("input", function(ev){
+    var target=ev.target;
+    if(target.getAttribute('data-action')!=="changeQty") return;
+    var i=parseInt(target.getAttribute('data-idx'),10);
+    var q=Math.max(1, parseInt(target.value||"1",10));
+    var sku=cart[i].sku, stock=0, k;
+    for(k=0;k<estoque.items.length;k++){ if(estoque.items[k].sku===sku){ stock=num(estoque.items[k].qtd); break; } }
+    var others=0; for(k=0;k<cart.length;k++){ if(k!==i && cart[k].sku===sku) others+=cart[k].qtd; }
+    var disp=Math.max(0, stock-others);
+    if(q>disp) q=disp;
+    cart[i].qtd=q; renderCart(); renderParts();
+  });
+  $("cartList").addEventListener("click", function(ev){
+    var btn=ev.target.closest("[data-action='removePart']"); if(!btn) return;
+    var i=parseInt(btn.getAttribute('data-idx'),10);
+    cart.splice(i,1); renderCart(); renderParts();
+  });
+
+  /* Salvar OS */
+  $("btnSalvarOS").addEventListener("click", function(){
+    if(!$("formOS").reportValidity()){ $("formOS").classList.add("was-validated"); return; }
+    var job={
+      id: editingId || String(Date.now()),
+      cliente: ($("iCliente").value||"").trim(),
+      modelo:  ($("iModelo").value||"").trim(),
+      placa:   (($("iPlaca").value||"").trim()).toUpperCase(),
+      entrada: $("iEntrada").value||"",
+      saida:   $("iSaida").value||"",
+      mecanico:($("iMecanico").value||"").trim(),
+      status:  $("iStatus").value||"Revisando",
+      pagamento:$("iPagamento").value||"Dinheiro",
+      desconto: num($("cDesconto").value),
+      valor:    num($("iValor").value),     /* serviço */
+      maoObra:  num($("iMaoObra").value),   /* controle interno - não imprime */
+      pecas:    cart.map(function(x){ return {sku:x.sku,nome:x.nome,preco:num(x.preco),qtd:num(x.qtd)}; }),
+      subtotal: cart.reduce(function(s,x){return s+x.qtd*x.preco;},0)
+    };
+
+    /* Ajusta estoque por diferença */
+    var old=null, i;
+    for(i=0;i<jobs.length;i++){ if(jobs[i].id===job.id){ old=jobs[i]; break; } }
+    var before={}, after={}, p;
+    if(old){ for(i=0;i<(old.pecas||[]).length;i++){ p=old.pecas[i]; before[p.sku]=(before[p.sku]||0)+num(p.qtd); } }
+    for(i=0;i<job.pecas.length;i++){ p=job.pecas[i]; after[p.sku]=(after[p.sku]||0)+num(p.qtd); }
+
+    var map={}, it;
+    for(i=0;i<estoque.items.length;i++){ it=estoque.items[i]; map[it.sku]=it; }
+    var skus={}, k;
+    for(k in before){ skus[k]=true; } for(k in after){ skus[k]=true; }
+    for(k in skus){
+      var delta=(after[k]||0)-(before[k]||0); /* >0 consome */
+      it = map[k]; if(it){ it.qtd = num(it.qtd)-delta; if(it.qtd<0) it.qtd=0; }
+    }
+    var outItems=[], keyItem;
+    for(keyItem in map){ outItems.push(map[keyItem]); }
+    estoque.items=outItems; saveStock(estoque.key, estoque.items);
+
+    if(old){ jobs[i]=job; } else jobs.push(job);
+    saveJobs();
+    rebuildClientFilter(); renderTable();
+    var mEl=document.getElementById("modalOS");
+    if(window.bootstrap && bootstrap.Modal.getInstance(mEl)){ bootstrap.Modal.getInstance(mEl).hide(); }
+    resetModal();
+  });
+
+  /* Ações da tabela */
+  $("tbody").addEventListener("click", function(ev){
+    var btn=ev.target.closest("button[data-action]"); if(!btn) return;
+    var id=btn.getAttribute('data-id'); var act=btn.getAttribute('data-action');
+
+    if(act==="edit"){
+      var j=null, i;
+      for(i=0;i<jobs.length;i++){ if(jobs[i].id===id){ j=jobs[i]; break; } }
+      if(!j) return;
+      editingId=j.id;
+      $("modalTitle").textContent="Editar OS";
+      $("iCliente").value=j.cliente||"";
+      $("iModelo").value=j.modelo||"";
+      $("iPlaca").value=j.placa||"";
+      $("iEntrada").value=j.entrada||todayISO();
+      $("iSaida").value=j.saida||"";
+      $("iMecanico").value=j.mecanico||"";
+      $("iStatus").value=j.status||"Revisando";
+      $("iPagamento").value=j.pagamento||"Dinheiro";
+      $("cDesconto").value=num(j.desconto);
+      $("iValor").value=num(j.valor);
+      $("iMaoObra").value=num(j.maoObra);
+      cart=(j.pecas||[]).map(function(p){ return {sku:p.sku,nome:p.nome,preco:num(p.preco),qtd:num(p.qtd)}; });
+      rebuildPartCats(); renderParts(); renderCart();
+      if(window.bootstrap){ new bootstrap.Modal(document.getElementById("modalOS")).show(); }
+    }
+
+    if(act==="del"){
+      if(!confirm("Excluir esta OS?")) return;
+      var j=null, idx=-1, i;
+      for(i=0;i<jobs.length;i++){ if(jobs[i].id===id){ j=jobs[i]; idx=i; break; } }
+      if(!j) return;
+      /* estorna peças */
+      var map={}, it;
+      for(i=0;i<estoque.items.length;i++){ it=estoque.items[i]; map[it.sku]=it; }
+      (j.pecas||[]).forEach(function(p){
+        var it=map[p.sku]; if(it){ it.qtd = num(it.qtd)+num(p.qtd); }
+      });
+      var outItems=[], keyItem;
+      for(keyItem in map){ outItems.push(map[keyItem]); }
+      estoque.items=outItems; saveStock(estoque.key, estoque.items);
+
+      jobs.splice(idx,1); saveJobs();
+      rebuildClientFilter(); renderTable();
+    }
+
+    if(act==="print"){
+      var j=null, i;
+      for(i=0;i<jobs.length;i++){ if(jobs[i].id===id){ j=jobs[i]; break; } }
+      if(!j) return;
+      printReceiptInline(j); /* sem mão de obra na nota */
+    }
+  });
+
+  /* ===== Impressão 100% DOM ===== */
+  function buildReceiptInDoc(doc, j){
+    while (doc.head.firstChild) doc.head.removeChild(doc.head.firstChild);
+    while (doc.body.firstChild) doc.body.removeChild(doc.body.firstChild);
+
+    var style = doc.createElement('style');
+    style.textContent =
+      '*{box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}' +
+      'body{margin:0;padding:12px;font-size:12px}' +
+      '.c{text-align:center}.ln{border-top:1px dashed #999;margin:8px 0}' +
+      '.row{display:flex;justify-content:space-between}' +
+      '.b{font-weight:bold}' +
+      'table{width:100%;border-collapse:collapse;margin-top:6px}' +
+      'th,td{padding:2px 0;border-bottom:1px dotted #ddd}' +
+      'td.l{text-align:left} td.r{text-align:right}';
+    doc.head.appendChild(style);
+
+    var body = doc.body;
+    function add(txt, cls, bold){
+      var d=doc.createElement('div');
+      if(txt!=null) d.textContent=txt;
+      if(cls) d.className=cls;
+      if(bold) d.style.fontWeight='700';
+      body.appendChild(d);
+      return d;
+    }
+
+    add('Rota Motos','c',true);
+    add('CNPJ 60.469.425/0001-76','c');
+    add('Ordem de Compra','c');
+    add('', 'ln');
+
+    add('Dados do Cliente','c',true);
+    add('Nome Cliente: '+(j.cliente||''));
+    add('Moto Cliente: '+(j.modelo||''));
+    add('Placa da moto: '+(j.placa||''));
+    add('Entrada: '+(j.entrada||''));
+    add('', 'ln');
+
+    add('Dados do Mecânico','c',true);
+    add('Nome Mecânico: '+(j.mecanico||''));
+    add('', 'ln');
+
+    add('Dados de Compras','c',true);
+
+    if((j.pecas||[]).length){
+      var table=doc.createElement('table');
+      var thead=doc.createElement('thead'), trh=doc.createElement('tr');
+      var th1=doc.createElement('th'); th1.className='l'; th1.textContent='Item';
+      var th2=doc.createElement('th'); th2.className='r'; th2.textContent='Qtde';
+      var th3=doc.createElement('th'); th3.className='r'; th3.textContent='Preço';
+      var th4=doc.createElement('th'); th4.className='r'; th4.textContent='Total';
+      trh.appendChild(th1); trh.appendChild(th2); trh.appendChild(th3); trh.appendChild(th4);
+      thead.appendChild(trh); table.appendChild(thead);
+
+      var tbody=doc.createElement('tbody');
+      (j.pecas||[]).forEach(function(p){
+        var tr=doc.createElement('tr');
+        var td1=doc.createElement('td'); td1.className='l'; td1.textContent=p.nome; tr.appendChild(td1);
+        var td2=doc.createElement('td'); td2.className='r'; td2.textContent=String(num(p.qtd)); tr.appendChild(td2);
+        var td3=doc.createElement('td'); td3.className='r'; td3.textContent=BRL.format(num(p.preco)); tr.appendChild(td3);
+        var td4=doc.createElement('td'); td4.className='r'; td4.textContent=BRL.format(num(p.preco)*num(p.qtd)); tr.appendChild(td4);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      body.appendChild(table);
+    } else {
+      add('Sem itens.');
+    }
+
+    var subtotal=(j.pecas||[]).reduce(function(s,p){return s+num(p.qtd)*num(p.preco);},0);
+    var total=num(j.valor)+subtotal-num(j.desconto);
+
+    var r1=doc.createElement('div'); r1.className='row b';
+    var r1a=doc.createElement('div'); r1a.textContent='Forma de Pagamento:'; var r1b=doc.createElement('div'); r1b.textContent=(j.pagamento||'');
+    r1.appendChild(r1a); r1.appendChild(r1b); body.appendChild(r1);
+
+    var r2=doc.createElement('div'); r2.className='row';
+    var r2a=doc.createElement('div'); r2a.textContent='Subtotal:'; var r2b=doc.createElement('div'); r2b.textContent=BRL.format(subtotal);
+    r2.appendChild(r2a); r2.appendChild(r2b); body.appendChild(r2);
+
+    var r3=doc.createElement('div'); r3.className='row';
+    var r3a=doc.createElement('div'); r3a.textContent='Descontos:'; var r3b=doc.createElement('div'); r3b.textContent=BRL.format(num(j.desconto));
+    r3.appendChild(r3a); r3.appendChild(r3b); body.appendChild(r3);
+
+    var r4=doc.createElement('div'); r4.className='row b';
+    var r4a=doc.createElement('div'); r4a.textContent='Valor Total:'; var r4b=doc.createElement('div'); r4b.textContent=BRL.format(Math.max(0,total));
+    r4.appendChild(r4a); r4.appendChild(r4b); body.appendChild(r4);
+
+    add('', 'ln');
+    add('Observações','c',true);
+    add('Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+  }
+
+  function printReceiptInline(j){
+    /* Sem srcdoc / sem write — monta DOM direto num iframe em branco */
+    var iframe=document.createElement('iframe');
+    iframe.style.position='fixed'; iframe.style.right='-9999px'; iframe.style.bottom='0';
+    iframe.width='0'; iframe.height='0'; iframe.setAttribute('aria-hidden','true');
+    document.body.appendChild(iframe);
+
+    /* Em alguns navegadores o about:blank já está pronto */
+    var d = iframe.contentDocument || (iframe.contentWindow ? iframe.contentWindow.document : null);
+    if(d){
+      buildReceiptInDoc(d, j);
+      setTimeout(function(){
+        try{ if(iframe.contentWindow){ iframe.contentWindow.focus(); iframe.contentWindow.print(); } }catch(e){}
+        setTimeout(function(){ if(iframe && iframe.parentNode){ iframe.parentNode.removeChild(iframe); } }, 1200);
+      }, 60);
+    }else{
+      iframe.addEventListener('load', function(){
+        var d2 = iframe.contentDocument || iframe.contentWindow.document;
+        buildReceiptInDoc(d2, j);
         setTimeout(function(){
           try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
-          setTimeout(()=> iframe.remove(), 1200);
+          setTimeout(function(){ if(iframe && iframe.parentNode){ iframe.parentNode.removeChild(iframe); } }, 1200);
         }, 60);
-      };
-
-      try{ iframe.src = "about:blank"; }catch(e){
-        const d = iframe.contentDocument || iframe.contentWindow.document;
-        d.open(); d.close();
-        iframe.onload && iframe.onload();
-      }
-    }
-
-    /* ===== Estoque (localStorage) ===== */
-    const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
-    function loadStock(){
-      for(const k of STOCK_KEYS){
-        try{ const raw=localStorage.getItem(k); if(raw){ const arr=JSON.parse(raw)||[]; return {key:k, items:Array.isArray(arr)?arr:[]}; } }
-        catch(e){}
-      }
-      return {key:null, items:[]};
-    }
-    function saveStock(key,items){ if(key) localStorage.setItem(key, JSON.stringify(items)); }
-    let estoque = loadStock();
-    estoque.items = (estoque.items||[]).map(it=>({
-      sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
-      qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0),
-      custo:Number(it.custo??0), local:String(it.local??"")
-    }));
-
-    /* ===== OS (localStorage) ===== */
-    const OS_KEY="oficina.jobs.v1";
-    let jobs = (()=>{ try{ const j=JSON.parse(localStorage.getItem(OS_KEY)); return Array.isArray(j)?j:[]; }catch(e){ return []; } })();
-    const saveJobs = ()=> localStorage.setItem(OS_KEY, JSON.stringify(jobs));
-
-    /* ===== Estado ===== */
-    let editingId=null, cart=[];
-
-    /* ===== Render UI ===== */
-    function badge(s){
-      if(s==="Concluído") return '<span class="badge badge-status st-conc">Concluído</span>';
-      if(s==="Aguardando Cliente") return '<span class="badge badge-status st-agu">Aguardando</span>';
-      return '<span class="badge badge-status st-rev">Revisando</span>';
-    }
-
-    function filterRows(list){
-      const q=($("search").value||"").toLowerCase();
-      const fc=$("fCliente").value;
-      const ini = clampDate($("fIni").value);
-      const fim = clampDate($("fFim").value);
-
-      return list.filter(r=>{
-        const mQ=!q||[r.cliente,r.modelo,r.mecanico,r.placa,r.status].join(" ").toLowerCase().includes(q);
-        const mC=!fc||r.cliente===fc;
-
-        // Filtro por data de ENTRADA
-        const d = clampDate(r.entrada||"");
-        const mIni = !ini || (d && d >= ini);
-        const mFim = !fim || (d && d <= fim);
-
-        return mQ && mC && mIni && mFim;
       });
     }
+  }
 
-    function rebuildClientFilter(){
-      const sel=$("fCliente"); const set=[...new Set(jobs.map(j=>j.cliente).filter(Boolean))].sort();
-      sel.innerHTML='<option value="">Todos</option>'+set.map(c=>"<option>"+c+"</option>").join("");
-    }
-
-    function renderTable(){
-      const data=filterRows(jobs);
-      const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0),0);
-      const valorPecas=data.reduce((s,j)=> s+(+j.subtotal||0),0);
-      const emOficina=data.filter(j=>j.status!=="Concluído").length;
-      $("mConsertos").textContent=data.length; $("mOficina").textContent=emOficina;
-      $("mValor").textContent=money(total);
-      $("mLucro").textContent=money(total-valorPecas);
-      const tbody=$("tbody"), empty=$("empty");
-      if(!data.length){ tbody.innerHTML=""; empty.style.display="block"; return; }
-      empty.style.display="none";
-      tbody.innerHTML=data.map(j=>
-        '<tr>'+
-          '<td>'+(j.cliente||"")+'</td>'+
-          '<td>'+(j.modelo||"")+'</td>'+
-          '<td class="nowrap">'+(j.placa||"")+'</td>'+
-          '<td class="nowrap">'+(j.entrada||"")+'</td>'+
-          '<td class="nowrap">'+(j.saida||"")+'</td>'+
-          '<td>'+(j.mecanico||"")+'</td>'+
-          '<td>'+badge(j.status)+'</td>'+
-          '<td class="text-end nowrap">'+money(+j.valor||0)+'</td>'+
-          '<td class="text-end nowrap">'+money(+j.subtotal||0)+'</td>'+
-          '<td class="text-end nowrap">'+money((+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0))+'</td>'+
-          '<td class="text-end nowrap">'+
-            '<div class="btn-group btn-group-sm">'+
-              '<button class="btn btn-outline-secondary" data-action="print" data-id="'+j.id+'" title="Imprimir SO"><i class="bi bi-printer"></i></button>'+
-              '<button class="btn btn-outline-secondary" data-action="edit" data-id="'+j.id+'" title="Editar"><i class="bi bi-pencil-square"></i></button>'+
-              '<button class="btn btn-outline-danger"    data-action="del"  data-id="'+j.id+'" title="Excluir"><i class="bi bi-trash"></i></button>'+
-            '</div>'+
-          '</td>'+
-        '</tr>'
-      ).join("");
-    }
-
-    /* ===== Peças (modal) ===== */
-    function rebuildPartCats(){
-      const sel=$("pCategoria"); const cats=[...new Set(estoque.items.map(i=>i.categoria).filter(Boolean))].sort();
-      sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>"<option>"+c+"</option>").join("");
-    }
-    function renderParts(){
-      const q=($("pSearch").value||"").toLowerCase(), cat=$("pCategoria").value;
-      const reserved=new Map(cart.map(x=>[x.sku,x.qtd]));
-      const items=estoque.items.filter(it=>{
-        const mQ=!q||[it.sku,it.nome,it.categoria].join(" ").toLowerCase().includes(q);
-        const mC=!cat || (it.categoria||"")===cat; return mQ&&mC;
-      }).slice(0,80);
-
-      $("partsList").innerHTML = items.map(it=>{
-        const disp=Math.max(0,(+it.qtd||0)-(reserved.get(it.sku)||0));
-        const qid="q_"+safeId(it.sku);
-        const precoExib = +it.preco||0;
-        return '<div class="d-flex align-items-center justify-content-between py-1 border-bottom">'+
-          '<div class="small">'+
-            '<div class="fw-semibold">'+(it.nome||"")+'</div>'+
-            '<div class="text-secondary">SKU: '+(it.sku||"")+' • Cat: '+(it.categoria||"-")+' • Em estoque: <strong>'+disp+'</strong> • Preço: <strong>'+money(precoExib)+'</strong></div>'+
-          '</div>'+
-          '<div class="d-flex align-items-center gap-2">'+
-            '<input id="'+qid+'" type="number" min="1" step="1" value="1" class="form-control form-control-sm" style="width:80px">'+
-            '<button class="btn btn-ghost btn-sm" data-action="addPart" data-sku="'+encodeURIComponent(it.sku)+'" data-qid="'+qid+'"><i class="bi bi-plus-lg"></i> Adicionar</button>'+
-          '</div>'+
-        '</div>';
-      }).join("") || '<div class="text-secondary text-center py-3">Nada encontrado…</div>';
-    }
-
-    /* ===== Carrinho ===== */
-    function renderCart(){
-      $("cartList").innerHTML = cart.map((it,i)=>
-        '<div class="cart-row">'+
-          '<div class="small"><div class="fw-semibold">'+it.nome+'</div><div class="text-secondary">SKU: '+it.sku+' • Preço: '+money(priceOf(it))+'</div></div>'+
-          '<div class="d-flex align-items-center gap-2">'+
-            '<input class="form-control form-control-sm" type="number" min="1" step="1" value="'+it.qtd+'" style="width:64px" data-action="changeQty" data-idx="'+i+'">'+
-            '<div class="text-end" style="width:110px">'+money(itemTotal(it))+'</div>'+
-            '<button class="btn btn-outline-danger btn-sm" data-action="removePart" data-idx="'+i+'"><i class="bi bi-x-lg"></i></button>'+
-          '</div>'+
-        '</div>'
-      ).join("") || '<div class="text-secondary text-center py-3">Carrinho vazio…</div>';
-
-      const subtotal=cart.reduce((s,x)=>s+itemTotal(x),0); // soma de PREÇOS
-      $("cSubtotal").textContent=money(subtotal);
-      $("iValorPecas").value=money(subtotal);
-      const total=(+$("iValor").value||0)+subtotal-(+$("cDesconto").value||0);
-      $("cTotal").textContent=money(Math.max(0,total));
-    }
-
-    /* ===== Modal helpers ===== */
-    function resetModal(){
-      editingId=null; cart=[]; $("formOS").reset();
-      $("iEntrada").value=todayISO(); $("iStatus").value="Revisando"; $("cDesconto").value=0; $("iPagamento").value="Dinheiro";
-      estoque = loadStock();
-      estoque.items = (estoque.items||[]).map(it=>({ sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""), qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"") }));
-      rebuildPartCats(); renderParts(); renderCart();
-    }
-
-    /* ===== Eventos ===== */
-
-    // Abrir modal
-    $("btnNova").addEventListener("click", resetModal);
-
-    // Filtros / busca / datas
-    $("search").addEventListener("input", renderTable);
-    $("fCliente").addEventListener("change", renderTable);
-    $("fIni").addEventListener("change", renderTable);
-    $("fFim").addEventListener("change", renderTable);
-
-    // Peças
-    $("pSearch").addEventListener("input", renderParts);
-    $("pCategoria").addEventListener("change", renderParts);
-    $("cDesconto").addEventListener("input", renderCart);
-    $("iValor").addEventListener("input", renderCart);
-
-    // Lista de peças (delegação)
-    $("partsList").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action='addPart']"); if(!btn) return;
-      const sku=decodeURIComponent(btn.dataset.sku), qid=btn.dataset.qid;
-      const it=estoque.items.find(x=>x.sku===sku); if(!it){ alert("Peça não encontrada no estoque."); return; }
-      let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
-      const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
-      const disp=Math.max(0,(+it.qtd||0)-reserved);
-      if(q>disp) q=disp;
-      if(q<=0){ alert("Sem quantidade disponível."); return; }
-      const i=cart.findIndex(x=>x.sku===sku);
-      if(i>=0) cart[i].qtd+=q;
-      else cart.push({sku, nome:it.nome, preco:+it.preco||0, qtd:q}); // usa PREÇO
-      renderCart(); renderParts();
-    });
-
-    // Carrinho (delegação)
-    $("cartList").addEventListener("input", function(ev){
-      if(ev.target.dataset.action!=="changeQty") return;
-      const i=+ev.target.dataset.idx;
-      let q=Math.max(1, parseInt(ev.target.value||"1",10));
-      const sku=cart[i].sku, stock=+(estoque.items.find(x=>x.sku===sku)?.qtd||0);
-      const others=cart.filter((_,idx)=>idx!==i && _.sku===sku).reduce((s,x)=>s+x.qtd,0);
-      const disp=Math.max(0, stock-others);
-      if(q>disp) q=disp;
-      cart[i].qtd=q; renderCart(); renderParts();
-    });
-    $("cartList").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action='removePart']"); if(!btn) return;
-      cart.splice(+btn.dataset.idx,1); renderCart(); renderParts();
-    });
-
-    // Salvar OS
-    $("btnSalvarOS").addEventListener("click", function(){
-      if(!$("formOS").reportValidity()){ $("formOS").classList.add("was-validated"); return; }
-
-      const job={
-        id: editingId || String(Date.now()),
-        cliente:$("iCliente").value.trim(),
-        modelo:$("iModelo").value.trim(),
-        placa:$("iPlaca").value.trim().toUpperCase(),
-        entrada:$("iEntrada").value, saida:$("iSaida").value,
-        mecanico:$("iMecanico").value.trim(),
-        status:$("iStatus").value,
-        valor:+$("iValor").value||0,
-        desconto:+$("cDesconto").value||0,
-        pagamento:$("iPagamento").value,
-        pecas:cart.map(x=>({sku:x.sku,nome:x.nome,preco:+x.preco||0,qtd:+x.qtd||0})),
-        subtotal:cart.reduce((s,x)=>s+itemTotal(x),0) // soma PREÇO
-      };
-
-      // Atualiza estoque (consumo/rollback em edição)
-      const old=jobs.find(j=>j.id===job.id);
-      const before=new Map((old?.pecas||[]).map(p=>[p.sku,p.qtd]));
-      const after=new Map(job.pecas.map(p=>[p.sku,p.qtd]));
-      const map=new Map(estoque.items.map(it=>[it.sku,it]));
-      const skus=new Set([].concat(Array.from(before.keys()), Array.from(after.keys())));
-      skus.forEach(function(sku){
-        const delta=(after.get(sku)||0)-(before.get(sku)||0); // >0 consome
-        const it=map.get(sku); if(it){ it.qtd=(+it.qtd||0)-delta; if(it.qtd<0) it.qtd=0; }
-      });
-      estoque.items=[].concat(Array.from(map.values())); saveStock(estoque.key, estoque.items);
-
-      if(old){ const i=jobs.findIndex(j=>j.id===job.id); jobs[i]=job; } else jobs.push(job);
-      saveJobs(); rebuildClientFilter(); renderTable();
-
-      bootstrap.Modal.getInstance(document.getElementById("modalOS"))?.hide();
-      resetModal();
-    });
-
-    // Ações da tabela (editar / excluir / imprimir)
-    $("tbody").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action]"); if(!btn) return;
-      const id=btn.dataset.id, act=btn.dataset.action;
-
-      if(act==="edit"){
-        const j=jobs.find(x=>x.id===id); if(!j) return;
-        editingId=j.id; $("modalTitle").textContent="Editar OS";
-        $("iCliente").value=j.cliente||""; $("iModelo").value=j.modelo||""; $("iPlaca").value=j.placa||"";
-        $("iEntrada").value=j.entrada||todayISO(); $("iSaida").value=j.saida||""; $("iMecanico").value=j.mecanico||"";
-        $("iStatus").value=j.status||"Revisando"; $("iValor").value=+j.valor||0; $("cDesconto").value=+j.desconto||0;
-        $("iPagamento").value = j.pagamento || "Dinheiro";
-        cart=(j.pecas||[]).map(p=>({sku:p.sku,nome:p.nome,preco:+p.preco||0,qtd:+p.qtd||0}));
-        renderCart(); rebuildPartCats(); renderParts();
-        new bootstrap.Modal(document.getElementById("modalOS")).show();
-      }
-
-      if(act==="del"){
-        if(!confirm("Excluir esta OS?")) return;
-        const j=jobs.find(x=>x.id===id); if(!j) return;
-        const map=new Map(estoque.items.map(it=>[it.sku,it]));
-        (j.pecas||[]).forEach(p=>{ const it=map.get(p.sku); if(it){ it.qtd=(+it.qtd||0)+(+p.qtd||0); }});
-        estoque.items=[].concat(Array.from(map.values())); saveStock(estoque.key, estoque.items);
-        jobs=jobs.filter(x=>x.id!==id); saveJobs(); rebuildClientFilter(); renderTable();
-      }
-
-      if(act==="print"){
-        const j = jobs.find(x=>x.id===id); if(!j) return;
-        printReceiptInline(j); // imprime via IFRAME com @page 80mm
-      }
-    });
-
-    /* ===== Init ===== */
-    (function init(){
-      rebuildClientFilter(); renderTable(); rebuildPartCats(); renderParts();
-      $("iEntrada").value=todayISO();
-      // se quiser iniciar já no dia de hoje, descomente as 2 linhas abaixo:
-      // $("fIni").value = todayISO();
-      // $("fFim").value = todayISO();
-    })();
+  /* ===== Init ===== */
+  (function init(){
+    $("iEntrada").value=todayISO();
+    rebuildClientFilter();
+    renderTable();
+    rebuildPartCats();
+    renderParts();
   })();
-  </script>
+})();
+</script>
 </body>
 </html>
