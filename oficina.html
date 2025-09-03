@@ -627,116 +627,254 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-/* ===== Impressão OFICINA — 1 folha + Mão de Obra entra no total ===== */
+/* ===== Impressão via iframe oculto ===== */
 function buildReceiptInDoc(doc, j){
-  // HTML base isolado
-  doc.open();
-  doc.write('<!doctype html><html><head><meta charset="utf-8"><title> </title></head><body></body></html>');
-  doc.close();
+  // limpa
+  doc.head.innerHTML=''; 
+  doc.body.innerHTML='';
 
-  const head = doc.head, body = doc.body;
+  // título em branco para não aparecer no cabeçalho da impressora
+  const title = doc.createElement('title');
+  title.textContent = ' ';
+  doc.head.appendChild(title);
 
-  // CSS: largura 80mm, sem quebras
+  // CSS de impressão: remove margem da página e do body e define largura 80mm
   const style = doc.createElement('style');
   style.textContent = `
     @media print {
       @page { size: 80mm auto; margin: 0; }
-      html, body { width: 80mm !important; margin: 0 !important; padding: 0 !important; }
-      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { margin: 0 !important; }
     }
-    html, body { width: 80mm; margin: 0; padding: 0; }
-    .sheet { width: 80mm; padding: 14px; box-sizing: border-box; font-family: ui-monospace,Menlo,Consolas,"Courier New",monospace; font-size: 14px; line-height: 1.3; }
-    .c{text-align:center}.b{font-weight:700}.big{font-size:16px}
-    .ln{border-top:1px dashed #999;margin:10px 0}
-    .no-break, .sheet, table, thead, tbody, tr, td, th, div { break-inside: avoid; page-break-inside: avoid; }
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:6px 0;border-bottom:1px dotted #ddd}
+    *{box-sizing:border-box}
+    body{margin:0;padding:12px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
+    .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th,td{padding:4px 0;border-bottom:1px dotted #ddd}
     td.r{text-align:right}
   `;
-  head.appendChild(style);
+  doc.head.appendChild(style);
 
-  const add=(parent, tag, txt, cls)=>{
-    const el = doc.createElement(tag);
-    if(cls) el.className = cls;
-    if(txt!=null) el.textContent = txt;
-    parent.appendChild(el);
+  // helper para adicionar nós via DOM
+  const add=(tag,txt,cls)=>{
+    const el=doc.createElement(tag);
+    if(cls) el.className=cls;
+    if(txt!=null) el.textContent=txt;
+    doc.body.appendChild(el);
     return el;
   };
-  const BRLF = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
 
-  const wrap = add(body, 'div', null, 'sheet no-break');
+  // conteúdo do recibo
+  add('div','Rota Motos','c b');
+  add('div','CNPJ 60.469.425/0001-76','c');
+  add('div','Ordem de Compra','c');
+  add('div','', 'ln');
 
-  // Cabeçalho
-  add(wrap,'div','Rota Motos','c b big');
-  add(wrap,'div','CNPJ 60.469.425/0001-76','c');
-  add(wrap,'div','Ordem de Compra','c b');
-  add(wrap,'div','', 'ln');
+  add('div','Dados do Cliente','c b');
+  add('div','Nome Cliente: '+(j.cliente||''));
+  add('div','Moto Cliente: '+(j.modelo||''));
+  add('div','Placa da moto: '+(j.placa||''));
+  add('div','Entrada: '+(j.entrada||''));
+  add('div','', 'ln');
 
-  // Cliente
-  add(wrap,'div','Dados do Cliente','c b');
-  add(wrap,'div','Nome Cliente: '+(j.cliente||''));
-  add(wrap,'div','Moto Cliente: '+(j.modelo||''));
-  add(wrap,'div','Placa da moto: '+(j.placa||''));
-  add(wrap,'div','Entrada: '+(j.entrada||''));
-  add(wrap,'div','', 'ln');
+  add('div','Dados do Mecânico','c b');
+  add('div','Nome Mecânico: '+(j.mecanico||''));
+  add('div','', 'ln');
 
-  // Mecânico
-  add(wrap,'div','Dados do Mecânico','c b');
-  add(wrap,'div','Nome Mecânico: '+(j.mecanico||''));
-  add(wrap,'div','', 'ln');
+  add('div','Dados de Compras','c b');
 
-  // Itens
-  add(wrap,'div','Dados de Compras','c b');
-  const itens = (j.pecas||[]).map(p=>({
-    nome: p.nome || '-',
-    qtd: +p.qtd || 0,
-    preco: +p.preco || 0
-  }));
-
-  if(itens.length){
-    const table = add(wrap,'table',null,'no-break');
-    const thead = add(table,'thead',null,'no-break');
-    const trh = add(thead,'tr',null,'no-break');
-    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{ add(trh,'th',h, i>0 ? 'r' : ''); });
-    const tbody = add(table,'tbody',null,'no-break');
-    itens.forEach(p=>{
-      const tr = add(tbody,'tr',null,'no-break');
-      const td = (tx,cls)=> add(tr,'td',tx,cls||'');
-      td(p.nome);
-      td(String(p.qtd),'r');
-      td(BRLF.format(p.preco),'r');
-      td(BRLF.format(p.preco * p.qtd),'r');
+  if((j.pecas||[]).length){
+    const t=doc.createElement('table');
+    const thead=doc.createElement('thead');
+    const trh=doc.createElement('tr');
+    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
+      const th=doc.createElement('th');
+      th.textContent=h;
+      if(i>0) th.className='r';
+      trh.appendChild(th);
     });
+    thead.appendChild(trh);
+    t.appendChild(thead);
+
+    const tb=doc.createElement('tbody');
+    (j.pecas||[]).forEach(p=>{
+      const tr=doc.createElement('tr');
+      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      tr.appendChild(td(p.nome||'-'));
+      tr.appendChild(td(p.qtd,'r'));
+      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    doc.body.appendChild(t);
   } else {
-    add(wrap,'div','Sem itens.');
+    add('div','Sem itens.');
   }
 
-  // ===== Totais (agora Mão de Obra entra no total) =====
-  const subtotalPecas = (j.pecas||[]).reduce((s,p)=> s + (+p.preco||0)*(+p.qtd||0), 0);
-  const maoDeObra     = (+j.maoObra || +j.mao_obra || 0); // aceita ambos nomes
-  const descontos     = (+j.desconto || 0);
-  const total         = Math.max(0, subtotalPecas + maoDeObra - descontos);
+  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
 
-  add(wrap,'div','', 'ln');
-  if (j.pagamento) add(wrap,'div','Forma de Pagamento: '+j.pagamento);
+  add('div','', 'ln');
+  add('div','Forma de Pagamento: '+(j.pagamento||''));
 
-  const row=(lbl, val, bold)=>{
-    const d = add(wrap,'div',null,'no-break');
-    d.style.display='flex'; d.style.justifyContent='space-between';
-    add(d,'div',lbl);
-    const r = add(d,'div',BRLF.format(val), bold?'b':'');
+  const row=(lbl,val,bold)=>{
+    const d=doc.createElement('div');
+    d.style.display='flex';
+    d.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent=lbl;
+    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
+    d.appendChild(l); d.appendChild(r); doc.body.appendChild(d);
+  };
+  row('Subtotal:', subtotal, true);
+  row('Descontos:', +j.desconto||0, false);
+  row('Valor Total:', Math.max(0,total), true);
+
+  add('div','', 'ln');
+  add('div','Observações','c b');
+  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+}
+
+function printReceiptInline(j){
+  const iframe=document.createElement("iframe");
+  iframe.style.position="fixed";
+  iframe.style.right="-9999px";
+  iframe.style.bottom="0";
+  iframe.width="0";
+  iframe.height="0";
+  iframe.setAttribute("aria-hidden","true");
+  // Evita que o frame herde título/URL visíveis
+  iframe.setAttribute("sandbox","allow-modals allow-same-origin");
+  document.body.appendChild(iframe);
+
+  const d=iframe.contentDocument||iframe.contentWindow.document;
+  buildReceiptInDoc(d,j);
+
+  // pequena espera para o layout aplicar antes de imprimir
+  setTimeout(()=>{
+    try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
+    setTimeout(()=>iframe.remove(), 1200);
+  }, 80);
+}
+/* ===== Impressão via iframe oculto (fonte maior) ===== */
+function buildReceiptInDoc(doc, j){
+  // limpa documento do iframe
+  doc.head.innerHTML=''; 
+  doc.body.innerHTML='';
+
+  // título em branco para não aparecer no cabeçalho do navegador
+  const title = doc.createElement('title');
+  title.textContent = ' ';
+  doc.head.appendChild(title);
+
+  // CSS: aumenta fonte e espaçamentos, mantém página 80mm
+  const style = doc.createElement('style');
+  style.textContent = `
+    @media print {
+      @page { size: 80mm auto; margin: 0; }
+      body { margin: 0 !important; }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:14px;                /* + padding */
+      font-size:14px;              /* <- fonte maior (antes era 12px) */
+      line-height:1.3;             /* melhor leitura */
+      font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace
+    }
+    .c{text-align:center}
+    .b{font-weight:700}
+    .big{font-size:16px}           /* títulos maiores */
+    .ln{border-top:1px dashed #999;margin:10px 0}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:6px 0;           /* + padding nas linhas */
+          border-bottom:1px dotted #ddd}
+    th{font-size:14px}
+    td.r{text-align:right}
+  `;
+  doc.head.appendChild(style);
+
+  // helper para criar elementos
+  const add=(tag,txt,cls)=>{
+    const el=doc.createElement(tag);
+    if(cls) el.className=cls;
+    if(txt!=null) el.textContent=txt;
+    doc.body.appendChild(el);
+    return el;
   };
 
-  // Ordem solicitada:
-  row('Subtotal:',    subtotalPecas, true);
-  row('Mão de Obra:', maoDeObra,     false);
-  row('Descontos:',   descontos,     false);
-  row('Valor Total + Mão de Obra:', total,         true);
+  // conteúdo do recibo
+  add('div','Rota Motos','c b big');
+  add('div','CNPJ 60.469.425/0001-76','c');
+  add('div','Ordem de Compra','c b');
+  add('div','', 'ln');
 
-  add(wrap,'div','', 'ln');
-  add(wrap,'div','Observações','c b');
-  add(wrap,'div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+  add('div','Dados do Cliente','c b');
+  add('div','Nome Cliente: '+(j.cliente||''));
+  add('div','Moto Cliente: '+(j.modelo||''));
+  add('div','Placa da moto: '+(j.placa||''));
+  add('div','Entrada: '+(j.entrada||''));
+  add('div','', 'ln');
+
+  add('div','Dados do Mecânico','c b');
+  add('div','Nome Mecânico: '+(j.mecanico||''));
+  add('div','', 'ln');
+
+  add('div','Dados de Compras','c b');
+
+  if((j.pecas||[]).length){
+    const t=doc.createElement('table');
+    const thead=doc.createElement('thead');
+    const trh=doc.createElement('tr');
+    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
+      const th=doc.createElement('th');
+      th.textContent=h;
+      if(i>0) th.className='r';
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    t.appendChild(thead);
+
+    const tb=doc.createElement('tbody');
+    (j.pecas||[]).forEach(p=>{
+      const tr=doc.createElement('tr');
+      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      tr.appendChild(td(p.nome||'-'));
+      tr.appendChild(td(p.qtd,'r'));
+      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    doc.body.appendChild(t);
+  } else {
+    add('div','Sem itens.');
+  }
+
+  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
+
+  add('div','', 'ln');
+  add('div','Forma de Pagamento: '+(j.pagamento||''));
+
+  const row=(lbl,val,bold)=>{
+    const d=doc.createElement('div');
+    d.style.display='flex';
+    d.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent=lbl;
+    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
+    d.appendChild(l); d.appendChild(r);
+    doc.body.appendChild(d);
+  };
+  row('Subtotal:', subtotal, true);
+  row('Descontos:', +j.desconto||0, false);
+  row('Valor Total + Mão de Obra:', Math.max(0,total), true);
+
+  add('div','', 'ln');
+  add('div','Observações','c b');
+  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
 }
+
+
   /* Init */
   (function init(){
     $("iEntrada").value=todayISO();
@@ -748,6 +886,3 @@ function buildReceiptInDoc(doc, j){
 </script>
 </body>
 </html>
-
-
-
