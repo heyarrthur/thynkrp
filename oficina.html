@@ -159,8 +159,7 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
             <th>Saída</th>
             <th>Mecânico</th>
             <th>Status</th>
-            <th class="text-end">Serviço</th>
-            <th class="text-end">Peças</th>
+            <th class="text-end">Produtos</th>
             <th class="text-end">Total</th>
             <th>Ações</th>
           </tr>
@@ -234,10 +233,10 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
             <textarea id="iObs" class="form-control" rows="2" placeholder="Observações gerais..."></textarea>
           </div>
 
-          <!-- Peças (esquerda) -->
+          <!-- Produtos (esquerda) -->
           <div class="col-lg-6 parts-panel">
             <div class="row g-2">
-              <div class="col-8"><input id="pSearch" class="form-control" placeholder="Buscar peça por SKU, nome..."></div>
+              <div class="col-8"><input id="pSearch" class="form-control" placeholder="Buscar produto por SKU, nome..."></div>
               <div class="col-4"><select id="pCategoria" class="form-select"><option value="">Todas as categorias</option></select></div>
               <div class="col-12"><div id="partsList"></div></div>
             </div>
@@ -248,27 +247,22 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
             <div id="cartList"></div>
 
             <div class="row g-2 mt-2">
-              <div class="col-md-4">
-                <label class="form-label">Valor Serviço</label>
-                <input id="iValor" type="number" step="0.01" min="0" class="form-control mono" value="0">
-              </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">Mão de Obra</label>
                 <input id="iMaoObra" type="number" step="0.01" min="0" class="form-control mono" value="0">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">Desconto</label>
                 <input id="cDesconto" type="number" step="0.01" min="0" class="form-control mono" value="0">
               </div>
 
               <div class="col-12">
                 <div class="totals d-flex justify-content-between mono">
-                  <div>Subtotal peças: <span id="cSubtotal">R$ 0,00</span></div>
+                  <div>Subtotal produtos: <span id="cSubtotal">R$ 0,00</span></div>
                   <div>Total (nota): <strong id="cTotal">R$ 0,00</strong></div>
                 </div>
               </div>
 
-              <!-- Botão Salvar aqui -->
               <div class="col-12">
                 <div class="d-grid mt-2">
                   <button id="btnSalvarOS" type="button" class="btn btn-primary-clean btn-lg">
@@ -395,7 +389,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return mQ&&mC&&mD;
     });
 
-    const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0),0);
+    const total=data.reduce((s,j)=> s+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0),0);
     const custo=data.reduce((s,j)=> s+(+j.subtotal||0),0);
     const emOficina=data.filter(j=>j.status!=="Concluído").length;
     $("mConsertos").textContent=data.length;
@@ -411,9 +405,8 @@ window.addEventListener('DOMContentLoaded', () => {
         <td>${esc(j.cliente||"-")}</td><td>${esc(j.modelo||"-")}</td><td>${esc(j.placa||"-")}</td>
         <td>${esc(j.entrada||"-")}</td><td>${esc(j.saida||"-")}</td><td>${esc(j.mecanico||"-")}</td>
         <td>${statusBadge(j.status)}</td>
-        <td class="text-end">${money(+j.valor||0)}</td>
         <td class="text-end">${money(+j.subtotal||0)}</td>
-        <td class="text-end">${money((+j.valor||0)+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0))}</td>
+        <td class="text-end">${money((+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0))}</td>
         <td class="text-nowrap">
           <button class="btn btn-sm btn-ghost" data-action="print" data-id="${j.id}">Imprimir SO</button>
           <button class="btn btn-sm btn-ghost" data-action="edit" data-id="${j.id}">Editar</button>
@@ -423,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
     `).join("");
   }
 
-  /* ===== Peças modal ===== */
+  /* ===== Produtos modal ===== */
   function rebuildPartCats(){
     const sel=$("pCategoria");
     const cats=[...new Set(estoque.items.map(i=>i.categoria).filter(Boolean))].sort();
@@ -477,7 +470,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const subtotal=cart.reduce((s,x)=>s+x.qtd*x.preco,0);
     $("cSubtotal").textContent=money(subtotal);
-    const total=(+$("iValor").value||0)+(+$("iMaoObra").value||0)+subtotal-(+$("cDesconto").value||0); // Mão de obra ENTRA
+    const total=(+$("iMaoObra").value||0)+subtotal-(+$("cDesconto").value||0);
     $("cTotal").textContent=money(Math.max(0,total));
   }
   function resetModal(){
@@ -504,28 +497,27 @@ window.addEventListener('DOMContentLoaded', () => {
   $("dFrom").addEventListener("input", renderTable);
   $("dTo").addEventListener("input", renderTable);
 
-  // Peças
+  // Produtos
   $("pSearch").addEventListener("input", renderParts);
   $("pCategoria").addEventListener("change", renderParts);
 
   // Totais
   $("cDesconto").addEventListener("input", renderCart);
-  $("iValor").addEventListener("input", renderCart);
   $("iMaoObra").addEventListener("input", renderCart);
 
-  // Peças (delegação)
+  // Produtos (delegação)
   $("partsList").addEventListener("click", (ev)=>{
     const btn=ev.target.closest("[data-action='addPart']"); if(!btn) return;
     const sku=decodeURIComponent(btn.dataset.sku), qid=btn.dataset.qid;
     const it=estoque.items.find(x=>x.sku===sku);
-    if(!it){ alert("Peça não encontrada no estoque."); return; }
+    if(!it){ alert("Produto não encontrado no estoque."); return; }
     let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
     const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
     const disp=Math.max(0,(+it.qtd||0)-reserved);
     if(q>disp) q=disp;
     if(q<=0){ alert("Sem quantidade disponível."); return; }
     const i=cart.findIndex(x=>x.sku===sku);
-    if(i>=0) cart[i].qtd+=q; else cart.push({sku, nome:it.nome, preco:+it.preco||0, qtd:q}); // sempre PREÇO
+    if(i>=0) cart[i].qtd+=q; else cart.push({sku, nome:it.nome, preco:+it.preco||0, qtd:q});
     renderCart(); renderParts();
   });
 
@@ -561,7 +553,6 @@ window.addEventListener('DOMContentLoaded', () => {
       mecanico:$("iMecanico").value.trim(),
       status:$("iStatus").value,
       pagamento:$("iPagamento").value,
-      valor:+$("iValor").value||0,
       desconto:+$("cDesconto").value||0,
       maoObra:+$("iMaoObra").value||0,
       obs:$("iObs").value||"",
@@ -607,7 +598,7 @@ window.addEventListener('DOMContentLoaded', () => {
       $("iCliente").value=j.cliente||""; $("iModelo").value=j.modelo||"";
       $("iPlaca").value=j.placa||""; $("iEntrada").value=j.entrada||todayISO();
       $("iSaida").value=j.saida||""; $("iMecanico").value=j.mecanico||"";
-      $("iStatus").value=j.status||"Revisando"; $("iValor").value=+j.valor||0;
+      $("iStatus").value=j.status||"Revisando";
       $("cDesconto").value=+j.desconto||0; $("iPagamento").value=j.pagamento||"Dinheiro";
       $("iMaoObra").value=+j.maoObra||0; $("iObs").value=j.obs||"";
       cart=(j.pecas||[]).map(p=>({sku:p.sku,nome:p.nome,preco:+p.preco||0,qtd:+p.qtd||0}));
@@ -630,16 +621,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
 /* ===== Impressão via iframe oculto (80mm, sem quebra de nota) ===== */
 function buildReceiptInDoc(doc, j){
-  // limpar doc
   doc.head.innerHTML=''; 
   doc.body.innerHTML='';
 
-  // título em branco
   const title = doc.createElement('title');
   title.textContent = ' ';
   doc.head.appendChild(title);
 
-  // CSS: sem margens; evitar quebras; 80mm de largura
   const style = doc.createElement('style');
   style.textContent = `
     @media print {
@@ -700,10 +688,10 @@ function buildReceiptInDoc(doc, j){
   add('div','Nome Mecânico: '+(j.mecanico||''), 'block');
   add('div','', 'ln');
 
-  // Compras
+  // Compras / Produtos
   add('div','Dados de Compra','c b block');
 
-  // Mão de obra abaixo do título
+  // Mão de obra (linha separada logo abaixo do título)
   const maoRow=doc.createElement('div');
   maoRow.className='rowflex block';
   const lbl=doc.createElement('div'); lbl.textContent="Mão de obra";
@@ -711,7 +699,10 @@ function buildReceiptInDoc(doc, j){
   maoRow.appendChild(lbl); maoRow.appendChild(val);
   doc.body.appendChild(maoRow);
 
-  // Tabela de peças
+  // Subtítulo Produtos
+  add('div','Produtos','b block');
+
+  // Tabela de produtos
   if((j.pecas||[]).length){
     const t=doc.createElement('table');
     const thead=doc.createElement('thead');
@@ -738,12 +729,12 @@ function buildReceiptInDoc(doc, j){
     t.appendChild(tb);
     doc.body.appendChild(t);
   } else {
-    add('div','Sem itens.','block');
+    add('div','Sem produtos.','block');
   }
 
-  // Totais (inclui mão de obra)
+  // Totais (Mão de obra + produtos – desconto)
   const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
-  const total=(+j.valor||0)+(+j.maoObra||0)+subtotal-(+j.desconto||0);
+  const total=(+j.maoObra||0)+subtotal-(+j.desconto||0);
 
   add('div','', 'ln');
   add('div','Forma de Pagamento: '+(j.pagamento||''), 'block');
@@ -755,9 +746,8 @@ function buildReceiptInDoc(doc, j){
     const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
     d.appendChild(l); d.appendChild(r); doc.body.appendChild(d);
   };
-  row('Serviço:', +j.valor||0, false);
   row('Mão de obra:', +j.maoObra||0, false);
-  row('Subtotal (peças):', subtotal, false);
+  row('Subtotal (produtos):', subtotal, false);
   row('Descontos:', +j.desconto||0, false);
   row('Valor Total (nota):', Math.max(0,total), true);
 
