@@ -815,10 +815,6 @@ function buildReceiptInDoc(doc, j){
   add('div','Entrada: '+(j.entrada||''));
   add('div','', 'ln');
 
-  add('div','Dados do Mecânico','c b');
-  add('div','Nome Mecânico: '+(j.mecanico||''));
-  add('div','', 'ln');
-
   add('div','Dados de Compras','c b');
 
   if((j.pecas||[]).length){
@@ -886,3 +882,4 @@ function buildReceiptInDoc(doc, j){
 </script>
 </body>
 </html>
+
