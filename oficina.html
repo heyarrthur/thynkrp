@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rota Motos — Oficina</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{--ink:#0f172a;--muted:#6b7280;--border:#e6e8ef;--accent:#f59e0b;--nav-h:64px}
+*{box-sizing:border-box}
+body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
+.container{max-width:1180px}
+.navbar{background:#fff;border-bottom:1px solid var(--border)}
+.brand{display:flex;gap:.5rem;align-items:center;font-weight:800}
+.brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center}
+.nav-link{color:var(--ink);font-weight:600;border-radius:8px}
+.nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+
+.card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
+.metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
+.metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.i-jobs{background:#64748b}.i-inshop{background:#0ea5e9}.i-total{background:#10b981}.i-low{background:#ef4444}
+.metric .label{color:var(--muted);font-size:.9rem}
+.metric .value{font-weight:800;font-size:1.35rem}
+
+.toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
+.form-control,.form-select{border-radius:10px;border-color:var(--border)}
+.form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
+.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
+.btn-ghost:hover{background:#f9fafb}
+.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+
+.table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700}
+.empty{color:#6b7280;text-align:center;padding:2rem 0}
+
+/* ===== Status badges ===== */
+.status-badge{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.28rem .68rem;border-radius:999px;
+  font-weight:800;font-size:.78rem;letter-spacing:.01em;line-height:1;user-select:none
+}
+.status-badge i{font-size:.95rem}
+.st-revisando{color:#1d4ed8;background:#eaf1ff;border:1px solid #bfdbfe}
+.st-aguardando{color:#b45309;background:#fff7ed;border:1px solid #fde68a}
+.st-concluido{color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0}
+.st-cancelado{color:#991b1b;background:#fef2f2;border:1px solid #fecaca}
+
+/* ===== Modal ===== */
+.modal-lg{--bs-modal-width: 1000px}
+.parts-panel{border-right:1px dashed var(--border)}
+.part-card{border:1px solid var(--border);border-radius:10px;padding:.6rem;margin-bottom:.6rem}
+.badge-soft{background:#f1f5f9;border:1px solid #e2e8f0;color:#334155;border-radius:999px;padding:.15rem .5rem;font-weight:700;font-size:.72rem}
+.cart-item{border-bottom:1px dashed #e5e7eb;padding:.35rem 0}
+.totals{background:#fafafa;border:1px dashed #e5e7eb;border-radius:10px;padding:.6rem}
+.right-num{text-align:right}
+.mono{font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand brand" href="#"><span class="logo">RM</span>Rota Motos</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="topnav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
+        <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
+        <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
+        <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- METRICS -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-jobs"><i class="bi bi-wrench-adjustable"></i></div>
+        <div><div class="label">Consertos</div><div id="mConsertos" class="value">0</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-inshop"><i class="bi bi-bicycle"></i></div>
+        <div><div class="label">Motos em Oficina</div><div id="mOficina" class="value">0</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-total"><i class="bi bi-currency-dollar"></i></div>
+        <div><div class="label">Valor Total</div><div id="mValor" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-low"><i class="bi bi-graph-up-arrow"></i></div>
+        <div><div class="label">Lucro (ilustrativo)</div><div id="mLucro" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-6">
+        <label class="form-label mb-1">Buscar</label>
+        <input id="search" class="form-control" placeholder="cliente, modelo, mecânico, placa...">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Filtrar por cliente</label>
+        <select id="fCliente" class="form-select">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-grid d-lg-block">
+        <label class="form-label mb-1 d-block"> </label>
+        <button id="btnNova" class="btn btn-primary-clean w-100"><i class="bi bi-plus-lg"></i> Nova</button>
+      </div>
+      <div class="col-12"></div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Entrada de</label>
+        <input id="dFrom" type="date" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">até</label>
+        <input id="dTo" type="date" class="form-control">
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="card-soft p-0">
+    <div class="table-responsive" style="max-height:60vh;">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Modelo Moto</th>
+            <th>Placa</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Mecânico</th>
+            <th>Status</th>
+            <th class="text-end">Serviço</th>
+            <th class="text-end">Peças</th>
+            <th class="text-end">Total</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty">Nenhum registro.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OS (Save abaixo do preço/totais) -->
+<div class="modal fade" id="modalOS" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header">
+      <h5 id="modalTitle" class="modal-title">Nova OS</h5>
+      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+      <form id="formOS" novalidate>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Nome Cliente</label>
+            <input id="iCliente" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Modelo Moto</label>
+            <input id="iModelo" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Placa</label>
+            <input id="iPlaca" class="form-control" placeholder="ABC-1234">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Entrada</label>
+            <input id="iEntrada" type="date" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Saída</label>
+            <input id="iSaida" type="date" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Mecânico</label>
+            <input id="iMecanico" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select id="iStatus" class="form-select">
+              <option>Revisando</option>
+              <option>Aguardando Cliente</option>
+              <option>Concluído</option>
+              <option>Cancelado</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Forma de Pagamento</label>
+            <select id="iPagamento" class="form-select">
+              <option>Dinheiro</option>
+              <option>PIX</option>
+              <option>Cartão Débito</option>
+              <option>Cartão de Crédito</option>
+              <option>Outro</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Observações</label>
+            <textarea id="iObs" class="form-control" rows="2" placeholder="Observações gerais..."></textarea>
+          </div>
+
+          <!-- Peças (esquerda) -->
+          <div class="col-lg-6 parts-panel">
+            <div class="row g-2">
+              <div class="col-8"><input id="pSearch" class="form-control" placeholder="Buscar peça por SKU, nome..."></div>
+              <div class="col-4"><select id="pCategoria" class="form-select"><option value="">Todas as categorias</option></select></div>
+              <div class="col-12"><div id="partsList"></div></div>
+            </div>
+          </div>
+
+          <!-- Carrinho / Valores (direita) -->
+          <div class="col-lg-6">
+            <div id="cartList"></div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-4">
+                <label class="form-label">Valor Serviço</label>
+                <input id="iValor" type="number" step="0.01" min="0" class="form-control mono" value="0">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Mão de Obra (interno)</label>
+                <input id="iMaoObra" type="number" step="0.01" min="0" class="form-control mono" value="0">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Desconto</label>
+                <input id="cDesconto" type="number" step="0.01" min="0" class="form-control mono" value="0">
+              </div>
+
+              <div class="col-12">
+                <div class="totals d-flex justify-content-between mono">
+                  <div>Subtotal peças: <span id="cSubtotal">R$ 0,00</span></div>
+                  <div>Total (nota): <strong id="cTotal">R$ 0,00</strong></div>
+                </div>
+              </div>
+
+              <!-- Botão Salvar aqui -->
+              <div class="col-12">
+                <div class="d-grid mt-2">
+                  <button id="btnSalvarOS" type="button" class="btn btn-primary-clean btn-lg">
+                    <i class="bi bi-check2-circle"></i> Salvar OS
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /direita -->
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-bs-dismiss="modal">Fechar</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+  if (window.__RM_OFI_INIT__) return; window.__RM_OFI_INIT__ = true;
+
+  const BRL  = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  const $    = id => document.getElementById(id);
+  const num  = v => isNaN(+v)?0:+v;
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  /* ===== Helpers ===== */
+  function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function money(n){ return BRL.format(+n||0); }
+  function safeId(s){ return String(s).replace(/[^a-z0-9_-]/gi,'_'); }
+  function inRange(d,de,ate){ if(!d) return false; if(de && d<de) return false; if(ate && d>ate) return false; return true; }
+
+  /* ===== Status badge ===== */
+  function statusBadge(status){
+    const map={
+      "Revisando":{cls:"st-revisando",icon:"bi-search"},
+      "Aguardando Cliente":{cls:"st-aguardando",icon:"bi-hourglass-split"},
+      "Concluído":{cls:"st-concluido",icon:"bi-check-circle"},
+      "Cancelado":{cls:"st-cancelado",icon:"bi-x-circle"}
+    };
+    const s=map[status]||map["Revisando"];
+    return `<span class="status-badge ${s.cls}"><i class="bi ${s.icon}"></i><span>${esc(status||'Revisando')}</span></span>`;
+  }
+
+  /* ===== Estoque ===== */
+  const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
+  function loadStock(){
+    for(const k of STOCK_KEYS){
+      try{ const raw=localStorage.getItem(k); if(raw){ const arr=JSON.parse(raw)||[]; return {key:k, items:Array.isArray(arr)?arr:[]}; } }catch(e){}
+    }
+    return {key:null, items:[]};
+  }
+  function saveStock(key,items){ if(key) localStorage.setItem(key, JSON.stringify(items)); }
+
+  let estoque = loadStock();
+  estoque.items = (estoque.items||[]).map(it=>({
+    sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
+    qtd:Number(it.qtd??0), alerta:Number(it.alerta??0),
+    preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"")
+  }));
+
+  /* ===== OS storage ===== */
+  const OS_KEY="oficina.jobs.v1";
+  let jobs = (()=>{ try{ const j=JSON.parse(localStorage.getItem(OS_KEY)); return Array.isArray(j)?j:[]; }catch(e){ return []; } })();
+  const saveJobs = ()=> localStorage.setItem(OS_KEY, JSON.stringify(jobs));
+
+  /* ===== Estado ===== */
+  let editingId=null, cart=[]; // {sku,nome,preco,qtd}
+
+  /* ===== Filtros ===== */
+  function filterRows(list){
+    const q=($("search").value||"").toLowerCase(), fc=$("fCliente").value, de=$("dFrom").value, ate=$("dTo").value;
+    return list.filter(r=>{
+      const mQ=!q||[r.cliente,r.modelo,r.mecanico,r.placa,r.status].join(" ").toLowerCase().includes(q);
+      const mC=!fc||r.cliente===fc;
+      const mD=inRange(r.entrada,de,ate);
+      return mQ&&mC&&mD;
+    });
+  }
+
+  /* ===== UI ===== */
+  function rebuildClientFilter(){
+    const sel=$("fCliente");
+    const set=[...new Set(jobs.map(j=>j.cliente).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos</option>'+set.map(c=>`<option>${esc(c)}</option>`).join("");
+  }
+
+  function renderTable(){
+    const data=filterRows(jobs);
+    const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0),0);
+    const emOficina=data.filter(j=>j.status!=="Concluído").length;
+    $("mConsertos").textContent=data.length;
+    $("mOficina").textContent=emOficina;
+    $("mValor").textContent=money(total);
+    const custo=data.reduce((s,j)=> s+(+j.subtotal||0),0);
+    $("mLucro").textContent=money(total - custo);
+
+    const tbody=$("tbody"), empty=$("empty");
+    if(!data.length){ tbody.innerHTML=""; empty.style.display="block"; return; }
+    empty.style.display="none";
+    tbody.innerHTML=data.map(j=>`
+      <tr>
+        <td>${esc(j.cliente||"-")}</td>
+        <td>${esc(j.modelo||"-")}</td>
+        <td>${esc(j.placa||"-")}</td>
+        <td>${esc(j.entrada||"-")}</td>
+        <td>${esc(j.saida||"-")}</td>
+        <td>${esc(j.mecanico||"-")}</td>
+        <td>${statusBadge(j.status)}</td>
+        <td class="text-end">${money(+j.valor||0)}</td>
+        <td class="text-end">${money(+j.subtotal||0)}</td>
+        <td class="text-end">${money((+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0))}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-ghost" data-action="print" data-id="${j.id}">Imprimir SO</button>
+          <button class="btn btn-sm btn-ghost" data-action="edit" data-id="${j.id}">Editar</button>
+          <button class="btn btn-sm btn-ghost" data-action="del" data-id="${j.id}">Excluir</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  /* ===== Peças (modal) ===== */
+  function rebuildPartCats(){
+    const sel=$("pCategoria");
+    const cats=[...new Set(estoque.items.map(i=>i.categoria).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  }
+  function renderParts(){
+    const q=($("pSearch").value||"").toLowerCase(), cat=$("pCategoria").value;
+    const reserved=new Map(cart.map(x=>[x.sku,x.qtd]));
+    const items=estoque.items.filter(it=>{
+      const mQ=!q||[it.sku,it.nome,it.categoria].join(" ").toLowerCase().includes(q);
+      const mC=!cat||(it.categoria||"")===cat;
+      return mQ&&mC;
+    }).slice(0,80);
+
+    $("partsList").innerHTML = items.map(it=>{
+      const disp=Math.max(0,(+it.qtd||0)-(reserved.get(it.sku)||0));
+      const qid="q_"+safeId(it.sku);
+      return `
+        <div class="part-card">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">${esc(it.nome||"-")}</div>
+            <span class="badge-soft">SKU ${esc(it.sku||"-")}</span>
+          </div>
+          <div class="small text-muted">Cat: ${esc(it.categoria||"-")} • Em estoque: ${disp} • Preço: <strong>${money(+it.preco||0)}</strong></div>
+          <div class="d-flex gap-2 mt-1">
+            <input id="${qid}" type="number" min="1" value="1" class="form-control form-control-sm" style="max-width:90px">
+            <button class="btn btn-sm btn-primary-clean" data-action="addPart" data-sku="${encodeURIComponent(it.sku)}" data-qid="${qid}">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("") || `<div class="text-muted">Nada encontrado…</div>`;
+  }
+
+  /* ===== Carrinho ===== */
+  function renderCart(){
+    $("cartList").innerHTML = cart.map((it,i)=>`
+      <div class="cart-item d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">${esc(it.nome)}</div>
+          <div class="small text-muted">SKU ${esc(it.sku)} • ${money(it.preco)} • Qtd:
+            <input data-action="changeQty" data-idx="${i}" type="number" min="1" value="${it.qtd}" class="form-control form-control-sm d-inline-block ms-1 mono" style="width:80px">
+          </div>
+        </div>
+        <div class="right-num mono">
+          ${money(it.qtd*it.preco)} 
+          <button class="btn btn-sm btn-ghost ms-2" data-action="removePart" data-idx="${i}"><i class="bi bi-x-lg"></i></button>
+        </div>
+      </div>
+    `).join("") || `<div class="text-muted">Carrinho vazio…</div>`;
+
+    const subtotal=cart.reduce((s,x)=>s+x.qtd*x.preco,0);
+    $("cSubtotal").textContent=money(subtotal);
+    const total=(+$("iValor").value||0)+subtotal-(+$("cDesconto").value||0); // mão de obra NÃO entra
+    $("cTotal").textContent=money(Math.max(0,total));
+  }
+
+  function resetModal(){
+    editingId=null; cart=[];
+    $("formOS").reset();
+    $("iEntrada").value=todayISO();
+    $("iStatus").value="Revisando";
+    $("cDesconto").value=0;
+    $("iPagamento").value="Dinheiro";
+    $("iMaoObra").value=0;
+    $("iObs").value="";
+
+    estoque = loadStock();
+    estoque.items = (estoque.items||[]).map(it=>({
+      sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
+      qtd:Number(it.qtd??0), alerta:Number(it.alerta??0),
+      preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"")
+    }));
+    rebuildPartCats(); renderParts(); renderCart();
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('modalOS'));
+
+  // Abrir modal
+  $("btnNova").addEventListener("click", ()=>{ $("modalTitle").textContent="Nova OS"; resetModal(); modal.show(); });
+
+  // Filtros / busca
+  $("search").addEventListener("input", renderTable);
+  $("fCliente").addEventListener("change", renderTable);
+  $("dFrom").addEventListener("input", renderTable);
+  $("dTo").addEventListener("input", renderTable);
+
+  // Peças
+  $("pSearch").addEventListener("input", renderParts);
+  $("pCategoria").addEventListener("change", renderParts);
+
+  // Totais
+  $("cDesconto").addEventListener("input", renderCart);
+  $("iValor").addEventListener("input", renderCart);
+
+  // Lista de peças (delegação)
+  $("partsList").addEventListener("click", function(ev){
+    const btn=ev.target.closest("[data-action='addPart']"); if(!btn) return;
+    const sku=decodeURIComponent(btn.dataset.sku), qid=btn.dataset.qid;
+    const it=estoque.items.find(x=>x.sku===sku);
+    if(!it){ alert("Peça não encontrada no estoque."); return; }
+    let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
+    const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
+    const disp=Math.max(0,(+it.qtd||0)-reserved);
+    if(q>disp) q=disp;
+    if(q<=0){ alert("Sem quantidade disponível."); return; }
+    const i=cart.findIndex(x=>x.sku===sku);
+    if(i>=0) cart[i].qtd+=q;
+    else cart.push({sku, nome:it.nome, preco:+it.preco||0, qtd:q}); // sempre PREÇO
+    renderCart(); renderParts();
+  });
+
+  // Carrinho (delegação)
+  $("cartList").addEventListener("input", function(ev){
+    if(ev.target.dataset.action!=="changeQty") return;
+    const i=+ev.target.dataset.idx; let q=Math.max(1, parseInt(ev.target.value||"1",10));
+    const sku=cart[i].sku, stock=+(estoque.items.find(x=>x.sku===sku)?.qtd||0);
+    const others=cart.filter((_,idx)=>idx!==i && _.sku===sku).reduce((s,x)=>s+x.qtd,0);
+    const disp=Math.max(0, stock-others);
+    if(q>disp) q=disp;
+    cart[i].qtd=q; renderCart(); renderParts();
+  });
+  $("cartList").addEventListener("click", function(ev){
+    const btn=ev.target.closest("[data-action='removePart']"); if(!btn) return;
+    cart.splice(+btn.dataset.idx,1); renderCart(); renderParts();
+  });
+
+  // Salvar OS
+  let saving=false;
+  $("btnSalvarOS").addEventListener("click", function(){
+    if(saving) return; // evita duplicidade
+    const form=$("formOS");
+    if(!form.reportValidity()){ form.classList.add("was-validated"); return; }
+    saving=true; this.disabled=true;
+
+    const job={
+      id: editingId || String(Date.now()),
+      cliente:$("iCliente").value.trim(),
+      modelo:$("iModelo").value.trim(),
+      placa:$("iPlaca").value.trim().toUpperCase(),
+      entrada:$("iEntrada").value,
+      saida:$("iSaida").value,
+      mecanico:$("iMecanico").value.trim(),
+      status:$("iStatus").value,
+      pagamento:$("iPagamento").value,
+      valor:+$("iValor").value||0,
+      desconto:+$("cDesconto").value||0,
+      maoObra:+$("iMaoObra").value||0, // interno
+      obs:$("iObs").value||"",
+      pecas:cart.map(x=>({sku:x.sku,nome:x.nome,preco:+x.preco||0,qtd:+x.qtd||0})),
+      subtotal:cart.reduce((s,x)=>s+x.qtd*x.preco,0)
+    };
+
+    const old=jobs.find(j=>j.id===job.id);
+    const before=new Map((old?.pecas||[]).map(p=>[p.sku,p.qtd]));
+    const after=new Map(job.pecas.map(p=>[p.sku,p.qtd]));
+    const map=new Map(estoque.items.map(it=>[it.sku,it]));
+    const skus=new Set([].concat(Array.from(before.keys()), Array.from(after.keys())));
+    skus.forEach(function(sku){
+      const delta=(after.get(sku)||0)-(before.get(sku)||0); // >0 consome
+      const it=map.get(sku); if(it){ it.qtd=(+it.qtd||0)-delta; if(it.qtd<0) it.qtd=0; }
+    });
+    estoque.items=[...map.values()];
+    saveStock(estoque.key, estoque.items);
+
+    if(old){ const i=jobs.findIndex(j=>j.id===job.id); jobs[i]=job; }
+    else jobs.push(job);
+    saveJobs();
+
+    rebuildClientFilter(); renderTable();
+    modal.hide(); resetModal();
+    saving=false; $("btnSalvarOS").disabled=false;
+  });
+
+  // Ações tabela
+  $("tbody").addEventListener("click", function(ev){
+    const btn=ev.target.closest("[data-action]"); if(!btn) return;
+    const id=btn.dataset.id, act=btn.dataset.action;
+    if(act==="edit"){
+      const j=jobs.find(x=>x.id===id); if(!j) return;
+      editingId=j.id; $("modalTitle").textContent="Editar OS";
+      $("iCliente").value=j.cliente||""; $("iModelo").value=j.modelo||"";
+      $("iPlaca").value=j.placa||""; $("iEntrada").value=j.entrada||todayISO();
+      $("iSaida").value=j.saida||""; $("iMecanico").value=j.mecanico||"";
+      $("iStatus").value=j.status||"Revisando"; $("iValor").value=+j.valor||0;
+      $("cDesconto").value=+j.desconto||0; $("iPagamento").value=j.pagamento||"Dinheiro";
+      $("iMaoObra").value=+j.maoObra||0; $("iObs").value=j.obs||"";
+      cart=(j.pecas||[]).map(p=>({sku:p.sku,nome:p.nome,preco:+p.preco||0,qtd:+p.qtd||0}));
+      renderCart(); rebuildPartCats(); renderParts(); modal.show();
+    }
+    if(act==="del"){
+      if(!confirm("Excluir esta OS?")) return;
+      const j=jobs.find(x=>x.id===id); if(!j) return;
+      const map=new Map(estoque.items.map(it=>[it.sku,it]));
+      (j.pecas||[]).forEach(p=>{ const it=map.get(p.sku); if(it){ it.qtd=(+it.qtd||0)+(+p.qtd||0); } });
+      estoque.items=[...map.values()]; saveStock(estoque.key, estoque.items);
+      jobs=jobs.filter(x=>x.id!==id); saveJobs();
+      rebuildClientFilter(); renderTable();
+    }
+    if(act==="print"){
+      const j=jobs.find(x=>x.id===id); if(!j) return;
+      printReceiptInline(j);
+    }
+  });
+
+  /* ===== Impressão via iframe oculto ===== */
+  function buildReceiptInDoc(doc, j){
+    while(doc.head.firstChild) doc.head.removeChild(doc.head.firstChild);
+    while(doc.body.firstChild) doc.body.removeChild(doc.body.firstChild);
+
+    const style=doc.createElement('style');
+    style.textContent=`*{box-sizing:border-box} body{margin:0;padding:12px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
+    .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th,td{padding:4px 0;border-bottom:1px dotted #ddd}
+    td.r{text-align:right}`;
+    doc.head.appendChild(style);
+
+    const add=(tag,txt,cls)=>{const el=doc.createElement(tag); if(cls) el.className=cls; if(txt!=null) el.textContent=txt; doc.body.appendChild(el); return el;};
+
+    add('div','Rota Motos','c b');
+    add('div','CNPJ 60.469.425/0001-76','c');
+    add('div','Ordem de Compra','c');
+    add('div','', 'ln');
+
+    add('div','Dados do Cliente','c b');
+    add('div','Nome Cliente: '+(j.cliente||''));
+    add('div','Moto Cliente: '+(j.modelo||''));
+    add('div','Placa da moto: '+(j.placa||''));
+    add('div','Entrada: '+(j.entrada||''));
+    add('div','', 'ln');
+
+    add('div','Dados do Mecânico','c b');
+    add('div','Nome Mecânico: '+(j.mecanico||''));
+    add('div','', 'ln');
+
+    add('div','Dados de Compras','c b');
+
+    if((j.pecas||[]).length){
+      const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
+      ['Item','Qtde','Preço','Total'].forEach((h,i)=>{const th=doc.createElement('th'); th.textContent=h; if(i>0) th.className='r'; trh.appendChild(th);});
+      thead.appendChild(trh); t.appendChild(thead);
+      const tb=doc.createElement('tbody');
+      (j.pecas||[]).forEach(p=>{
+        const tr=doc.createElement('tr');
+        const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+        tr.appendChild(td(p.nome||'-'));
+        tr.appendChild(td(p.qtd,'r'));
+        tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+        tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); doc.body.appendChild(t);
+    } else {
+      add('div','Sem itens.');
+    }
+
+    const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+    const total=(+j.valor||0)+subtotal-(+j.desconto||0); // mão de obra não entra
+    add('div','', 'ln');
+    add('div','Forma de Pagamento: '+(j.pagamento||''));
+    const row1=doc.createElement('div'); row1.style.display='flex'; row1.style.justifyContent='space-between';
+    const l1=doc.createElement('div'); l1.textContent='Subtotal:'; const r1=doc.createElement('div'); r1.textContent=BRL.format(subtotal); r1.className='b';
+    row1.appendChild(l1); row1.appendChild(r1); doc.body.appendChild(row1);
+    const row2=doc.createElement('div'); row2.style.display='flex'; row2.style.justifyContent='space-between';
+    const l2=doc.createElement('div'); l2.textContent='Descontos:'; const r2=doc.createElement('div'); r2.textContent=BRL.format(+j.desconto||0);
+    row2.appendChild(l2); row2.appendChild(r2); doc.body.appendChild(row2);
+    const row3=doc.createElement('div'); row3.style.display='flex'; row3.style.justifyContent='space-between';
+    const l3=doc.createElement('div'); l3.textContent='Valor Total:'; const r3=doc.createElement('div'); r3.textContent=BRL.format(Math.max(0,total)); r3.className='b';
+    row3.appendChild(l3); row3.appendChild(r3); doc.body.appendChild(row3);
+
+    add('div','', 'ln');
+    add('div','Observações','c b');
+    add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+  }
+
+  function printReceiptInline(j){
+    const iframe=document.createElement("iframe");
+    iframe.style.position="fixed"; iframe.style.right="-9999px"; iframe.style.bottom="0";
+    iframe.width="0"; iframe.height="0"; iframe.setAttribute("aria-hidden","true");
+    document.body.appendChild(iframe);
+    const d=iframe.contentDocument||iframe.contentWindow.document;
+    buildReceiptInDoc(d,j);
+    setTimeout(()=>{ try{iframe.contentWindow.focus(); iframe.contentWindow.print();}catch(e){} setTimeout(()=>iframe.remove(),1200); }, 80);
+  }
+
+  /* ===== Init ===== */
+  (function init(){
+    $("iEntrada").value=todayISO();
+    const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0');
+    $("dFrom").value=`${y}-${m}-01`; $("dTo").value=todayISO();
+
+    rebuildClientFilter(); rebuildPartCats(); renderParts(); renderTable();
+  })();
+})();
+</script>
+</body>
+</html>

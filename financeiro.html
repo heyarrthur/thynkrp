@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rota Motos — Financeiro</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+:root{--ink:#0f172a;--muted:#6b7280;--border:#e6e8ef;--accent:#f59e0b;--nav-h:64px}
+*{box-sizing:border-box}
+body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
+.container{max-width:1180px}
+.navbar{background:#fff;border-bottom:1px solid var(--border)}
+.brand{display:flex;gap:.5rem;align-items:center;font-weight:800}
+.brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center}
+.nav-link{color:var(--ink);font-weight:600;border-radius:8px}
+.nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+
+.card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
+.metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
+.metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.i-balance{background:#0ea5e9}.i-in{background:#10b981}.i-out{background:#ef4444}.i-work{background:#f59e0b}
+.metric .label{color:var(--muted);font-size:.9rem}
+.metric .value{font-weight:800;font-size:1.35rem}
+
+.toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem;overflow:visible}
+.form-control,.form-select{border-radius:10px;border-color:var(--border)}
+.form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
+.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
+.btn-ghost:hover{background:#f9fafb}
+.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+
+.table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700}
+.empty{color:#6b7280;text-align:center;padding:2rem 0}
+
+.chart-card{padding:1rem}
+canvas{max-height:300px}
+
+/* ===== Ferramentas (dropdown melhorado) ===== */
+.tools-menu.dropdown-menu{
+  width:min(360px,calc(100vw - 32px));
+  min-width:300px;
+  white-space:normal;
+  word-break:break-word;
+  border-radius:12px;
+  border:1px solid var(--border);
+  box-shadow:0 12px 28px rgba(2,6,23,.12);
+  padding:.5rem;
+  z-index:1055;
+}
+.tools-menu .dropdown-item{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.55rem .65rem;line-height:1.25;border-radius:8px;
+}
+.tools-menu .dropdown-item i{flex:0 0 18px;font-size:1rem}
+@media (max-width:480px){ .tools-menu.dropdown-menu{min-width:260px} }
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand brand" href="#"><span class="logo">RM</span>Rota Motos</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="topnav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
+        <li class="nav-item"><a class="nav-link" href="oficina.html">Oficina</a></li>
+        <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
+        <li class="nav-item"><a class="nav-link active" href="financeiro.html">Financeiro</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- Cards -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-balance"><i class="bi bi-cash-stack"></i></div>
+        <div><div class="label">Saldo no período</div><div id="kSaldo" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-in"><i class="bi bi-arrow-down-circle"></i></div>
+        <div><div class="label">Entradas</div><div id="kIn" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-out"><i class="bi bi-arrow-up-circle"></i></div>
+        <div><div class="label">Saídas</div><div id="kOut" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-soft metric">
+        <div class="icon i-work"><i class="bi bi-hammer"></i></div>
+        <div><div class="label">Mão de Obra</div><div id="kMO" class="value">R$ 0,00</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros + Ferramentas + Botões de inclusão -->
+  <div class="toolbar mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label mb-1">De</label>
+        <input id="fDe" type="date" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Até</label>
+        <input id="fAte" type="date" class="form-control">
+      </div>
+
+      <!-- Ferramentas -->
+      <div class="col-md-2 d-grid position-static">
+        <div class="dropdown" data-bs-display="static">
+          <button class="btn btn-ghost dropdown-toggle w-100" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-tools"></i> Ferramentas
+          </button>
+          <ul class="tools-menu dropdown-menu">
+            <li>
+              <button class="dropdown-item" id="exAll">
+                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Tudo (Resumo)</span>
+              </button>
+            </li>
+            <li>
+              <button class="dropdown-item" id="exIn">
+                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Entradas</span>
+              </button>
+            </li>
+            <li>
+              <button class="dropdown-item" id="exOut">
+                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Saídas</span>
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button class="dropdown-item" id="exMO">
+                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Mão de Obra</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Botões de inclusão -->
+      <div class="col-md-4 d-grid d-md-flex gap-2">
+        <button id="btnAddEntrada" class="btn btn-primary-clean flex-fill">
+          <i class="bi bi-plus-circle"></i> Adicionar Entradas
+        </button>
+        <button id="btnAddSaida" class="btn btn-ghost flex-fill">
+          <i class="bi bi-dash-circle"></i> Adicionar Saídas
+        </button>
+        <button id="btnAddDesp" class="btn btn-ghost flex-fill">
+          <i class="bi bi-receipt"></i> Adicionar Despesas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-4">
+      <div class="card-soft chart-card">
+        <h6 class="mb-2">Entradas x Saídas</h6>
+        <canvas id="chES"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card-soft chart-card">
+        <h6 class="mb-2">Entradas por Forma de Pagamento</h6>
+        <canvas id="chFP"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card-soft chart-card">
+        <h6 class="mb-2">Composição de Entradas</h6>
+        <canvas id="chComp"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-soft chart-card mb-3">
+    <h6 class="mb-2">Fluxo Diário</h6>
+    <canvas id="chFlux"></canvas>
+  </div>
+
+  <!-- Tabela (entradas de OS) -->
+  <div class="card-soft p-0">
+    <div class="table-responsive" style="max-height:60vh;">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Mecânico</th>
+            <th class="text-end">Serviço</th>
+            <th class="text-end">Peças</th>
+            <th class="text-end">Desconto</th>
+            <th class="text-end">Mão de Obra</th>
+            <th class="text-end">Total (Entrada)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty">Sem lançamentos no período.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: Entrada avulsa -->
+<div class="modal fade" id="modalEntrada" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Adicionar Entrada</h5>
+      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Data</label>
+          <input id="eData" type="date" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Forma de Pagamento</label>
+          <select id="eFP" class="form-select">
+            <option>Dinheiro</option>
+            <option>PIX</option>
+            <option>Cartão Débito</option>
+            <option>Cartão de Crédito</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descrição</label>
+          <input id="eDesc" type="text" class="form-control" placeholder="Ex.: Venda balcão / Serviço avulso">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Valor</label>
+          <input id="eValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+      <button id="saveEntrada" class="btn btn-primary-clean">Salvar</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- MODAL: Saída / Despesa -->
+<div class="modal fade" id="modalGasto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 id="gTitle" class="modal-title">Adicionar Saída</h5>
+      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Data</label>
+          <input id="gData" type="date" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Categoria (opcional)</label>
+          <input id="gCat" type="text" class="form-control" placeholder="Ex.: Aluguel, Energia...">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descrição</label>
+          <input id="gDesc" type="text" class="form-control" placeholder="Ex.: Pagamento fornecedor">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Valor</label>
+          <input id="gValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+      <button id="saveGasto" class="btn btn-primary-clean">Salvar</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+  if (window.__RM_FIN_INIT__) return; window.__RM_FIN_INIT__ = true;
+
+  const BRL  = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  const $    = id => document.getElementById(id);
+  const num  = v => isNaN(+v)?0:+v;
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  /* ===== Storage helpers ===== */
+  const OS_KEYS   = ["oficina.jobs.v1","oficina.jobs","oficina"];          // OS (entradas)
+  const IN_KEY    = "finance.incomes.v1";                                  // entradas avulsas
+  const EXP_KEYS  = ["finance.expenses.v1","finance.expenses"];            // saídas/despesas
+
+  function readArray(key){ try{ const r=localStorage.getItem(key); const a=JSON.parse(r); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function writeArray(key, arr){ localStorage.setItem(key, JSON.stringify(arr||[])); }
+  function readFirst(keys){
+    for(const k of keys){
+      try{ const r=localStorage.getItem(k); const a=JSON.parse(r); if(Array.isArray(a)) return {key:k, data:a}; }catch(e){}
+    }
+    return {key:null, data:[]};
+  }
+
+  // OS da Oficina (entradas)
+  let jobs = readFirst(OS_KEYS).data.map(j=>({
+    entrada: String(j.entrada||""),
+    cliente: String(j.cliente||""),
+    mecanico:String(j.mecanico||""),
+    pagamento:String(j.pagamento||"Outro"),
+    valor:   num(j.valor),
+    subtotal:num(j.subtotal),  // peças (preço venda)
+    desconto:num(j.desconto),
+    maoObra: num(j.maoObra||0)
+  }));
+
+  // Entradas avulsas
+  let incomes = readArray(IN_KEY).map(i=>({
+    data:String(i.data||""), descricao:String(i.descricao||""), valor:num(i.valor), pagamento:String(i.pagamento||"Outro")
+  }));
+
+  // Saídas/Despesas
+  const expStore = readFirst(EXP_KEYS);
+  let expenses = expStore.data.map(e=>({
+    data:String(e.data||""), descricao:String(e.descricao||""), categoria:String(e.categoria||""), valor:Math.abs(num(e.valor)), tipo:(e.tipo||"saida")
+  }));
+
+  /* ===== Filtros ===== */
+  function inRange(d, de, ate){
+    if(!d) return false;
+    if(de && d < de) return false;
+    if(ate && d > ate) return false;
+    return true;
+  }
+  function filtered(){
+    const de=$('fDe').value, ate=$('fAte').value;
+    const os   = jobs.filter(j=> inRange(j.entrada, de, ate));
+    const incs = incomes.filter(i=> inRange(i.data, de, ate));
+    const outs = expenses.filter(e=> inRange(e.data, de, ate));
+    return {os, incs, outs, periodoTxt:(de?`De ${de}`:'')+(de||ate?' ':'')+(ate?`até ${ate}`:'')};
+  }
+
+  /* ===== Render ===== */
+  let chES, chFP, chFlux, chComp;
+  function destroyCharts(){ [chES,chFP,chFlux,chComp].forEach(c=>{ try{c&&c.destroy();}catch(e){} }); chES=chFP=chFlux=chComp=null; }
+
+  function render(){
+    const {os, incs, outs} = filtered();
+
+    const entradasOS   = os.reduce((s,j)=> s + (j.valor + j.subtotal - j.desconto), 0);
+    const entradasAv   = incs.reduce((s,i)=> s + i.valor, 0);
+    const entradasTot  = entradasOS + entradasAv;
+    const saidasTot    = outs.reduce((s,e)=> s + e.valor, 0);
+    const saldo        = entradasTot - saidasTot;
+    const maoObraTot   = os.reduce((s,j)=> s + j.maoObra, 0);
+
+    $('kIn').textContent    = BRL.format(entradasTot);
+    $('kOut').textContent   = BRL.format(saidasTot);
+    $('kSaldo').textContent = BRL.format(saldo);
+    $('kMO').textContent    = BRL.format(maoObraTot);
+
+    // Tabela (somente OS, como referência)
+    const tb=$('tbody'), empty=$('empty');
+    tb.innerHTML='';
+    if(!os.length){ empty.style.display='block'; } else {
+      empty.style.display='none';
+      os.forEach(j=>{
+        const tr=document.createElement('tr');
+        const td=(t,c)=>{const e=document.createElement('td'); if(c) e.className=c; e.textContent=t; return e;};
+        tr.appendChild(td(j.entrada||'-'));
+        tr.appendChild(td(j.cliente||'-'));
+        tr.appendChild(td(j.mecanico||'-'));
+        tr.appendChild(td(BRL.format(j.valor),'text-end'));
+        tr.appendChild(td(BRL.format(j.subtotal),'text-end'));
+        tr.appendChild(td(BRL.format(j.desconto),'text-end'));
+        tr.appendChild(td(BRL.format(j.maoObra),'text-end'));
+        tr.appendChild(td(BRL.format(j.valor + j.subtotal - j.desconto),'text-end'));
+        tb.appendChild(tr);
+      });
+    }
+
+    // Gráficos
+    destroyCharts();
+    // Entradas x Saídas
+    chES = new Chart(document.getElementById('chES'),{
+      type:'doughnut',
+      data:{labels:['Entradas','Saídas'],datasets:[{data:[entradasTot,saidasTot]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+    // Entradas por FP (OS + avulsas)
+    const mapFP = new Map([['Dinheiro',0],['PIX',0],['Cartão Débito',0],['Cartão de Crédito',0],['Outro',0]]);
+    os.forEach(j=>{ const fp=mapFP.has(j.pagamento)?j.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+(j.valor+j.subtotal-j.desconto)); });
+    incs.forEach(i=>{ const fp=mapFP.has(i.pagamento)?i.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+i.valor); });
+    chFP = new Chart(document.getElementById('chFP'),{
+      type:'doughnut',
+      data:{labels:[...mapFP.keys()],datasets:[{data:[...mapFP.values()]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+    // Composição de Entradas
+    const compServ = os.reduce((s,j)=> s+j.valor,0);
+    const compPcs  = os.reduce((s,j)=> s+j.subtotal,0);
+    const compDesc = os.reduce((s,j)=> s+Math.max(0,j.desconto),0);
+    const compAv   = incs.reduce((s,i)=> s+i.valor,0);
+    chComp = new Chart(document.getElementById('chComp'),{
+      type:'doughnut',
+      data:{labels:['Serviço','Peças','(-) Descontos','Entradas Avulsas'],datasets:[{data:[compServ,compPcs,compDesc,compAv]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+    // Fluxo diário
+    const de=$('fDe').value, ate=$('fAte').value;
+    const labels=(de&&ate)?(function(){const a=[],d0=new Date(de),d1=new Date(ate);for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))a.push(d.toISOString().slice(0,10));return a;})():[];
+    const mapIn=new Map(labels.map(d=>[d,0])), mapOut=new Map(labels.map(d=>[d,0]));
+    os.forEach(j=>{ if(mapIn.has(j.entrada)) mapIn.set(j.entrada, mapIn.get(j.entrada)+(j.valor+j.subtotal-j.desconto)); });
+    incs.forEach(i=>{ if(mapIn.has(i.data)) mapIn.set(i.data, mapIn.get(i.data)+i.valor); });
+    outs.forEach(e=>{ if(mapOut.has(e.data)) mapOut.set(e.data, mapOut.get(e.data)+e.valor); });
+    chFlux = new Chart(document.getElementById('chFlux'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Entradas',data:labels.map(d=>mapIn.get(d)||0),tension:.2},
+        {label:'Saídas',  data:labels.map(d=>mapOut.get(d)||0),tension:.2}
+      ]},
+      options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}
+    });
+  }
+
+  /* ===== PDF ===== */
+  function buildStyles(doc){ const st=doc.createElement('style'); st.textContent=`*{box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace} body{margin:0;padding:12px;font-size:12px} .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0} table{width:100%;border-collapse:collapse;margin-top:6px} th,td{padding:4px 0;border-bottom:1px dotted #ddd} td.r{text-align:right} h4{margin:.25rem 0}`; doc.head.appendChild(st); }
+  function wipe(doc){ while(doc.head.firstChild) doc.head.removeChild(doc.head.firstChild); while(doc.body.firstChild) doc.body.removeChild(doc.body.firstChild); }
+  function header(doc,t,per){ const add=(tx,cls,b)=>{const d=doc.createElement('div'); if(cls) d.className=cls; if(b) d.style.fontWeight='700'; d.textContent=tx; doc.body.appendChild(d);}; add('Rota Motos','c b',true); add(t,'c'); if(per) add(per,'c'); const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln); }
+  function tEntradasOS(doc, list){
+    const h4=doc.createElement('h4'); h4.textContent='Entradas (Oficina)'; doc.body.appendChild(h4);
+    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
+    ['Data','Cliente','Mecânico','Serviço','Peças','Desconto','Total'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i>=3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
+    const tb=doc.createElement('tbody'); let total=0;
+    list.forEach(j=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;}; const tot=j.valor+j.subtotal-j.desconto;
+      tr.appendChild(td(j.entrada||'-')); tr.appendChild(td(j.cliente||'-')); tr.appendChild(td(j.mecanico||'-')); tr.appendChild(td(BRL.format(j.valor),'r')); tr.appendChild(td(BRL.format(j.subtotal),'r')); tr.appendChild(td(BRL.format(j.desconto),'r')); tr.appendChild(td(BRL.format(tot),'r')); tb.appendChild(tr); total+=tot;});
+    t.appendChild(tb); doc.body.appendChild(t);
+    const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
+    const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent='Total (Oficina):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
+    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+  }
+  function tEntradasAvulsas(doc, list){
+    const h4=doc.createElement('h4'); h4.textContent='Entradas (Avulsas)'; doc.body.appendChild(h4);
+    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
+    ['Data','Descrição','Forma de Pagamento','Valor'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
+    const tb=doc.createElement('tbody'); let total=0;
+    list.forEach(i=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      tr.appendChild(td(i.data||'-')); tr.appendChild(td(i.descricao||'-')); tr.appendChild(td(i.pagamento||'-')); tr.appendChild(td(BRL.format(i.valor),'r')); tb.appendChild(tr); total+=i.valor;});
+    t.appendChild(tb); doc.body.appendChild(t);
+    const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
+    const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent='Total (Avulsas):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
+    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+  }
+  function tSaidas(doc, list){
+    const h4=doc.createElement('h4'); h4.textContent='Saídas (Despesas)'; doc.body.appendChild(h4);
+    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
+    ['Data','Descrição','Categoria','Valor','Tipo'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
+    const tb=doc.createElement('tbody'); let total=0;
+    list.forEach(e=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const el=doc.createElement('td'); if(cls) el.className=cls; el.textContent=tx; return el;};
+      tr.appendChild(td(e.data||'-')); tr.appendChild(td(e.descricao||'-')); tr.appendChild(td(e.categoria||'-')); tr.appendChild(td(BRL.format(e.valor),'r')); tr.appendChild(td(e.tipo||'-')); tb.appendChild(tr); total+=e.valor;});
+    t.appendChild(tb); doc.body.appendChild(t);
+    const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
+    const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent='Total de Saídas:'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
+    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+  }
+  function exportPDF(kind){
+    const {os, incs, outs, periodoTxt} = filtered();
+    const iframe=document.createElement('iframe');
+    iframe.style.position='fixed'; iframe.style.right='-9999px'; iframe.style.bottom='0';
+    iframe.width='0'; iframe.height='0'; iframe.setAttribute('aria-hidden','true');
+    document.body.appendChild(iframe);
+    const build=(d)=>{
+      wipe(d); buildStyles(d);
+      if(kind==='in'){
+        header(d,'Relatório — Entradas',periodoTxt);
+        tEntradasOS(d,os); tEntradasAvulsas(d,incs);
+      } else if(kind==='out'){
+        header(d,'Relatório — Saídas',periodoTxt);
+        tSaidas(d,outs);
+      } else if(kind==='mo'){
+        header(d,'Relatório — Mão de Obra',periodoTxt);
+        const onlyMO=os.filter(j=>num(j.maoObra)>0);
+        // tabela MO
+        const h4=d.createElement('h4'); h4.textContent='Mão de Obra (Oficina)'; d.body.appendChild(h4);
+        const t=d.createElement('table'), H=d.createElement('thead'), R=d.createElement('tr');
+        ['Data','Cliente','Mecânico','Mão de Obra'].forEach((tx,i)=>{const th=d.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; R.appendChild(th);}); H.appendChild(R); t.appendChild(H);
+        const B=d.createElement('tbody'); let total=0;
+        onlyMO.forEach(j=>{const tr=d.createElement('tr'); const td=(tx,cls)=>{const e=d.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+          tr.appendChild(td(j.entrada||'-')); tr.appendChild(td(j.cliente||'-')); tr.appendChild(td(j.mecanico||'-')); tr.appendChild(td(BRL.format(j.maoObra),'r'));
+          B.appendChild(tr); total+=j.maoObra;});
+        t.appendChild(B); d.body.appendChild(t);
+        const ln=d.createElement('div'); ln.className='ln'; d.body.appendChild(ln);
+        const row=d.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+        const l=d.createElement('div'); l.textContent='Total de Mão de Obra:'; const r=d.createElement('div'); r.textContent=BRL.format(total); r.className='b';
+        row.appendChild(l); row.appendChild(r); d.body.appendChild(row);
+      } else {
+        header(d,'Resumo Financeiro',periodoTxt);
+        tEntradasOS(d,os); tEntradasAvulsas(d,incs); tSaidas(d,outs);
+        const totalIn = os.reduce((s,j)=>s+(j.valor+j.subtotal-j.desconto),0) + incs.reduce((s,i)=>s+i.valor,0);
+        const totalOut= outs.reduce((s,e)=>s+e.valor,0);
+        const saldo= totalIn-totalOut;
+        const ln=d.createElement('div'); ln.className='ln'; d.body.appendChild(ln);
+        const row=d.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+        const l=d.createElement('div'); l.textContent='Saldo do Período:'; const r=d.createElement('div'); r.textContent=BRL.format(saldo); r.className='b';
+        row.appendChild(l); row.appendChild(r); d.body.appendChild(row);
+      }
+      setTimeout(()=>{ try{iframe.contentWindow.focus(); iframe.contentWindow.print();}catch(e){} setTimeout(()=>iframe.remove(),1200); },60);
+    };
+    const d=iframe.contentDocument || (iframe.contentWindow?iframe.contentWindow.document:null);
+    if(d) build(d); else iframe.addEventListener('load',()=>build(iframe.contentDocument||iframe.contentWindow.document));
+  }
+
+  /* ===== Inclusão: Entradas / Saídas / Despesas ===== */
+  const modalEntrada = new bootstrap.Modal(document.getElementById('modalEntrada'));
+  const modalGasto   = new bootstrap.Modal(document.getElementById('modalGasto'));
+  let tipoGasto = 'saida';
+
+  $('btnAddEntrada').addEventListener('click', ()=>{
+    $('eData').value = todayISO(); $('eDesc').value=''; $('eValor').value=''; $('eFP').value='Dinheiro';
+    modalEntrada.show();
+  });
+  $('saveEntrada').addEventListener('click', ()=>{
+    const data=$('eData').value, descricao=$('eDesc').value.trim(), valor=num($('eValor').value), pagamento=$('eFP').value;
+    if(!data || !valor){ alert('Informe data e valor.'); return; }
+    const arr = readArray(IN_KEY);
+    arr.push({data, descricao, valor, pagamento});
+    writeArray(IN_KEY, arr);
+    // refresca memória
+    incomes = arr.map(i=>({data:String(i.data||""), descricao:String(i.descricao||""), valor:num(i.valor), pagamento:String(i.pagamento||"Outro")}));
+    modalEntrada.hide(); render();
+  });
+
+  $('btnAddSaida').addEventListener('click', ()=>{
+    tipoGasto='saida';
+    $('gTitle').textContent='Adicionar Saída';
+    $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value='';
+    modalGasto.show();
+  });
+  $('btnAddDesp').addEventListener('click', ()=>{
+    tipoGasto='despesa';
+    $('gTitle').textContent='Adicionar Despesa';
+    $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value='';
+    modalGasto.show();
+  });
+  $('saveGasto').addEventListener('click', ()=>{
+    const data=$('gData').value, categoria=$('gCat').value.trim(), descricao=$('gDesc').value.trim(), valor=num($('gValor').value);
+    if(!data || !valor){ alert('Informe data e valor.'); return; }
+    const key = expStore.key || EXP_KEYS[0];
+    const arr = readArray(key);
+    arr.push({data, categoria, descricao, valor, tipo:tipoGasto});
+    writeArray(key, arr);
+    expenses = arr.map(e=>({data:String(e.data||""), descricao:String(e.descricao||""), categoria:String(e.categoria||""), valor:Math.abs(num(e.valor)), tipo:(e.tipo||"saida")}));
+    modalGasto.hide(); render();
+  });
+
+  /* ===== Eventos gerais ===== */
+  $('fDe').addEventListener('input', render);
+  $('fAte').addEventListener('input', render);
+  $('exAll').addEventListener('click', ()=> exportPDF('all'));
+  $('exIn').addEventListener('click',  ()=> exportPDF('in'));
+  $('exOut').addEventListener('click', ()=> exportPDF('out'));
+  $('exMO').addEventListener('click',  ()=> exportPDF('mo'));
+
+  // Período padrão: mês atual
+  const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0');
+  $('fDe').value=`${y}-${m}-01`; $('fAte').value=todayISO();
+
+  render();
+})();
+</script>
+</body>
+</html>
