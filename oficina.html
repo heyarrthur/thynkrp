@@ -731,7 +731,7 @@ function buildReceiptInDoc(doc, j){
   row('Subtotal:',    subtotalPecas, true);
   row('Mão de Obra:', maoDeObra,     false);
   row('Descontos:',   descontos,     false);
-  row('Valor Total:', total,         true);
+  row('Valor Total + Mão de Obra:', total,         true);
 
   add(wrap,'div','', 'ln');
   add(wrap,'div','Observações','c b');
@@ -748,5 +748,6 @@ function buildReceiptInDoc(doc, j){
 </script>
 </body>
 </html>
+
 
 
