@@ -172,7 +172,7 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
   </div>
 </div>
 
-<!-- MODAL OS (Salvar logo abaixo dos totais) -->
+<!-- MODAL OS -->
 <div class="modal fade" id="modalOS" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg"><div class="modal-content">
     <div class="modal-header">
@@ -253,7 +253,7 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
                 <input id="iValor" type="number" step="0.01" min="0" class="form-control mono" value="0">
               </div>
               <div class="col-md-4">
-                <label class="form-label">Mão de Obra (interno)</label>
+                <label class="form-label">Mão de Obra</label>
                 <input id="iMaoObra" type="number" step="0.01" min="0" class="form-control mono" value="0">
               </div>
               <div class="col-md-4">
@@ -395,7 +395,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return mQ&&mC&&mD;
     });
 
-    const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0),0);
+    const total=data.reduce((s,j)=> s+(+j.valor||0)+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0),0);
     const custo=data.reduce((s,j)=> s+(+j.subtotal||0),0);
     const emOficina=data.filter(j=>j.status!=="Concluído").length;
     $("mConsertos").textContent=data.length;
@@ -413,7 +413,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <td>${statusBadge(j.status)}</td>
         <td class="text-end">${money(+j.valor||0)}</td>
         <td class="text-end">${money(+j.subtotal||0)}</td>
-        <td class="text-end">${money((+j.valor||0)+(+j.subtotal||0)-(+j.desconto||0))}</td>
+        <td class="text-end">${money((+j.valor||0)+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0))}</td>
         <td class="text-nowrap">
           <button class="btn btn-sm btn-ghost" data-action="print" data-id="${j.id}">Imprimir SO</button>
           <button class="btn btn-sm btn-ghost" data-action="edit" data-id="${j.id}">Editar</button>
@@ -477,7 +477,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const subtotal=cart.reduce((s,x)=>s+x.qtd*x.preco,0);
     $("cSubtotal").textContent=money(subtotal);
-    const total=(+$("iValor").value||0)+subtotal-(+$("cDesconto").value||0); // mão de obra NÃO entra
+    const total=(+$("iValor").value||0)+(+$("iMaoObra").value||0)+subtotal-(+$("cDesconto").value||0); // Mão de obra ENTRA
     $("cTotal").textContent=money(Math.max(0,total));
   }
   function resetModal(){
@@ -511,6 +511,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Totais
   $("cDesconto").addEventListener("input", renderCart);
   $("iValor").addEventListener("input", renderCart);
+  $("iMaoObra").addEventListener("input", renderCart);
 
   // Peças (delegação)
   $("partsList").addEventListener("click", (ev)=>{
@@ -562,7 +563,7 @@ window.addEventListener('DOMContentLoaded', () => {
       pagamento:$("iPagamento").value,
       valor:+$("iValor").value||0,
       desconto:+$("cDesconto").value||0,
-      maoObra:+$("iMaoObra").value||0, // interno
+      maoObra:+$("iMaoObra").value||0,
       obs:$("iObs").value||"",
       pecas:cart.map(x=>({sku:x.sku,nome:x.nome,preco:+x.preco||0,qtd:+x.qtd||0})),
       subtotal:cart.reduce((s,x)=>s+x.qtd*x.preco,0)
@@ -627,34 +628,51 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-/* ===== Impressão via iframe oculto ===== */
+/* ===== Impressão via iframe oculto (80mm, sem quebra de nota) ===== */
 function buildReceiptInDoc(doc, j){
-  // limpa
+  // limpar doc
   doc.head.innerHTML=''; 
   doc.body.innerHTML='';
 
-  // título em branco para não aparecer no cabeçalho da impressora
+  // título em branco
   const title = doc.createElement('title');
   title.textContent = ' ';
   doc.head.appendChild(title);
 
-  // CSS de impressão: remove margem da página e do body e define largura 80mm
+  // CSS: sem margens; evitar quebras; 80mm de largura
   const style = doc.createElement('style');
   style.textContent = `
     @media print {
       @page { size: 80mm auto; margin: 0; }
-      body { margin: 0 !important; }
+      html, body { margin: 0 !important; }
     }
     *{box-sizing:border-box}
-    body{margin:0;padding:12px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
-    .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
-    table{width:100%;border-collapse:collapse;margin-top:6px}
-    th,td{padding:4px 0;border-bottom:1px dotted #ddd}
+    body{
+      margin:0;
+      padding:14px;
+      font-size:14px;
+      line-height:1.3;
+      font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace
+    }
+    .c{text-align:center}
+    .b{font-weight:700}
+    .big{font-size:16px}
+    .ln{border-top:1px dashed #999;margin:10px 0}
+
+    /* Evita quebra dentro de blocos/tabelas na impressão */
+    .block, table, thead, tbody, tr, td, th, div { 
+      break-inside: avoid; 
+      page-break-inside: avoid; 
+    }
+
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:6px 0;border-bottom:1px dotted #ddd}
+    th{font-size:14px}
     td.r{text-align:right}
+    .rowflex{display:flex;justify-content:space-between;align-items:baseline}
   `;
   doc.head.appendChild(style);
 
-  // helper para adicionar nós via DOM
   const add=(tag,txt,cls)=>{
     const el=doc.createElement(tag);
     if(cls) el.className=cls;
@@ -663,25 +681,37 @@ function buildReceiptInDoc(doc, j){
     return el;
   };
 
-  // conteúdo do recibo
-  add('div','Rota Motos','c b');
-  add('div','CNPJ 60.469.425/0001-76','c');
-  add('div','Ordem de Compra','c');
+  // Cabeçalho
+  add('div','Rota Motos','c b big block');
+  add('div','CNPJ 60.469.425/0001-76','c block');
+  add('div','Ordem de Compra','c b block');
   add('div','', 'ln');
 
-  add('div','Dados do Cliente','c b');
-  add('div','Nome Cliente: '+(j.cliente||''));
-  add('div','Moto Cliente: '+(j.modelo||''));
-  add('div','Placa da moto: '+(j.placa||''));
-  add('div','Entrada: '+(j.entrada||''));
+  // Cliente
+  add('div','Dados do Cliente','c b block');
+  add('div','Nome Cliente: '+(j.cliente||''), 'block');
+  add('div','Moto Cliente: '+(j.modelo||''), 'block');
+  add('div','Placa da moto: '+(j.placa||''), 'block');
+  add('div','Entrada: '+(j.entrada||''), 'block');
   add('div','', 'ln');
 
-  add('div','Dados do Mecânico','c b');
-  add('div','Nome Mecânico: '+(j.mecanico||''));
+  // Mecânico
+  add('div','Dados do Mecânico','c b block');
+  add('div','Nome Mecânico: '+(j.mecanico||''), 'block');
   add('div','', 'ln');
 
-  add('div','Dados de Compras','c b');
+  // Compras
+  add('div','Dados de Compra','c b block');
 
+  // Mão de obra abaixo do título
+  const maoRow=doc.createElement('div');
+  maoRow.className='rowflex block';
+  const lbl=doc.createElement('div'); lbl.textContent="Mão de obra";
+  const val=doc.createElement('div'); val.textContent=BRL.format(+j.maoObra||0);
+  maoRow.appendChild(lbl); maoRow.appendChild(val);
+  doc.body.appendChild(maoRow);
+
+  // Tabela de peças
   if((j.pecas||[]).length){
     const t=doc.createElement('table');
     const thead=doc.createElement('thead');
@@ -708,30 +738,33 @@ function buildReceiptInDoc(doc, j){
     t.appendChild(tb);
     doc.body.appendChild(t);
   } else {
-    add('div','Sem itens.');
+    add('div','Sem itens.','block');
   }
 
+  // Totais (inclui mão de obra)
   const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
-  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
+  const total=(+j.valor||0)+(+j.maoObra||0)+subtotal-(+j.desconto||0);
 
   add('div','', 'ln');
-  add('div','Forma de Pagamento: '+(j.pagamento||''));
+  add('div','Forma de Pagamento: '+(j.pagamento||''), 'block');
 
   const row=(lbl,val,bold)=>{
     const d=doc.createElement('div');
-    d.style.display='flex';
-    d.style.justifyContent='space-between';
+    d.className='rowflex block';
     const l=doc.createElement('div'); l.textContent=lbl;
     const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
     d.appendChild(l); d.appendChild(r); doc.body.appendChild(d);
   };
-  row('Subtotal:', subtotal, true);
+  row('Serviço:', +j.valor||0, false);
+  row('Mão de obra:', +j.maoObra||0, false);
+  row('Subtotal (peças):', subtotal, false);
   row('Descontos:', +j.desconto||0, false);
-  row('Valor Total:', Math.max(0,total), true);
+  row('Valor Total (nota):', Math.max(0,total), true);
 
   add('div','', 'ln');
-  add('div','Observações','c b');
-  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+  add('div','Observações','c b block');
+  const obsText = (j.obs && j.obs.trim()) ? j.obs.trim() : 'Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!';
+  add('div', obsText, 'block');
 }
 
 function printReceiptInline(j){
@@ -742,138 +775,17 @@ function printReceiptInline(j){
   iframe.width="0";
   iframe.height="0";
   iframe.setAttribute("aria-hidden","true");
-  // Evita que o frame herde título/URL visíveis
   iframe.setAttribute("sandbox","allow-modals allow-same-origin");
   document.body.appendChild(iframe);
 
   const d=iframe.contentDocument||iframe.contentWindow.document;
   buildReceiptInDoc(d,j);
 
-  // pequena espera para o layout aplicar antes de imprimir
   setTimeout(()=>{
     try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
     setTimeout(()=>iframe.remove(), 1200);
   }, 80);
 }
-/* ===== Impressão via iframe oculto (fonte maior) ===== */
-function buildReceiptInDoc(doc, j){
-  // limpa documento do iframe
-  doc.head.innerHTML=''; 
-  doc.body.innerHTML='';
-
-  // título em branco para não aparecer no cabeçalho do navegador
-  const title = doc.createElement('title');
-  title.textContent = ' ';
-  doc.head.appendChild(title);
-
-  // CSS: aumenta fonte e espaçamentos, mantém página 80mm
-  const style = doc.createElement('style');
-  style.textContent = `
-    @media print {
-      @page { size: 80mm auto; margin: 0; }
-      body { margin: 0 !important; }
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      padding:14px;                /* + padding */
-      font-size:14px;              /* <- fonte maior (antes era 12px) */
-      line-height:1.3;             /* melhor leitura */
-      font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace
-    }
-    .c{text-align:center}
-    .b{font-weight:700}
-    .big{font-size:16px}           /* títulos maiores */
-    .ln{border-top:1px dashed #999;margin:10px 0}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:6px 0;           /* + padding nas linhas */
-          border-bottom:1px dotted #ddd}
-    th{font-size:14px}
-    td.r{text-align:right}
-  `;
-  doc.head.appendChild(style);
-
-  // helper para criar elementos
-  const add=(tag,txt,cls)=>{
-    const el=doc.createElement(tag);
-    if(cls) el.className=cls;
-    if(txt!=null) el.textContent=txt;
-    doc.body.appendChild(el);
-    return el;
-  };
-
-  // conteúdo do recibo
-  add('div','Rota Motos','c b big');
-  add('div','CNPJ 60.469.425/0001-76','c');
-  add('div','Ordem de Compra','c b');
-  add('div','', 'ln');
-
-  add('div','Dados do Cliente','c b');
-  add('div','Nome Cliente: '+(j.cliente||''));
-  add('div','Moto Cliente: '+(j.modelo||''));
-  add('div','Placa da moto: '+(j.placa||''));
-  add('div','Entrada: '+(j.entrada||''));
-  add('div','', 'ln');
-
-  add('div','Dados do Mecânico','c b');
-  add('div','Nome Mecânico: '+(j.mecanico||''));
-  add('div','', 'ln');
-
-  add('div','Dados de Compras','c b');
-
-  if((j.pecas||[]).length){
-    const t=doc.createElement('table');
-    const thead=doc.createElement('thead');
-    const trh=doc.createElement('tr');
-    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
-      const th=doc.createElement('th');
-      th.textContent=h;
-      if(i>0) th.className='r';
-      trh.appendChild(th);
-    });
-    thead.appendChild(trh);
-    t.appendChild(thead);
-
-    const tb=doc.createElement('tbody');
-    (j.pecas||[]).forEach(p=>{
-      const tr=doc.createElement('tr');
-      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-      tr.appendChild(td(p.nome||'-'));
-      tr.appendChild(td(p.qtd,'r'));
-      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
-      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
-      tb.appendChild(tr);
-    });
-    t.appendChild(tb);
-    doc.body.appendChild(t);
-  } else {
-    add('div','Sem itens.');
-  }
-
-  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
-  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
-
-  add('div','', 'ln');
-  add('div','Forma de Pagamento: '+(j.pagamento||''));
-
-  const row=(lbl,val,bold)=>{
-    const d=doc.createElement('div');
-    d.style.display='flex';
-    d.style.justifyContent='space-between';
-    const l=doc.createElement('div'); l.textContent=lbl;
-    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
-    d.appendChild(l); d.appendChild(r);
-    doc.body.appendChild(d);
-  };
-  row('Subtotal:', subtotal, true);
-  row('Descontos:', +j.desconto||0, false);
-  row('Valor Total + Mão de Obra:', Math.max(0,total), true);
-
-  add('div','', 'ln');
-  add('div','Observações','c b');
-  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
-}
-
 
   /* Init */
   (function init(){
