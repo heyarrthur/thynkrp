@@ -72,10 +72,10 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
     <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
     <div class="collapse navbar-collapse" id="topnav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-        <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
-        <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-        <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Estoque</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Oficina</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Vendas</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Financeiro</a></li>
       </ul>
     </div>
   </div>
@@ -627,44 +627,253 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ===== Impressão via iframe oculto ===== */
-  function buildReceiptInDoc(doc, j){
-    doc.head.innerHTML=''; doc.body.innerHTML='';
-    const style=doc.createElement('style');
-    style.textContent=`*{box-sizing:border-box} body{margin:0;padding:12px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
+/* ===== Impressão via iframe oculto ===== */
+function buildReceiptInDoc(doc, j){
+  // limpa
+  doc.head.innerHTML=''; 
+  doc.body.innerHTML='';
+
+  // título em branco para não aparecer no cabeçalho da impressora
+  const title = doc.createElement('title');
+  title.textContent = ' ';
+  doc.head.appendChild(title);
+
+  // CSS de impressão: remove margem da página e do body e define largura 80mm
+  const style = doc.createElement('style');
+  style.textContent = `
+    @media print {
+      @page { size: 80mm auto; margin: 0; }
+      body { margin: 0 !important; }
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:12px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
     .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
-    table{width:100%;border-collapse:collapse;margin-top:6px} th,td{padding:4px 0;border-bottom:1px dotted #ddd} td.r{text-align:right}`;
-    doc.head.appendChild(style);
-    const add=(tag,txt,cls)=>{const el=doc.createElement(tag); if(cls) el.className=cls; if(txt!=null) el.textContent=txt; doc.body.appendChild(el); return el;};
-    add('div','Rota Motos','c b'); add('div','CNPJ 60.469.425/0001-76','c'); add('div','Ordem de Compra','c'); add('div','', 'ln');
-    add('div','Dados do Cliente','c b');
-    add('div','Nome Cliente: '+(j.cliente||'')); add('div','Moto Cliente: '+(j.modelo||'')); add('div','Placa da moto: '+(j.placa||'')); add('div','Entrada: '+(j.entrada||'')); add('div','', 'ln');
-    add('div','Dados do Mecânico','c b'); add('div','Nome Mecânico: '+(j.mecanico||'')); add('div','', 'ln');
-    add('div','Dados de Compras','c b');
-    if((j.pecas||[]).length){
-      const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
-      ['Item','Qtde','Preço','Total'].forEach((h,i)=>{const th=doc.createElement('th'); th.textContent=h; if(i>0) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
-      const tb=doc.createElement('tbody');
-      (j.pecas||[]).forEach(p=>{ const tr=doc.createElement('tr');
-        const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-        tr.appendChild(td(p.nome||'-')); tr.appendChild(td(p.qtd,'r')); tr.appendChild(td(BRL.format(+p.preco||0),'r')); tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
-        tb.appendChild(tr);
-      }); t.appendChild(tb); doc.body.appendChild(t);
-    } else add('div','Sem itens.');
-    const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0); const total=(+j.valor||0)+subtotal-(+j.desconto||0);
-    add('div','', 'ln'); add('div','Forma de Pagamento: '+(j.pagamento||''));
-    const r=(l,v,b)=>{const d=doc.createElement('div'); d.style.display='flex'; d.style.justifyContent='space-between'; const a=doc.createElement('div'); a.textContent=l; const c=doc.createElement('div'); c.textContent=v; if(b) c.className='b'; d.appendChild(a); d.appendChild(c); doc.body.appendChild(d);};
-    r('Subtotal:', BRL.format(subtotal), true); r('Descontos:', BRL.format(+j.desconto||0), false); r('Valor Total:', BRL.format(Math.max(0,total)), true);
-    add('div','', 'ln'); add('div','Observações','c b'); add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th,td{padding:4px 0;border-bottom:1px dotted #ddd}
+    td.r{text-align:right}
+  `;
+  doc.head.appendChild(style);
+
+  // helper para adicionar nós via DOM
+  const add=(tag,txt,cls)=>{
+    const el=doc.createElement(tag);
+    if(cls) el.className=cls;
+    if(txt!=null) el.textContent=txt;
+    doc.body.appendChild(el);
+    return el;
+  };
+
+  // conteúdo do recibo
+  add('div','Rota Motos','c b');
+  add('div','CNPJ 60.469.425/0001-76','c');
+  add('div','Ordem de Compra','c');
+  add('div','', 'ln');
+
+  add('div','Dados do Cliente','c b');
+  add('div','Nome Cliente: '+(j.cliente||''));
+  add('div','Moto Cliente: '+(j.modelo||''));
+  add('div','Placa da moto: '+(j.placa||''));
+  add('div','Entrada: '+(j.entrada||''));
+  add('div','', 'ln');
+
+  add('div','Dados do Mecânico','c b');
+  add('div','Nome Mecânico: '+(j.mecanico||''));
+  add('div','', 'ln');
+
+  add('div','Dados de Compras','c b');
+
+  if((j.pecas||[]).length){
+    const t=doc.createElement('table');
+    const thead=doc.createElement('thead');
+    const trh=doc.createElement('tr');
+    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
+      const th=doc.createElement('th');
+      th.textContent=h;
+      if(i>0) th.className='r';
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    t.appendChild(thead);
+
+    const tb=doc.createElement('tbody');
+    (j.pecas||[]).forEach(p=>{
+      const tr=doc.createElement('tr');
+      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      tr.appendChild(td(p.nome||'-'));
+      tr.appendChild(td(p.qtd,'r'));
+      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    doc.body.appendChild(t);
+  } else {
+    add('div','Sem itens.');
   }
-  function printReceiptInline(j){
-    const iframe=document.createElement("iframe");
-    iframe.style.position="fixed"; iframe.style.right="-9999px"; iframe.style.bottom="0"; iframe.width="0"; iframe.height="0"; iframe.setAttribute("aria-hidden","true");
-    document.body.appendChild(iframe);
-    const d=iframe.contentDocument||iframe.contentWindow.document;
-    buildReceiptInDoc(d,j);
-    setTimeout(()=>{ try{iframe.contentWindow.focus(); iframe.contentWindow.print();}catch(e){} setTimeout(()=>iframe.remove(),1200); }, 80);
+
+  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
+
+  add('div','', 'ln');
+  add('div','Forma de Pagamento: '+(j.pagamento||''));
+
+  const row=(lbl,val,bold)=>{
+    const d=doc.createElement('div');
+    d.style.display='flex';
+    d.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent=lbl;
+    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
+    d.appendChild(l); d.appendChild(r); doc.body.appendChild(d);
+  };
+  row('Subtotal:', subtotal, true);
+  row('Descontos:', +j.desconto||0, false);
+  row('Valor Total:', Math.max(0,total), true);
+
+  add('div','', 'ln');
+  add('div','Observações','c b');
+  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+}
+
+function printReceiptInline(j){
+  const iframe=document.createElement("iframe");
+  iframe.style.position="fixed";
+  iframe.style.right="-9999px";
+  iframe.style.bottom="0";
+  iframe.width="0";
+  iframe.height="0";
+  iframe.setAttribute("aria-hidden","true");
+  // Evita que o frame herde título/URL visíveis
+  iframe.setAttribute("sandbox","allow-modals allow-same-origin");
+  document.body.appendChild(iframe);
+
+  const d=iframe.contentDocument||iframe.contentWindow.document;
+  buildReceiptInDoc(d,j);
+
+  // pequena espera para o layout aplicar antes de imprimir
+  setTimeout(()=>{
+    try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
+    setTimeout(()=>iframe.remove(), 1200);
+  }, 80);
+}
+/* ===== Impressão via iframe oculto (fonte maior) ===== */
+function buildReceiptInDoc(doc, j){
+  // limpa documento do iframe
+  doc.head.innerHTML=''; 
+  doc.body.innerHTML='';
+
+  // título em branco para não aparecer no cabeçalho do navegador
+  const title = doc.createElement('title');
+  title.textContent = ' ';
+  doc.head.appendChild(title);
+
+  // CSS: aumenta fonte e espaçamentos, mantém página 80mm
+  const style = doc.createElement('style');
+  style.textContent = `
+    @media print {
+      @page { size: 80mm auto; margin: 0; }
+      body { margin: 0 !important; }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:14px;                /* + padding */
+      font-size:14px;              /* <- fonte maior (antes era 12px) */
+      line-height:1.3;             /* melhor leitura */
+      font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace
+    }
+    .c{text-align:center}
+    .b{font-weight:700}
+    .big{font-size:16px}           /* títulos maiores */
+    .ln{border-top:1px dashed #999;margin:10px 0}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:6px 0;           /* + padding nas linhas */
+          border-bottom:1px dotted #ddd}
+    th{font-size:14px}
+    td.r{text-align:right}
+  `;
+  doc.head.appendChild(style);
+
+  // helper para criar elementos
+  const add=(tag,txt,cls)=>{
+    const el=doc.createElement(tag);
+    if(cls) el.className=cls;
+    if(txt!=null) el.textContent=txt;
+    doc.body.appendChild(el);
+    return el;
+  };
+
+  // conteúdo do recibo
+  add('div','Rota Motos','c b big');
+  add('div','CNPJ 60.469.425/0001-76','c');
+  add('div','Ordem de Compra','c b');
+  add('div','', 'ln');
+
+  add('div','Dados do Cliente','c b');
+  add('div','Nome Cliente: '+(j.cliente||''));
+  add('div','Moto Cliente: '+(j.modelo||''));
+  add('div','Placa da moto: '+(j.placa||''));
+  add('div','Entrada: '+(j.entrada||''));
+  add('div','', 'ln');
+
+  add('div','Dados do Mecânico','c b');
+  add('div','Nome Mecânico: '+(j.mecanico||''));
+  add('div','', 'ln');
+
+  add('div','Dados de Compras','c b');
+
+  if((j.pecas||[]).length){
+    const t=doc.createElement('table');
+    const thead=doc.createElement('thead');
+    const trh=doc.createElement('tr');
+    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
+      const th=doc.createElement('th');
+      th.textContent=h;
+      if(i>0) th.className='r';
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    t.appendChild(thead);
+
+    const tb=doc.createElement('tbody');
+    (j.pecas||[]).forEach(p=>{
+      const tr=doc.createElement('tr');
+      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      tr.appendChild(td(p.nome||'-'));
+      tr.appendChild(td(p.qtd,'r'));
+      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    doc.body.appendChild(t);
+  } else {
+    add('div','Sem itens.');
   }
+
+  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+  const total=(+j.valor||0)+subtotal-(+j.desconto||0);
+
+  add('div','', 'ln');
+  add('div','Forma de Pagamento: '+(j.pagamento||''));
+
+  const row=(lbl,val,bold)=>{
+    const d=doc.createElement('div');
+    d.style.display='flex';
+    d.style.justifyContent='space-between';
+    const l=doc.createElement('div'); l.textContent=lbl;
+    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
+    d.appendChild(l); d.appendChild(r);
+    doc.body.appendChild(d);
+  };
+  row('Subtotal:', subtotal, true);
+  row('Descontos:', +j.desconto||0, false);
+  row('Valor Total:', Math.max(0,total), true);
+
+  add('div','', 'ln');
+  add('div','Observações','c b');
+  add('div','Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+}
+
 
   /* Init */
   (function init(){
@@ -677,4 +886,3 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
