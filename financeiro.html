@@ -321,8 +321,8 @@ canvas{max-height:300px}
     cliente: String(j.cliente||""),
     mecanico:String(j.mecanico||""),
     pagamento:String(j.pagamento||"Outro"),
-    valor:   num(j.valor),
-    subtotal:num(j.subtotal),  // peças (preço venda)
+    valor:   num(j.valor),     // Serviço
+    subtotal:num(j.subtotal),  // Peças (preço venda)
     desconto:num(j.desconto),
     maoObra: num(j.maoObra||0)
   }));
@@ -360,7 +360,8 @@ canvas{max-height:300px}
   function render(){
     const {os, incs, outs} = filtered();
 
-    const entradasOS   = os.reduce((s,j)=> s + (j.valor + j.subtotal - j.desconto), 0);
+    // Total de OS: Serviço + Mão de Obra + Peças − Desconto
+    const entradasOS   = os.reduce((s,j)=> s + (j.valor + j.maoObra + j.subtotal - j.desconto), 0);
     const entradasAv   = incs.reduce((s,i)=> s + i.valor, 0);
     const entradasTot  = entradasOS + entradasAv;
     const saidasTot    = outs.reduce((s,e)=> s + e.valor, 0);
@@ -383,47 +384,53 @@ canvas{max-height:300px}
         tr.appendChild(td(j.entrada||'-'));
         tr.appendChild(td(j.cliente||'-'));
         tr.appendChild(td(j.mecanico||'-'));
-        tr.appendChild(td(BRL.format(j.valor),'text-end'));
-        tr.appendChild(td(BRL.format(j.subtotal),'text-end'));
-        tr.appendChild(td(BRL.format(j.desconto),'text-end'));
-        tr.appendChild(td(BRL.format(j.maoObra),'text-end'));
-        tr.appendChild(td(BRL.format(j.valor + j.subtotal - j.desconto),'text-end'));
+        tr.appendChild(td(BRL.format(j.valor),'text-end'));      // Serviço
+        tr.appendChild(td(BRL.format(j.subtotal),'text-end'));    // Peças
+        tr.appendChild(td(BRL.format(j.desconto),'text-end'));    // Desconto
+        tr.appendChild(td(BRL.format(j.maoObra),'text-end'));     // Mão de Obra
+        // TOTAL inclui MÃO DE OBRA
+        tr.appendChild(td(BRL.format(j.valor + j.maoObra + j.subtotal - j.desconto),'text-end'));
         tb.appendChild(tr);
       });
     }
 
     // Gráficos
     destroyCharts();
+
     // Entradas x Saídas
     chES = new Chart(document.getElementById('chES'),{
       type:'doughnut',
       data:{labels:['Entradas','Saídas'],datasets:[{data:[entradasTot,saidasTot]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
-    // Entradas por FP (OS + avulsas)
+
+    // Entradas por Forma de Pagamento (total da OS inclui mão de obra)
     const mapFP = new Map([['Dinheiro',0],['PIX',0],['Cartão Débito',0],['Cartão de Crédito',0],['Outro',0]]);
-    os.forEach(j=>{ const fp=mapFP.has(j.pagamento)?j.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+(j.valor+j.subtotal-j.desconto)); });
+    os.forEach(j=>{ const fp=mapFP.has(j.pagamento)?j.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+(j.valor+j.maoObra+j.subtotal-j.desconto)); });
     incs.forEach(i=>{ const fp=mapFP.has(i.pagamento)?i.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+i.valor); });
     chFP = new Chart(document.getElementById('chFP'),{
       type:'doughnut',
       data:{labels:[...mapFP.keys()],datasets:[{data:[...mapFP.values()]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
-    // Composição de Entradas
+
+    // Composição de Entradas (inclui Mão de Obra)
     const compServ = os.reduce((s,j)=> s+j.valor,0);
+    const compMO   = os.reduce((s,j)=> s+j.maoObra,0);
     const compPcs  = os.reduce((s,j)=> s+j.subtotal,0);
     const compDesc = os.reduce((s,j)=> s+Math.max(0,j.desconto),0);
     const compAv   = incs.reduce((s,i)=> s+i.valor,0);
     chComp = new Chart(document.getElementById('chComp'),{
       type:'doughnut',
-      data:{labels:['Serviço','Peças','(-) Descontos','Entradas Avulsas'],datasets:[{data:[compServ,compPcs,compDesc,compAv]}]},
+      data:{labels:['Serviço','Mão de Obra','Peças','(-) Descontos','Entradas Avulsas'],datasets:[{data:[compServ,compMO,compPcs,compDesc,compAv]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
-    // Fluxo diário
+
+    // Fluxo diário das entradas (inclui Mão de Obra)
     const de=$('fDe').value, ate=$('fAte').value;
     const labels=(de&&ate)?(function(){const a=[],d0=new Date(de),d1=new Date(ate);for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))a.push(d.toISOString().slice(0,10));return a;})():[];
     const mapIn=new Map(labels.map(d=>[d,0])), mapOut=new Map(labels.map(d=>[d,0]));
-    os.forEach(j=>{ if(mapIn.has(j.entrada)) mapIn.set(j.entrada, mapIn.get(j.entrada)+(j.valor+j.subtotal-j.desconto)); });
+    os.forEach(j=>{ if(mapIn.has(j.entrada)) mapIn.set(j.entrada, mapIn.get(j.entrada)+(j.valor+j.maoObra+j.subtotal-j.desconto)); });
     incs.forEach(i=>{ if(mapIn.has(i.data)) mapIn.set(i.data, mapIn.get(i.data)+i.valor); });
     outs.forEach(e=>{ if(mapOut.has(e.data)) mapOut.set(e.data, mapOut.get(e.data)+e.valor); });
     chFlux = new Chart(document.getElementById('chFlux'),{
@@ -440,19 +447,34 @@ canvas{max-height:300px}
   function buildStyles(doc){ const st=doc.createElement('style'); st.textContent=`*{box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace} body{margin:0;padding:12px;font-size:12px} .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0} table{width:100%;border-collapse:collapse;margin-top:6px} th,td{padding:4px 0;border-bottom:1px dotted #ddd} td.r{text-align:right} h4{margin:.25rem 0}`; doc.head.appendChild(st); }
   function wipe(doc){ while(doc.head.firstChild) doc.head.removeChild(doc.head.firstChild); while(doc.body.firstChild) doc.body.removeChild(doc.body.firstChild); }
   function header(doc,t,per){ const add=(tx,cls,b)=>{const d=doc.createElement('div'); if(cls) d.className=cls; if(b) d.style.fontWeight='700'; d.textContent=tx; doc.body.appendChild(d);}; add('Rota Motos','c b',true); add(t,'c'); if(per) add(per,'c'); const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln); }
+
+  // Entradas (Oficina) com coluna de Mão de Obra e total incluindo MO
   function tEntradasOS(doc, list){
     const h4=doc.createElement('h4'); h4.textContent='Entradas (Oficina)'; doc.body.appendChild(h4);
     const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
-    ['Data','Cliente','Mecânico','Serviço','Peças','Desconto','Total'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i>=3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
+    ['Data','Cliente','Mecânico','Serviço','Peças','Desconto','Mão de Obra','Total'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i>=3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
     const tb=doc.createElement('tbody'); let total=0;
-    list.forEach(j=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;}; const tot=j.valor+j.subtotal-j.desconto;
-      tr.appendChild(td(j.entrada||'-')); tr.appendChild(td(j.cliente||'-')); tr.appendChild(td(j.mecanico||'-')); tr.appendChild(td(BRL.format(j.valor),'r')); tr.appendChild(td(BRL.format(j.subtotal),'r')); tr.appendChild(td(BRL.format(j.desconto),'r')); tr.appendChild(td(BRL.format(tot),'r')); tb.appendChild(tr); total+=tot;});
+    list.forEach(j=>{
+      const tr=doc.createElement('tr');
+      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+      const tot=j.valor + j.maoObra + j.subtotal - j.desconto;
+      tr.appendChild(td(j.entrada||'-'));
+      tr.appendChild(td(j.cliente||'-'));
+      tr.appendChild(td(j.mecanico||'-'));
+      tr.appendChild(td(BRL.format(j.valor),'r'));
+      tr.appendChild(td(BRL.format(j.subtotal),'r'));
+      tr.appendChild(td(BRL.format(j.desconto),'r'));
+      tr.appendChild(td(BRL.format(j.maoObra),'r'));
+      tr.appendChild(td(BRL.format(tot),'r'));
+      tb.appendChild(tr); total+=tot;
+    });
     t.appendChild(tb); doc.body.appendChild(t);
     const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
     const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
     const l=doc.createElement('div'); l.textContent='Total (Oficina):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
     row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
+
   function tEntradasAvulsas(doc, list){
     const h4=doc.createElement('h4'); h4.textContent='Entradas (Avulsas)'; doc.body.appendChild(h4);
     const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
@@ -466,6 +488,7 @@ canvas{max-height:300px}
     const l=doc.createElement('div'); l.textContent='Total (Avulsas):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
     row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
+
   function tSaidas(doc, list){
     const h4=doc.createElement('h4'); h4.textContent='Saídas (Despesas)'; doc.body.appendChild(h4);
     const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
@@ -479,6 +502,7 @@ canvas{max-height:300px}
     const l=doc.createElement('div'); l.textContent='Total de Saídas:'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
     row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
+
   function exportPDF(kind){
     const {os, incs, outs, periodoTxt} = filtered();
     const iframe=document.createElement('iframe');
@@ -512,7 +536,8 @@ canvas{max-height:300px}
       } else {
         header(d,'Resumo Financeiro',periodoTxt);
         tEntradasOS(d,os); tEntradasAvulsas(d,incs); tSaidas(d,outs);
-        const totalIn = os.reduce((s,j)=>s+(j.valor+j.subtotal-j.desconto),0) + incs.reduce((s,i)=>s+i.valor,0);
+        // totalIn inclui MÃO DE OBRA
+        const totalIn = os.reduce((s,j)=>s+(j.valor + j.maoObra + j.subtotal - j.desconto),0) + incs.reduce((s,i)=>s+i.valor,0);
         const totalOut= outs.reduce((s,e)=>s+e.valor,0);
         const saldo= totalIn-totalOut;
         const ln=d.createElement('div'); ln.className='ln'; d.body.appendChild(ln);
@@ -541,7 +566,6 @@ canvas{max-height:300px}
     const arr = readArray(IN_KEY);
     arr.push({data, descricao, valor, pagamento});
     writeArray(IN_KEY, arr);
-    // refresca memória
     incomes = arr.map(i=>({data:String(i.data||""), descricao:String(i.descricao||""), valor:num(i.valor), pagamento:String(i.pagamento||"Outro")}));
     modalEntrada.hide(); render();
   });
