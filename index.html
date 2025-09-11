@@ -205,7 +205,36 @@
     const $ = id => document.getElementById(id);
     const money = n => BRL.format(+n||0);
     const safe = s => String(s??"");
-    const toNum = v => Number(v??0) || 0;
+    const toNum = (v) => {
+      if (v === null || v === undefined || v === "") return 0;
+      let s = String(v).trim();
+      // mantém só dígitos, ponto, vírgula e sinal
+      s = s.replace(/[^\d.,-]/g, "");
+      const lastComma = s.lastIndexOf(",");
+      const lastDot   = s.lastIndexOf(".");
+      let norm;
+      if (lastComma !== -1 && lastDot !== -1) {
+        // Os dois existem: o último é o separador decimal
+        if (lastComma > lastDot) {
+          // vírgula é decimal => remove pontos (milhar) e troca vírgula por ponto
+          norm = s.replace(/\./g, "").replace(",", ".");
+        } else {
+          // ponto é decimal => remove vírgulas (milhar)
+          norm = s.replace(/,/g, "");
+        }
+      } else if (lastComma !== -1) {
+        // só vírgula => decimal
+        norm = s.replace(",", ".");
+      } else if (lastDot !== -1) {
+        // só ponto => decimal; se houver vários pontos, mantém só o último
+        const parts = s.split(".");
+        norm = parts.length > 2 ? parts.slice(0, -1).join("") + "." + parts.at(-1) : s;
+      } else {
+        norm = s; // só dígitos
+      }
+      const n = Number(norm);
+      return Number.isFinite(n) ? n : 0;
+    };
     const isAlert = (it) => (+it.qtd || 0) <= (+it.alerta || 0); // somente efeito visual
 
     function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
@@ -406,7 +435,7 @@
       XLSX.writeFile(wb, "estoque.xlsx");
     });
 
-    /* ===== Import/Export: XML ===== */
+    /* ===== Importar XML ROBUSTO ===== */
     $('btnImportXML').addEventListener('click', ()=> $('fileXML').click());
     $('fileXML').addEventListener('change', function(){
       const f=this.files[0]; if(!f) return;
@@ -414,34 +443,149 @@
       reader.onload=function(e){
         try{
           const xmlStr = e.target.result;
-          const doc = new DOMParser().parseFromString(xmlStr, "application/xml");
-          const items = Array.from(doc.getElementsByTagName("item"));
-          if(!items.length){ alert("XML sem <item> no formato esperado."); return; }
-          items.forEach(n=>{
-            const get = tag => (n.getElementsByTagName(tag)[0]?.textContent||"").trim();
-            const obj = {
-              sku: get("sku"),
-              nome: get("nome"),
-              categoria: get("categoria"),
-              local: get("local"),
-              qtd: toNum(get("quantidade")),
-              alerta: toNum(get("alerta")),
-              preco: toNum(get("preco")),
-              custo: toNum(get("custo"))
-            };
-            if(!obj.sku || !obj.nome) return;
-            const i = estoque.items.findIndex(x=>x.sku===obj.sku);
-            if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
-          });
-          saveStock(); rebuildCats(); render();
+          const doc = new DOMParser().parseFromString(xmlStr, 'application/xml');
+
+          // Verifica erro de parser
+          if (doc.getElementsByTagName('parsererror').length) {
+            throw new Error('XML inválido (erro de parser).');
+          }
+
+          // ===== utilitários independentes de namespace =====
+          const byLocal = (node, tag) => {
+            const out=[]; const all = node.getElementsByTagName('*');
+            for(let i=0;i<all.length;i++){ if((all[i].localName||'').toLowerCase()===tag.toLowerCase()) out.push(all[i]); }
+            return out;
+          };
+          const firstText = (node, tag) => {
+            const el = byLocal(node, tag)[0];
+            return (el ? el.textContent : '').trim();
+          };
+
+          // ===== 1) NF-e <det><prod> =====
+          let dets = byLocal(doc, 'det');
+          if (dets.length) {
+            const tot = byLocal(doc, 'ICMSTot')[0] || byLocal(doc,'icmstot')[0];
+            const vTot = (t) => toNum(tot ? firstText(tot, t) : 0);
+            const freteTot = vTot('vFrete');
+            const descTot  = vTot('vDesc');
+            const outroTot = vTot('vOutro');
+            const segTot   = vTot('vSeg');
+
+            const itens = dets.map(det=>{
+              const prod = byLocal(det,'prod')[0];
+              if(!prod) return null;
+              const sku   = firstText(prod,'cProd') || firstText(prod,'codigo') || firstText(prod,'cod') || firstText(prod,'sku');
+              const nome  = firstText(prod,'xProd') || firstText(prod,'nome') || firstText(prod,'descricao');
+              const ncm   = firstText(prod,'NCM')   || firstText(prod,'ncm') || '';
+              const qCom  = toNum(firstText(prod,'qCom') || firstText(prod,'quantidade') || firstText(prod,'qtd'));
+              const vUnCom= toNum(firstText(prod,'vUnCom'));
+              const vProd = toNum(firstText(prod,'vProd')) || (vUnCom*qCom);
+              const vFreteItem = toNum(firstText(prod,'vFrete'));
+              const vDescItem  = toNum(firstText(prod,'vDesc'));
+              const vOutroItem = toNum(firstText(prod,'vOutro'));
+              const vSegItem   = toNum(firstText(prod,'vSeg'));
+              return {sku,nome,ncm,qCom,vUnCom,vProd,vFreteItem,vDescItem,vOutroItem,vSegItem};
+            }).filter(Boolean);
+
+            const somaVProd = itens.reduce((s,it)=> s + (it.vProd||0), 0) || 0;
+            let imported = 0;
+            for(const it of itens){
+              if(!it.sku || !it.nome || !(it.qCom>0)) continue;
+              const fator = somaVProd>0 ? (it.vProd / somaVProd) : 0;
+              const freteUnit = (it.vFreteItem>0 ? it.vFreteItem : freteTot * fator) / (it.qCom||1);
+              const outroUnit = (it.vOutroItem>0 ? it.vOutroItem : outroTot * fator) / (it.qCom||1);
+              const segUnit   = (it.vSegItem>0   ? it.vSegItem   : segTot   * fator) / (it.qCom||1);
+              const descUnit  = (it.vDescItem>0  ? it.vDescItem  : descTot  * fator) / (it.qCom||1);
+              const custoUnit = toNum(it.vUnCom + freteUnit + outroUnit + segUnit - descUnit);
+
+              const obj = {
+                sku: safe(it.sku),
+                nome: safe(it.nome),
+                categoria: safe(it.ncm),
+                local: "",
+                qtd: it.qCom,
+                alerta: 0,
+                preco: 0,           // sem valor de venda
+                custo: custoUnit    // custo correto
+              };
+              const i = estoque.items.findIndex(x=>x.sku===obj.sku);
+              if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
+              imported++;
+            }
+            if(imported===0) throw new Error('Nenhum item válido encontrado na NF-e.');
+            saveStock(); rebuildCats(); render();
+            alert(`Importação NF-e concluída: ${imported} item(ns).`);
+            $('fileXML').value=""; return;
+          }
+
+          // ===== 2) Fallback BR: <estoque><item> ... =====
+          let items = byLocal(doc,'item');
+          if(items.length){
+            items.forEach(n=>{
+              const get = tag => (byLocal(n, tag)[0]?.textContent||"").trim();
+              const obj = {
+                sku: get('sku') || get('codigo') || get('cod') || get('id'),
+                nome: get('nome') || get('descricao'),
+                categoria: get('categoria') || get('ncm') || '',
+                local: get('local') || '',
+                qtd: toNum(get('quantidade') || get('qtd') || get('qCom')),
+                alerta: toNum(get('alerta')),
+                preco: 0, // zera venda
+                custo: toNum(get('custo') || get('vUnCom') || get('precoCusto'))
+              };
+              if(!obj.sku || !obj.nome) return;
+              const i = estoque.items.findIndex(x=>x.sku===obj.sku);
+              if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
+            });
+            saveStock(); rebuildCats(); render();
+            alert('Importação XML simples concluída.');
+            $('fileXML').value=""; return;
+          }
+
+          // ===== 3) Fallback genérico: <produto> / <product> =====
+          const candidatos = ['produto','product'];
+          for(const tag of candidatos){
+            const arr = byLocal(doc, tag);
+            if(!arr.length) continue;
+            arr.forEach(n=>{
+              const lowerMap = {};
+              Array.from(n.children||[]).forEach(ch=> lowerMap[(ch.localName||ch.tagName||'').toLowerCase()] = ch.textContent.trim());
+
+              const pick = (...keys)=>{
+                for(const k of keys){ if(lowerMap[k] && lowerMap[k]!=="-") return lowerMap[k]; }
+                return '';
+              };
+
+              const sku  = pick('cprod','sku','codigo','cod','code','id');
+              const nome = pick('xprod','nome','descricao','description','name','produto','title');
+              const ncm  = pick('ncm','categoria','category');
+              const qtd  = toNum(pick('qcom','quantidade','qtd','qty','quantity','amount'));
+              let custo  = toNum(pick('vuncom','custo','cost','preco_custo','unitcost'));
+              const vprod = toNum(pick('vprod','valor_total','totalvalue'));
+              if(!custo && vprod && qtd>0) custo = vprod / qtd; // fallback razoável
+
+              const obj = { sku: safe(sku), nome: safe(nome), categoria: safe(ncm), local: "", qtd, alerta:0, preco:0, custo };
+              if(!obj.sku || !obj.nome || !(obj.qtd>0)) return;
+              const i = estoque.items.findIndex(x=>x.sku===obj.sku);
+              if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
+            });
+            saveStock(); rebuildCats(); render();
+            alert('Importação genérica concluída.');
+            $('fileXML').value=""; return;
+          }
+
+          // Caso nenhum formato tenha sido reconhecido
+          alert('Não foi possível reconhecer o formato do XML. Tente enviar uma NF-e ou um XML com <item>, <produto> ou <product>.');
         }catch(err){
-          alert("Falha ao ler XML: "+err.message);
+          alert('Falha ao ler XML: '+ err.message);
+        } finally {
+          $('fileXML').value="";
         }
-        finally{ $('fileXML').value=""; }
       };
-      reader.readAsText(f, "utf-8");
+      reader.readAsText(f, 'utf-8');
     });
 
+    /* ===== Exportar XML ===== */
     $('btnExportXML').addEventListener('click', ()=>{
       const data = getFiltered();
       const esc = s=> String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -520,17 +664,12 @@
     /* ===== Somar itens repetidos (SKU) ===== */
     function mergeDuplicatesBySKU(){
       if(!estoque.items.length){ alert("Não há itens para mesclar."); return; }
-
-      // backup antes de alterar
       backupStock();
-
       const order=[], map=new Map();
       const norm = s => safe(s).trim().toUpperCase();
-
       for(const it of estoque.items){
         const key = norm(it.sku);
         if(!key){ continue; }
-
         if(!map.has(key)){
           map.set(key, {
             sku: safe(it.sku).trim(),
@@ -554,16 +693,12 @@
           if(!(toNum(base.custo)>0) && (toNum(it.custo)>0)) base.custo = toNum(it.custo);
         }
       }
-
       const merged = order.map(k=>map.get(k));
       const before = estoque.items.length, after = merged.length, removed = before - after;
       estoque.items = merged;
       saveStock(); rebuildCats(); render();
-
       alert(`Mesclagem concluída.\nSKU únicos: ${after}\nItens removidos (duplicados): ${removed}`);
     }
-
-    // Botão do dropdown “Somar itens repetidos (SKU)”
     $('btnMerge').addEventListener('click', ()=>{
       if(confirm('Somar quantidades de itens com o mesmo SKU?\n(Um backup será salvo: "estoque.backup.last")')){
         mergeDuplicatesBySKU();
