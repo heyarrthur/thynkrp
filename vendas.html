@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rota Motos — Vendas</title>
+  <title>Rota Motos — Vendas (Adicionar/Alterar sem retirar dados)</title>
 
   <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -25,6 +25,10 @@
     .nav-link{color:var(--ink);font-weight:600;border-radius:8px;padding:.5rem .75rem}
     .nav-link:hover{background:#f2f4f8}
     .nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+
+    /* ALERTAS */
+    #safeWarn{display:none}
+    #lsWarn{display:none}
 
     /* CARDS */
     .card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
@@ -80,6 +84,15 @@
   </nav>
 
   <div class="container py-4">
+    <!-- ALERTAS -->
+    <div id="safeWarn" class="alert alert-warning border-0 shadow-sm" role="alert">
+      🛡️ <strong>Modo Seguro</strong>: você pode <em>adicionar</em> e <em>alterar</em> pedidos. A exclusão está desativada e o estoque não é reduzido automaticamente, para que nada “suma” do que já existia.
+    </div>
+    <div id="lsWarn" class="alert alert-danger border-0 shadow-sm" role="alert">
+      ⚠️ Não foi possível acessar o armazenamento do navegador. Ative cookies/armazenamento do site
+      ou abra esta página via <strong>https://seu-usuario.github.io/</strong>.
+    </div>
+
     <!-- MÉTRICAS -->
     <div class="row g-3 mb-3">
       <div class="col-md-3"><div class="card-soft metric"><div class="icon i-orders"><i class="bi bi-receipt"></i></div><div><div class="label">Pedidos</div><div id="mPedidos" class="value">0</div></div></div></div>
@@ -107,9 +120,15 @@
             <option>Concluído</option>
           </select>
         </div>
-        <div class="col-xl-4 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
+        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
           <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalVenda">
             <i class="bi bi-plus-lg"></i> Adicionar pedido
+          </button>
+        </div>
+        <!-- Botão Backup -->
+        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
+          <button id="btnBackup" class="btn btn-ghost">
+            <i class="bi bi-cloud-download"></i> Backup
           </button>
         </div>
       </div>
@@ -305,7 +324,7 @@
       try{ iframe.src = "about:blank"; }catch(e){ const d=iframe.contentDocument||iframe.contentWindow.document; d.open(); d.close(); iframe.onload && iframe.onload(); }
     }
 
-    /* ===== Estoque (localStorage) ===== */
+    /* ===== Estoque (somente leitura para não “retirar”) ===== */
     const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
     function loadStock(){
       for(const k of STOCK_KEYS){
@@ -314,7 +333,7 @@
       }
       return {key:null, items:[]};
     }
-    function saveStock(key,items){ if(key) localStorage.setItem(key, JSON.stringify(items)); }
+    function saveStockNoop(){ /* intencionalmente não salva estoque */ }
     let estoque = loadStock();
     estoque.items = (estoque.items||[]).map(it=>({
       sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
@@ -324,8 +343,68 @@
 
     /* ===== Vendas (localStorage) ===== */
     const SALE_KEY="vendas.orders.v1";
-    let pedidos = (()=>{ try{ const j=JSON.parse(localStorage.getItem(SALE_KEY)); return Array.isArray(j)?j:[]; }catch(e){ return []; } })();
-    const savePedidos = ()=> localStorage.setItem(SALE_KEY, JSON.stringify(pedidos));
+    const SALE_HISTORY_KEY="vendas.orders.history.v1"; // trilha de alterações (append only)
+
+    function loadPedidos(){
+      try{ const j=JSON.parse(localStorage.getItem(SALE_KEY)); return Array.isArray(j)?j:[]; }catch(e){ return []; }
+    }
+    let pedidos = loadPedidos();
+
+    // salva de forma NÃO destrutiva:
+    // - adiciona snapshot no histórico
+    // - faz merge com o que está no storage (atualiza por id ou push)
+    function savePedidoNonDestructive(pedido){
+      try{
+        const histRaw = localStorage.getItem(SALE_HISTORY_KEY);
+        const hist = histRaw ? JSON.parse(histRaw) : [];
+        hist.push({ saved_at: new Date().toISOString(), order: pedido });
+        localStorage.setItem(SALE_HISTORY_KEY, JSON.stringify(hist));
+      }catch(e){ console.warn('Falha ao salvar histórico de vendas:', e); }
+
+      let current = loadPedidos();
+      const idx = current.findIndex(p=>p.id===pedido.id);
+      if(idx>=0) current[idx]=pedido; else current.push(pedido);
+      try{
+        localStorage.setItem(SALE_KEY, JSON.stringify(current));
+        pedidos = current;
+        return true;
+      }catch(e){
+        console.error('Falha ao salvar pedido:', e);
+        return false;
+      }
+    }
+
+    /* ===== Backup ===== */
+    function fileTimestamp(){
+      const d = new Date(); const p = n => String(n).padStart(2,'0');
+      return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+    }
+    function downloadJSON(filename, obj){
+      const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
+    }
+    function buildBackupPayload(){
+      const stockDump = {};
+      for(const k of STOCK_KEYS){
+        try{ const raw = localStorage.getItem(k); if(raw!=null) stockDump[k] = JSON.parse(raw); }catch(e){}
+      }
+      let salesDump = loadPedidos();
+      let historyDump = [];
+      try{ const raw = localStorage.getItem(SALE_HISTORY_KEY); if(raw!=null) historyDump = JSON.parse(raw)||[]; }catch(e){}
+      return {
+        meta: { app:'Rota Motos', module:'Vendas', type:'backup', version:'1.0', created_at:new Date().toISOString(), origin:location.href, user_agent:navigator.userAgent },
+        resumo: {
+          estoque_chaves: Object.keys(stockDump),
+          itens_estoque_estimado: Object.values(stockDump).reduce((s,v)=> s + (Array.isArray(v)?v.length:0), 0),
+          pedidos: Array.isArray(salesDump)? salesDump.length : 0,
+          historico_registros: Array.isArray(historyDump)? historyDump.length : 0
+        },
+        dados: { estoque: stockDump, vendas: salesDump, historico_vendas: historyDump }
+      };
+    }
 
     /* ===== Estado ===== */
     let editingId=null, cart=[];
@@ -375,7 +454,7 @@
             '<div class="btn-group btn-group-sm">'+
               '<button class="btn btn-outline-secondary" data-action="print" data-id="'+p.id+'" title="Imprimir"><i class="bi bi-printer"></i></button>'+
               '<button class="btn btn-outline-secondary" data-action="edit"  data-id="'+p.id+'" title="Editar"><i class="bi bi-pencil-square"></i></button>'+
-              '<button class="btn btn-outline-danger"    data-action="del"   data-id="'+p.id+'" title="Excluir"><i class="bi bi-trash"></i></button>'+
+              '<button class="btn btn-outline-danger"    data-action="del"   data-id="'+p.id+'" title="Excluir" disabled><i class="bi bi-trash"></i></button>'+
             '</div>'+
           '</td>'+
         '</tr>';
@@ -442,20 +521,26 @@
       editingId=null; cart=[]; $("formVenda").reset();
       $("vData").value=todayISO(); $("vStatus").value="Aguardando Pagamento"; $("vPagamento").value="Dinheiro";
       $("vDocTipo").value="CPF"; $("vDocNum").placeholder="000.000.000-00";
-      estoque = loadStock();
+      estoque = loadStock(); // somente leitura
       estoque.items = (estoque.items||[]).map(it=>({ sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""), qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"") }));
       rebuildCats(); renderProducts(); renderCart();
     }
     function formatDoc(tipo, digits){
       const d = onlyDigits(digits);
-      if(tipo==="CNPJ" && d.length===14){
-        return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");
-      }
-      if(tipo==="CPF" && d.length===11){
-        return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4");
-      }
+      if(tipo==="CNPJ" && d.length===14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");
+      if(tipo==="CPF" && d.length===11)  return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4");
       return digits||"";
     }
+
+    /* ===== Verificação de storage e avisos ===== */
+    function storageOK(){
+      try{ const k='__rm_test__'+Date.now(); localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+      catch(e){ console.error('localStorage bloqueado:', e); return false; }
+    }
+    (function(){
+      if(!storageOK()) $('lsWarn').style.display='block';
+      $('safeWarn').style.display='block';
+    })();
 
     /* ===== Eventos ===== */
     (function(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav){ document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); } })();
@@ -483,10 +568,9 @@
       const it=estoque.items.find(x=>x.sku===sku); if(!it){ alert("Produto não encontrado no estoque."); return; }
       let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
       const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
-      const disp=Math.max(0,(+it.qtd||0)-reserved);
+      const disp=Math.max(0,(+it.qtd||0)-reserved);  // apenas para não ultrapassar estoque visível
       if(q>disp) q=disp;
       if(q<=0){ alert("Sem quantidade disponível."); return; }
-      // preço com fallback para custo
       const precoFinal = priceOf(it);
       const i=cart.findIndex(x=>x.sku===sku);
       if(i>=0){ cart[i].qtd+=q; if(!(cart[i].preco>0)) cart[i].preco = precoFinal; }
@@ -510,7 +594,7 @@
       cart.splice(+btn.dataset.idx,1); renderCart(); renderProducts();
     });
 
-    // Salvar Pedido
+    // Salvar Pedido (não reduz estoque; não remove dados)
     $("btnSalvar").addEventListener("click", function(){
       if(!$("formVenda").reportValidity()){ $("formVenda").classList.add("was-validated"); return; }
 
@@ -525,25 +609,14 @@
         pagamento:$("vPagamento").value,
         status:$("vStatus").value,
         desconto:+$("vDesc").value||0,
-        // ao persistir, garante preco com fallback
         items:cart.map(x=>({sku:x.sku,nome:x.nome,preco:priceOf(x),custo:+x.custo||0,qtd:+x.qtd||0}))
       };
 
-      // Atualiza estoque (consumo/rollback em edição)
-      const old=pedidos.find(p=>p.id===pedido.id);
-      const before=new Map((old?.items||[]).map(i=>[i.sku,i.qtd]));
-      const after=new Map(pedido.items.map(i=>[i.sku,i.qtd]));
-      const map=new Map(estoque.items.map(it=>[it.sku,it]));
-      const skus=new Set([].concat(Array.from(before.keys()), Array.from(after.keys())));
-      skus.forEach(function(sku){
-        const delta=(after.get(sku)||0)-(before.get(sku)||0); // >0 consome estoque
-        const it=map.get(sku); if(it){ it.qtd=(+it.qtd||0)-delta; if(it.qtd<0) it.qtd=0; }
-      });
-      estoque.items=[].concat(Array.from(map.values())); saveStock(estoque.key, estoque.items);
+      // NÃO altera estoque (saveStockNoop)
+      const ok = savePedidoNonDestructive(pedido);
+      if(!ok){ alert("Erro ao salvar. Veja o console."); return; }
 
-      if(old){ const i=pedidos.findIndex(p=>p.id===pedido.id); pedidos[i]=pedido; } else pedidos.push(pedido);
-      savePedidos(); renderTable();
-
+      renderTable();
       bootstrap.Modal.getInstance(document.getElementById("modalVenda"))?.hide();
       resetModal();
     });
@@ -571,17 +644,26 @@
       }
 
       if(act==="del"){
-        if(!confirm("Excluir este pedido?")) return;
-        const p=pedidos.find(x=>x.id===id); if(!p) return;
-        const map=new Map(estoque.items.map(it=>[it.sku,it]));
-        (p.items||[]).forEach(i=>{ const it=map.get(i.sku); if(it){ it.qtd=(+it.qtd||0)+(+i.qtd||0); }});
-        estoque.items=[].concat(Array.from(map.values())); saveStock(estoque.key, estoque.items);
-        pedidos=pedidos.filter(x=>x.id!==id); savePedidos(); renderTable();
+        // Exclusão desativada para não remover dados anteriores
+        alert("🛡️ Exclusão desativada para proteger seus dados. Use Backup para exportar.");
+        return;
       }
 
       if(act==="print"){
         const p=pedidos.find(x=>x.id===id); if(!p) return;
         printOrder(p);
+      }
+    });
+
+    /* ===== Botão Backup ===== */
+    $("btnBackup").addEventListener("click", ()=>{
+      try{
+        const payload = buildBackupPayload();
+        const fname = `rota-motos-vendas-backup-${fileTimestamp()}.json`;
+        downloadJSON(fname, payload);
+      }catch(e){
+        console.error('Erro ao gerar backup:', e);
+        alert('Não foi possível gerar o backup. Veja o console para detalhes.');
       }
     });
 
