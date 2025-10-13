@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rota Motos — Oficina</title>
+<title>Rota Motos — Oficina (Adicionar/Alterar sem remover dados)</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -61,6 +61,7 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
 
 /* Avisos */
 #lsWarn{display:none}
+#safeWarn{display:none}
 </style>
 </head>
 <body>
@@ -83,7 +84,11 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
 
 <div class="container py-4">
 
-  <!-- Aviso localStorage -->
+  <!-- Avisos -->
+  <div id="safeWarn" class="alert alert-warning border-0 shadow-sm" role="alert">
+    🛡️ <strong>Modo Seguro</strong>: você pode <em>adicionar</em> e <em>alterar</em> OS. A exclusão foi desativada e o estoque não é diminuído automaticamente — assim, nada “some” do que você já tinha salvo.
+  </div>
+
   <div id="lsWarn" class="alert alert-danger border-0 shadow-sm" role="alert">
     ⚠️ Não foi possível acessar o armazenamento do navegador. Ative cookies/armazenamento do site
     ou abra esta página via <strong>https://seu-usuario.github.io/</strong>. Sem isso, as OS não serão salvas.
@@ -134,6 +139,15 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
         <label class="form-label mb-1 d-block"> </label>
         <button id="btnNova" class="btn btn-primary-clean w-100"><i class="bi bi-plus-lg"></i> Nova</button>
       </div>
+
+      <!-- botão Backup -->
+      <div class="col-md-3 d-grid d-lg-block">
+        <label class="form-label mb-1 d-block"> </label>
+        <button id="btnBackup" class="btn btn-ghost w-100">
+          <i class="bi bi-cloud-download"></i> Backup
+        </button>
+      </div>
+
       <div class="col-12"></div>
       <div class="col-md-3">
         <label class="form-label mb-1">Entrada de</label>
@@ -308,6 +322,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const todayISO = () => new Date().toISOString().slice(0,10);
   const toast = (id)=> new bootstrap.Toast($(id)).show();
 
+  /* ===== BACKUP helpers ===== */
+  function fileTimestamp(){
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function downloadJSON(filename, obj){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
+  }
+
   /* localStorage check */
   function storageOK(){
     try{
@@ -318,8 +349,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   const canStore = storageOK();
   if(!canStore){ $('lsWarn').style.display='block'; }
+  $('safeWarn').style.display='block';
 
-  /* ===== ESTOQUE ===== */
+  /* ===== ESTOQUE (somente leitura para não “retirar” nada) ===== */
   const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
   function loadStock(){
     for(const k of STOCK_KEYS){
@@ -333,11 +365,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     return {key:null, items:[]};
   }
-  function saveStock(key,items){
-    if(!canStore || !key) return;
-    try{ localStorage.setItem(key, JSON.stringify(items)); }
-    catch(e){ console.error('Falha ao salvar estoque:', e); toast('toastERR'); }
-  }
+  // NÃO altera estoque (evita diminuir quantidades)
+  function saveStockNoop(){ /* intencionalmente vazio */ }
 
   let estoque = loadStock();
   estoque.items = (estoque.items||[]).map(it=>({
@@ -348,16 +377,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /* ===== OS ===== */
   const OS_KEY="oficina.jobs.v1";
-  let jobs = [];
-  try{
-    const j=JSON.parse(localStorage.getItem(OS_KEY)||'[]');
-    jobs = Array.isArray(j)?j:[];
-  }catch(e){ console.error('Falha ao ler OS:', e); jobs=[]; }
+  const OS_HISTORY_KEY="oficina.jobs.history.v1"; // trilha de alterações (não apaga nada)
+  function loadJobs(){
+    try{
+      const j=JSON.parse(localStorage.getItem(OS_KEY)||'[]');
+      return Array.isArray(j)?j:[];
+    }catch(e){ console.error('Falha ao ler OS:', e); return []; }
+  }
+  let jobs = loadJobs();
 
-  function saveJobs(){
-    if(!canStore) { toast('toastERR'); return; }
-    try{ localStorage.setItem(OS_KEY, JSON.stringify(jobs)); }
-    catch(e){ console.error('Falha ao salvar OS:', e); toast('toastERR'); }
+  // Salva de forma NÃO destrutiva:
+  // - Carrega do storage na hora (merge seguro)
+  // - Atualiza o item pelo id (se existir) OU adiciona novo
+  // - Registra snapshot no histórico (apenas append)
+  function saveJobsNonDestructive(updatedJob){
+    // 1) snapshot no histórico
+    try{
+      const histRaw = localStorage.getItem(OS_HISTORY_KEY);
+      const hist = histRaw ? JSON.parse(histRaw) : [];
+      hist.push({ saved_at: new Date().toISOString(), job: updatedJob });
+      localStorage.setItem(OS_HISTORY_KEY, JSON.stringify(hist));
+    }catch(e){ console.warn('Falha ao escrever histórico de OS:', e); }
+
+    // 2) merge com lista atual para não “perder” itens
+    let current = loadJobs();
+    const idx = current.findIndex(j=>j.id===updatedJob.id);
+    if(idx>=0) current[idx]=updatedJob; else current.push(updatedJob);
+    try{
+      localStorage.setItem(OS_KEY, JSON.stringify(current));
+      jobs = current;
+      return true;
+    }catch(e){
+      console.error('Falha ao salvar OS:', e);
+      return false;
+    }
   }
 
   /* ===== Helpers UI ===== */
@@ -410,7 +463,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <td class="text-nowrap">
           <button class="btn btn-sm btn-ghost" data-action="print" data-id="${j.id}">Imprimir SO</button>
           <button class="btn btn-sm btn-ghost" data-action="edit" data-id="${j.id}">Editar</button>
-          <button class="btn btn-sm btn-ghost" data-action="del" data-id="${j.id}">Excluir</button>
+          <button class="btn btn-sm btn-ghost" data-action="del" data-id="${j.id}" disabled title="Exclusão desativada">Excluir</button>
         </td>
       </tr>
     `).join("");
@@ -482,7 +535,7 @@ window.addEventListener('DOMContentLoaded', () => {
     $("iPagamento").value="Dinheiro";
     $("iMaoObra").value=0;
     $("iObs").value="";
-    estoque = loadStock();
+    estoque = loadStock(); // só para exibir
     rebuildPartCats(); renderParts(); renderCart();
   }
 
@@ -535,7 +588,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cart.splice(+btn.dataset.idx,1); renderCart(); renderParts();
   });
 
-  /* ===== Salvar OS ===== */
+  /* ===== Salvar OS (adiciona/edita sem remover nada) ===== */
   let saving=false;
   $("btnSalvarOS").addEventListener("click", ()=>{
     if(saving) return;
@@ -547,7 +600,7 @@ window.addEventListener('DOMContentLoaded', () => {
       id: editingId || String(Date.now()),
       cliente:$("iCliente").value.trim(),
       modelo:$("iModelo").value.trim(),
-      placa:$("iPlaca").value.trim().toUpperCase(),
+      placa:($("iPlaca").value||"").trim().toUpperCase(),
       entrada:$("iEntrada").value,
       saida:$("iSaida").value,
       mecanico:$("iMecanico").value.trim(),
@@ -561,21 +614,9 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     try{
-      const old=jobs.find(j=>j.id===job.id);
-      const before=new Map((old?.pecas||[]).map(p=>[p.sku,p.qtd]));
-      const after=new Map(job.pecas.map(p=>[p.sku,p.qtd]));
-      const map=new Map(estoque.items.map(it=>[it.sku,it]));
-      const skus=new Set([].concat(Array.from(before.keys()), Array.from(after.keys())));
-      skus.forEach((sku)=>{
-        const delta=(after.get(sku)||0)-(before.get(sku)||0);
-        const it=map.get(sku); if(it){ it.qtd=(+it.qtd||0)-delta; if(it.qtd<0) it.qtd=0; }
-      });
-      estoque.items=[...map.values()];
-      saveStock(estoque.key, estoque.items);
-
-      if(old){ const i=jobs.findIndex(j=>j.id===job.id); jobs[i]=job; }
-      else jobs.push(job);
-      saveJobs();
+      // NÃO ajusta estoque (não diminui quantidades)
+      const ok = saveJobsNonDestructive(job);
+      if(!ok) throw new Error('saveJobsNonDestructive falhou');
 
       rebuildClientFilter(); renderTable();
       modal.hide(); resetModal();
@@ -592,6 +633,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $("tbody").addEventListener("click",(ev)=>{
     const btn=ev.target.closest("[data-action]"); if(!btn) return;
     const id=btn.dataset.id, act=btn.dataset.action;
+
     if(act==="edit"){
       const j=jobs.find(x=>x.id===id); if(!j) return;
       editingId=j.id; $("modalTitle").textContent="Editar OS";
@@ -604,15 +646,13 @@ window.addEventListener('DOMContentLoaded', () => {
       cart=(j.pecas||[]).map(p=>({sku:p.sku,nome:p.nome,preco:+p.preco||0,qtd:+p.qtd||0}));
       renderCart(); rebuildPartCats(); renderParts(); modal.show();
     }
+
     if(act==="del"){
-      if(!confirm("Excluir esta OS?")) return;
-      const j=jobs.find(x=>x.id===id); if(!j) return;
-      const map=new Map(estoque.items.map(it=>[it.sku,it]));
-      (j.pecas||[]).forEach(p=>{ const it=map.get(p.sku); if(it){ it.qtd=(+it.qtd||0)+(+p.qtd||0); } });
-      estoque.items=[...map.values()]; saveStock(estoque.key, estoque.items);
-      jobs=jobs.filter(x=>x.id!==id); saveJobs();
-      rebuildClientFilter(); renderTable();
+      // Exclusão desativada para não remover dados anteriores
+      alert("🛡️ Exclusão desativada para proteger seus dados. Use Backup para exportar.");
+      return;
     }
+
     if(act==="print"){
       const j=jobs.find(x=>x.id===id); if(!j) return;
       printReceiptInline(j);
@@ -646,13 +686,10 @@ function buildReceiptInDoc(doc, j){
     .b{font-weight:700}
     .big{font-size:16px}
     .ln{border-top:1px dashed #999;margin:10px 0}
-
-    /* Evita quebra dentro de blocos/tabelas na impressão */
     .block, table, thead, tbody, tr, td, th, div { 
       break-inside: avoid; 
       page-break-inside: avoid; 
     }
-
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{padding:6px 0;border-bottom:1px dotted #ddd}
     th{font-size:14px}
@@ -691,7 +728,7 @@ function buildReceiptInDoc(doc, j){
   // Compras / Produtos
   add('div','Dados de Compra','c b block');
 
-  // Mão de obra (linha separada logo abaixo do título)
+  // Mão de obra (linha separada)
   const maoRow=doc.createElement('div');
   maoRow.className='rowflex block';
   const lbl=doc.createElement('div'); lbl.textContent="Mão de obra";
@@ -702,7 +739,6 @@ function buildReceiptInDoc(doc, j){
   // Subtítulo Produtos
   add('div','Produtos','b block');
 
-  // Tabela de produtos
   if((j.pecas||[]).length){
     const t=doc.createElement('table');
     const thead=doc.createElement('thead');
@@ -732,7 +768,6 @@ function buildReceiptInDoc(doc, j){
     add('div','Sem produtos.','block');
   }
 
-  // Totais (Mão de obra + produtos – desconto)
   const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
   const total=(+j.maoObra||0)+subtotal-(+j.desconto||0);
 
@@ -784,6 +819,42 @@ function printReceiptInline(j){
     $("dFrom").value=`${y}-${m}-01`; $("dTo").value=todayISO();
     rebuildClientFilter(); rebuildPartCats(); renderParts(); renderTable();
   })();
+
+  /* ===== Botão Backup ===== */
+  $("btnBackup").addEventListener("click", ()=>{
+    try{
+      // monta payload com tudo para exportar
+      const stockDump = {};
+      for(const k of STOCK_KEYS){
+        try{
+          const raw = localStorage.getItem(k);
+          if(raw!=null) stockDump[k] = JSON.parse(raw);
+        }catch(e){}
+      }
+      let osDump = loadJobs();
+      const payload = {
+        meta: {
+          app: 'Rota Motos',
+          type: 'backup',
+          version: '1.0',
+          created_at: new Date().toISOString(),
+          origin: location.href,
+          user_agent: navigator.userAgent
+        },
+        resumo: {
+          estoque_chaves: Object.keys(stockDump),
+          itens_estoque_estimado: Object.values(stockDump).reduce((s,v)=>s + (Array.isArray(v)?v.length:0), 0),
+          ordens_servico: Array.isArray(osDump)? osDump.length : 0
+        },
+        dados: { estoque: stockDump, oficina_os: osDump }
+      };
+      const fname = `rota-motos-backup-${fileTimestamp()}.json`;
+      downloadJSON(fname, payload);
+    }catch(e){
+      console.error('Erro ao gerar backup:', e);
+      alert('Não foi possível gerar o backup. Veja o console para detalhes.');
+    }
+  });
 });
 </script>
 </body>
