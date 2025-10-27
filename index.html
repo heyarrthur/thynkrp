@@ -34,6 +34,7 @@
       --shadow:0 8px 24px rgba(0,0,0,.08);
       --sidebar-w:280px;
       --sidebar-w-collapsed:84px;
+  --side-w:260px; --side-collapsed:74px; --radius:12px;
       --radius:16px;
     }
     *{box-sizing:border-box}
@@ -47,68 +48,72 @@
       transition: margin-left .18s ease;
     }
 
-    /* ====== Sidebar fixa à esquerda ====== */
-    .sidebar{
-      position:fixed; inset:0 auto 0 0;
-      width:var(--sidebar-w);
-      background:var(--bg);
-      border-right:1px solid var(--border);
-      box-shadow:var(--shadow);
-      display:flex; flex-direction:column;
-      padding:16px 12px;
-      z-index:1000;
-      transition: width .18s ease;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px; font-weight:800; letter-spacing:.2px;
-      user-select:none;
-    }
-    .brand .dot{
-      width:12px; height:12px; border-radius:50%;
-      background:var(--accent);
-      box-shadow:0 0 0 4px rgba(255,193,7,.25)
-    }
-    .brand .text{white-space:nowrap}
-    .divider{height:1px; background:var(--border); margin:12px 8px}
+/* ===== Sidebar fixa (BRANCA) ===== */
+.sidebar{
+  position:fixed; inset:0 auto 0 0; width:var(--side-w);
+  background:var(--sidebar); color:var(--side-txt);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:1030;
+  transition:width .25s ease, box-shadow .25s ease;
+  box-shadow:var(--shadow);
+}
+.brand{
+  display:flex; align-items:center; gap:.6rem;
+  padding:16px 16px 14px; font-weight:800; letter-spacing:.2px;
+}
+.brand .logo{
+  width:36px;height:36px;border-radius:10px; background:#111; color:#fff; display:grid; place-items:center;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.nav-scroll{flex:1; overflow:auto; padding:8px 8px 16px}
+.side-group{margin:8px 8px 14px}
+.side-title{
+  font-size:.78rem; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--side-dim); padding:10px 10px 6px;
+}
+.side-divider{height:1px; background:var(--border); margin:6px 10px 8px; border-radius:99px}
+.side-sub{font-size:.8rem; color:var(--side-dim); margin:8px 10px 6px}
+.side-item{
+  display:flex; align-items:center; gap:.7rem; color:var(--side-txt); text-decoration:none;
+  padding:10px 12px; border-radius:12px; font-weight:600; position:relative;
+  transition:transform .1s ease, background .2s ease, box-shadow .2s ease;
+}
+.side-item i{font-size:1.05rem}
+.side-item:hover{ background:rgba(15,23,42,.05); transform:translateY(-1px) }
+.side-item.active{
+  background:#fff7ed; box-shadow:inset 0 0 0 2px #fde68a; color:#7c2d12;
+}
+.side-toggle{
+  display:flex; align-items:center; justify-content:center;
+  margin:10px; border:1px solid var(--border); border-radius:12px; height:44px;
+  background:#fff; color:var(--side-txt); width:calc(100% - 20px);
+  box-shadow:var(--shadow); transition:transform .1s ease, box-shadow .2s ease;
+}
+.side-toggle:hover{ transform:translateY(-1px); box-shadow:var(--shadow-strong); }
 
-    .nav{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px}
-    .nav-sub{
-      margin:16px 10px 6px; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:#8a8f98;
-      transition: opacity .18s ease;
-    }
-    .nav a{
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px; border-radius:12px;
-      color:inherit; text-decoration:none;
-      transition: transform .12s ease, background-color .12s ease, box-shadow .12s ease;
-      outline: none;
-      white-space:nowrap;
-    }
-    .nav a:hover{ background:#fff7e0; box-shadow:0 2px 10px rgba(255,193,7,.2) }
-    .nav a:focus-visible{ box-shadow:0 0 0 3px rgba(255,193,7,.45) }
-    .nav a.active{
-      background:linear-gradient(180deg,#fff7e0,#fff);
-      box-shadow:0 8px 22px rgba(255,193,7,.25);
-    }
-    .nav a .bullet{width:8px; height:8px; border-radius:50%; background:var(--accent); opacity:.9}
-    .nav a .label{overflow:hidden; text-overflow:ellipsis}
-    .nav a .bi{font-size:1.05rem; width:22px; text-align:center}
+/* Colapsar = apenas ícones */
+body.collapsed{ padding-left:var(--side-collapsed) }
+body.collapsed .sidebar{ width:var(--side-collapsed) }
+.hide-on-collapse{ transition:opacity .15s ease }
+body.collapsed .hide-on-collapse{ opacity:0; pointer-events:none; width:0 !important; display:none !important }
+.show-on-collapse{ display:none }
+body.collapsed .show-on-collapse{ display:flex }
 
-    .badge{margin-left:auto; font-size:.72rem; padding:.12rem .5rem; border-radius:999px; background:var(--accent); color:#000; font-weight:700}
+/* ===== Topbar ===== */
+.topbar{
+  position:sticky; top:0; z-index:1010; padding:12px 0; margin-bottom:8px;
+  background:linear-gradient(180deg,#ffffffcc,#ffffffaa 60%,#ffffff00);
+  backdrop-filter:saturate(1.2) blur(6px); border-bottom:1px solid var(--border);
+  animation:fadeIn .25s ease both;
+}
 
-    /* Botões da base da sidebar */
-    .sidebar-actions{
-      margin-top:auto; display:flex; gap:8px; padding:8px;
-    }
-    .btn-icon{
-      display:inline-flex; align-items:center; justify-content:center;
-      width:40px; height:40px; border-radius:10px; border:1px solid var(--border);
-      background:#fff; cursor:pointer;
-      transition: transform .1s ease, box-shadow .1s ease, background-color .1s ease;
-    }
-    .btn-icon:hover{ transform: translateY(-1px); box-shadow: var(--shadow) }
-    .btn-icon:active{ transform: translateY(0) }
+/* ===== Micro animações ===== */
+@keyframes fadeInUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+[data-anim]{animation:fadeInUp .28s ease both}
+[data-anim-delay="1"]{animation-delay:.04s}
+[data-anim-delay="2"]{animation-delay:.08s}
+[data-anim-delay="3"]{animation-delay:.12s}
 
     /* ====== Conteúdo ====== */
     .content{
@@ -176,76 +181,49 @@
   </style>
 </head>
 <body>
-  <!-- Botão mobile (abre/fecha a sidebar no <991px) -->
-  <button class="toggle btn btn-dark btn-sm" id="toggleNav" aria-expanded="false" aria-controls="sidebar">
-    <i class="bi bi-list"></i> Menu
+<!-- SIDEBAR (BRANCA) -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">RM</span>
+    <div class="hide-on-collapse">Rota Motos</div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="side-divider"></div>
+
+    <div class="side-group">
+      <div class="side-sub">Estoque</div>
+      <a class="side-item active" href="index.html"><i class="bi bi-box-seam"></i><span class="hide-on-collapse">Gerenciar</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Mecânica</div>
+      <a class="side-item" href="oficina.html"><i class="bi bi-wrench-adjustable"></i><span class="hide-on-collapse">Oficina</span></a>
+      <a class="side-item" href="oficinaextras.html"><i class="bi bi-gear-wide-connected"></i><span class="hide-on-collapse">Serviços Extras</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Financeiro</div>
+      <a class="side-item" href="financeiro.html"><i class="bi bi-currency-dollar"></i><span class="hide-on-collapse">Faturamento</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Vendas</div>
+      <a class="side-item" href="vendas.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Vendas</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Configurações</div>
+      <a class="side-item" href="backup.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Backups</span></a>
+    </div>
+  </div>
+
+  <button id="btnToggleSide" class="side-toggle">
+    <i class="bi bi-chevron-left"></i>
+    <span class="hide-on-collapse ms-2">Recolher</span>
+    <i class="bi bi-chevron-right show-on-collapse"></i>
   </button>
-
-  <!-- ====== SIDEBAR FIXA ====== -->
-  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
-    <div class="brand" aria-current="page">
-      <span class="dot" aria-hidden="true"></span>
-      <span class="text">Rota Motos</span>
-    </div>
-    <div class="divider" role="separator" aria-hidden="true"></div>
-
-    <nav>
-      <p class="nav-sub">Estoque</p>
-      <ul class="nav" role="list">
-        <li>
-          <a href="index.html" class="active" aria-current="page">
-            <i class="bi bi-box-seam"></i>
-            <span class="label">Gerenciar</span>
-            <span class="badge">Atual</span>
-          </a>
-        </li>
-      </ul>
-
-      <p class="nav-sub">Mecânica</p>
-      <ul class="nav" role="list">
-        <li>
-          <a href="oficina.html">
-            <i class="bi bi-wrench"></i>
-            <span class="label">Oficina</span>
-          </a>
-        </li>
-      </ul>
-
-      <p class="nav-sub">Faturamento</p>
-      <ul class="nav" role="list">
-        <li>
-          <a href="financeiro.html">
-            <i class="bi bi-wallet2"></i>
-            <span class="label">Financeiro</span>
-          </a>
-        </li>
-        <li>
-          <a href="vendas.html">
-            <i class="bi bi-cart2"></i>
-            <span class="label">Vendas</span>
-          </a>
-        </li>
-      </ul>
-
-      <p class="nav-sub">Configurações</p>
-      <ul class="nav" role="list">
-        <li>
-          <a href="servicos.html">
-            <i class="bi bi-gear-wide-connected"></i>
-            <span class="label">Serviços</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- Ações da base da sidebar -->
-    <div class="sidebar-actions">
-      <button class="btn-icon" id="collapseNav" type="button" title="Recolher / expandir sidebar" aria-label="Recolher / expandir sidebar">
-        <i class="bi bi-layout-sidebar-inset"></i>
-      </button>
-      <!-- você pode colocar outros botões aqui se quiser -->
-    </div>
-  </aside>
+</aside>
 
   <!-- ====== CONTEÚDO ====== -->
   <main class="content" id="conteudo" tabindex="-1">

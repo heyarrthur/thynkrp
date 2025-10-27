@@ -3,44 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rota Motos — Oficina (Adicionar/Alterar sem remover dados)</title>
+<title>Rota Motos — Oficina</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-:root{--ink:#0f172a;--muted:#6b7280;--border:#e6e8ef;--accent:#f59e0b;--nav-h:64px}
+:root{
+  --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b;
+  --bg:#f6f8fb; --card:#fff;
+  --sidebar:#ffffff; --side-txt:#0f172a; --side-dim:#6b7280;
+  --side-w:260px; --side-collapsed:74px; --radius:12px;
+  --shadow:0 10px 30px rgba(2,6,23,.06); --shadow-strong:0 14px 40px rgba(2,6,23,.12);
+}
 *{box-sizing:border-box}
-body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
-.container{max-width:1180px}
-.navbar{background:#fff;border-bottom:1px solid var(--border)}
-.brand{display:flex;gap:.5rem;align-items:center;font-weight:800}
-.brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center}
-.nav-link{color:var(--ink);font-weight:600;border-radius:8px}
-.nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+html,body{height:100%}
+body{
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg); color:var(--ink); margin:0;
+  overflow-y:scroll; transition:padding .25s ease;
+  padding-left:var(--side-w);
+}
 
-.card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
-.metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
-.metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
+/* ===== Sidebar fixa (BRANCA) ===== */
+.sidebar{
+  position:fixed; inset:0 auto 0 0; width:var(--side-w);
+  background:var(--sidebar); color:var(--side-txt);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:1030;
+  transition:width .25s ease, box-shadow .25s ease;
+  box-shadow:var(--shadow);
+}
+.brand{
+  display:flex; align-items:center; gap:.6rem;
+  padding:16px 16px 14px; font-weight:800; letter-spacing:.2px;
+}
+.brand .logo{
+  width:36px;height:36px;border-radius:10px; background:#111; color:#fff; display:grid; place-items:center;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.nav-scroll{flex:1; overflow:auto; padding:8px 8px 16px}
+.side-group{margin:8px 8px 14px}
+.side-title{
+  font-size:.78rem; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--side-dim); padding:10px 10px 6px;
+}
+.side-divider{height:1px; background:var(--border); margin:6px 10px 8px; border-radius:99px}
+.side-sub{font-size:.8rem; color:var(--side-dim); margin:8px 10px 6px}
+.side-item{
+  display:flex; align-items:center; gap:.7rem; color:var(--side-txt); text-decoration:none;
+  padding:10px 12px; border-radius:12px; font-weight:600; position:relative;
+  transition:transform .1s ease, background .2s ease, box-shadow .2s ease;
+}
+.side-item i{font-size:1.05rem}
+.side-item:hover{ background:rgba(15,23,42,.05); transform:translateY(-1px) }
+.side-item.active{
+  background:#fff7ed; box-shadow:inset 0 0 0 2px #fde68a; color:#7c2d12;
+}
+.side-toggle{
+  display:flex; align-items:center; justify-content:center;
+  margin:10px; border:1px solid var(--border); border-radius:12px; height:44px;
+  background:#fff; color:var(--side-txt); width:calc(100% - 20px);
+  box-shadow:var(--shadow); transition:transform .1s ease, box-shadow .2s ease;
+}
+.side-toggle:hover{ transform:translateY(-1px); box-shadow:var(--shadow-strong); }
+
+/* Colapsar = apenas ícones */
+body.collapsed{ padding-left:var(--side-collapsed) }
+body.collapsed .sidebar{ width:var(--side-collapsed) }
+.hide-on-collapse{ transition:opacity .15s ease }
+body.collapsed .hide-on-collapse{ opacity:0; pointer-events:none; width:0 !important; display:none !important }
+.show-on-collapse{ display:none }
+body.collapsed .show-on-collapse{ display:flex }
+
+/* ===== Topbar ===== */
+.topbar{
+  position:sticky; top:0; z-index:1010; padding:12px 0; margin-bottom:8px;
+  background:linear-gradient(180deg,#ffffffcc,#ffffffaa 60%,#ffffff00);
+  backdrop-filter:saturate(1.2) blur(6px); border-bottom:1px solid var(--border);
+  animation:fadeIn .25s ease both;
+}
+
+/* ===== Micro animações ===== */
+@keyframes fadeInUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+[data-anim]{animation:fadeInUp .28s ease both}
+[data-anim-delay="1"]{animation-delay:.04s}
+[data-anim-delay="2"]{animation-delay:.08s}
+[data-anim-delay="3"]{animation-delay:.12s}
+
+/* ===== Cards / métricas ===== */
+.container{max-width:1180px}
+.card-soft{
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  box-shadow:var(--shadow); transition:transform .12s ease, box-shadow .2s ease;
+}
+.card-soft:hover{ transform:translateY(-2px); box-shadow:var(--shadow-strong) }
+.metric{display:flex; gap:.8rem; align-items:center; padding:1rem}
+.metric .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff; box-shadow:inset 0 -8px 18px rgba(0,0,0,.08)}
 .i-jobs{background:#64748b}.i-inshop{background:#0ea5e9}.i-total{background:#10b981}.i-low{background:#ef4444}
 .metric .label{color:var(--muted);font-size:.9rem}
 .metric .value{font-weight:800;font-size:1.35rem}
 
-.toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
-.form-control,.form-select{border-radius:10px;border-color:var(--border)}
+/* ===== Toolbar ===== */
+.toolbar{
+  background:#fff; border:1px solid var(--border); border-left:4px solid var(--accent);
+  border-radius:16px; padding:1rem; box-shadow:var(--shadow);
+}
+.form-control,.form-select{border-radius:12px;border-color:var(--border)}
 .form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
-.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
-.btn-ghost:hover{background:#f9fafb}
-.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600;border-radius:12px; transition:transform .1s ease, box-shadow .2s ease}
+.btn-ghost:hover{background:#f9fafb; transform:translateY(-1px); box-shadow:var(--shadow)}
+.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700;border-radius:12px; transition:transform .1s ease, filter .1s ease, box-shadow .2s ease}
+.btn-primary-clean:hover{filter:brightness(.98); transform:translateY(-1px); box-shadow:var(--shadow-strong)}
 
+/* ===== Tabela ===== */
 .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700}
 .empty{color:#6b7280;text-align:center;padding:2rem 0}
 
-/* ===== Status badges ===== */
+/* ===== Badges de status ===== */
 .status-badge{
-  display:inline-flex;align-items:center;gap:.35rem;
-  padding:.28rem .68rem;border-radius:999px;
+  display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .68rem;border-radius:999px;
   font-weight:800;font-size:.78rem;letter-spacing:.01em;line-height:1;user-select:none
 }
 .status-badge i{font-size:.95rem}
@@ -50,80 +134,110 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
 .st-cancelado{color:#991b1b;background:#fef2f2;border:1px solid #fecaca}
 
 /* ===== Modal ===== */
-.modal-lg{--bs-modal-width: 1000px}
+.modal-lg{--bs-modal-width: 1040px}
 .parts-panel{border-right:1px dashed var(--border)}
-.part-card{border:1px solid var(--border);border-radius:10px;padding:.6rem;margin-bottom:.6rem}
+.part-card{border:1px solid var(--border);border-radius:14px;padding:.7rem;margin-bottom:.7rem; box-shadow:var(--shadow); transition:transform .1s ease, box-shadow .2s ease}
+.part-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-strong) }
 .badge-soft{background:#f1f5f9;border:1px solid #e2e8f0;color:#334155;border-radius:999px;padding:.15rem .5rem;font-weight:700;font-size:.72rem}
-.cart-item{border-bottom:1px dashed #e5e7eb;padding:.35rem 0}
-.totals{background:#fafafa;border:1px dashed #e5e7eb;border-radius:10px;padding:.6rem}
+.cart-item{border-bottom:1px dashed #e5e7eb;padding:.45rem 0}
+.totals{background:#fafafa;border:1px dashed #e5e7eb;border-radius:14px;padding:.7rem}
 .right-num{text-align:right}
 .mono{font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
 
-/* Avisos */
+/* Aviso storage */
 #lsWarn{display:none}
-#safeWarn{display:none}
+
+/* ===== Print 80mm (sem recorte) ===== */
+@media print{
+  @page{ size:80mm auto; margin:0 }
+  html, body{ margin:0!important; padding:0!important; }
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav class="navbar navbar-expand-lg fixed-top">
-  <div class="container">
-    <a class="navbar-brand brand" href="#"><span class="logo">RM</span>Rota Motos</a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="topnav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-        <li class="nav-item"><a class="nav-link active" href="oficina.html">Oficina</a></li>
-        <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-        <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
-      </ul>
+<!-- SIDEBAR (BRANCA) -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">RM</span>
+    <div class="hide-on-collapse">Rota Motos</div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="side-divider"></div>
+
+    <div class="side-group">
+      <div class="side-sub">Estoque</div>
+      <a class="side-item" href="index.html"><i class="bi bi-box-seam"></i><span class="hide-on-collapse">Gerenciar</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Mecânica</div>
+      <a class="side-item active" href="oficina.html"><i class="bi bi-wrench-adjustable"></i><span class="hide-on-collapse">Oficina</span></a>
+      <a class="side-item" href="oficinaextras.html"><i class="bi bi-gear-wide-connected"></i><span class="hide-on-collapse">Serviços Extras</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Financeiro</div>
+      <a class="side-item" href="financeiro.html"><i class="bi bi-currency-dollar"></i><span class="hide-on-collapse">Faturamento</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Vendas</div>
+      <a class="side-item" href="vendas.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Vendas</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Configurações</div>
+      <a class="side-item" href="backup.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Backups</span></a>
     </div>
   </div>
-</nav>
 
-<div class="container py-4">
+  <button id="btnToggleSide" class="side-toggle">
+    <i class="bi bi-chevron-left"></i>
+    <span class="hide-on-collapse ms-2">Recolher</span>
+    <i class="bi bi-chevron-right show-on-collapse"></i>
+  </button>
+</aside>
 
-  <!-- Avisos -->
-  <div id="safeWarn" class="alert alert-warning border-0 shadow-sm" role="alert">
-    🛡️ <strong>Modo Seguro</strong>: você pode <em>adicionar</em> e <em>alterar</em> OS. A exclusão foi desativada e o estoque não é diminuído automaticamente — assim, nada “some” do que você já tinha salvo.
+<!-- CONTEÚDO -->
+<div class="topbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <h1 class="h5 m-0 fw-bold" data-anim>Oficina</h1>
+    <div class="text-muted small" data-anim data-anim-delay="1">Rota Motos</div>
   </div>
+</div>
 
-  <div id="lsWarn" class="alert alert-danger border-0 shadow-sm" role="alert">
+<div class="container pb-4">
+
+  <!-- Aviso storage -->
+  <div id="lsWarn" class="alert alert-danger border-0 shadow-sm" role="alert" data-anim>
     ⚠️ Não foi possível acessar o armazenamento do navegador. Ative cookies/armazenamento do site
     ou abra esta página via <strong>https://seu-usuario.github.io/</strong>. Sem isso, as OS não serão salvas.
   </div>
 
-  <!-- METRICS -->
+  <!-- MÉTRICAS -->
   <div class="row g-3 mb-3">
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-jobs"><i class="bi bi-wrench-adjustable"></i></div>
-        <div><div class="label">Consertos</div><div id="mConsertos" class="value">0</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-inshop"><i class="bi bi-bicycle"></i></div>
-        <div><div class="label">Motos em Oficina</div><div id="mOficina" class="value">0</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-total"><i class="bi bi-currency-dollar"></i></div>
-        <div><div class="label">Valor Total</div><div id="mValor" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-low"><i class="bi bi-graph-up-arrow"></i></div>
-        <div><div class="label">Lucro (ilustrativo)</div><div id="mLucro" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
+    <div class="col-md-3" data-anim><div class="card-soft metric">
+      <div class="icon i-jobs"><i class="bi bi-wrench-adjustable"></i></div>
+      <div><div class="label">Consertos</div><div id="mConsertos" class="value">0</div></div>
+    </div></div>
+    <div class="col-md-3" data-anim data-anim-delay="1"><div class="card-soft metric">
+      <div class="icon i-inshop"><i class="bi bi-bicycle"></i></div>
+      <div><div class="label">Motos em Oficina</div><div id="mOficina" class="value">0</div></div>
+    </div></div>
+    <div class="col-md-3" data-anim data-anim-delay="2"><div class="card-soft metric">
+      <div class="icon i-total"><i class="bi bi-currency-dollar"></i></div>
+      <div><div class="label">Valor Total</div><div id="mValor" class="value">R$ 0,00</div></div>
+    </div></div>
+    <div class="col-md-3" data-anim data-anim-delay="3"><div class="card-soft metric">
+      <div class="icon i-low"><i class="bi bi-graph-up-arrow"></i></div>
+      <div><div class="label">Lucro (ilustrativo)</div><div id="mLucro" class="value">R$ 0,00</div></div>
+    </div></div>
   </div>
 
   <!-- TOOLBAR -->
-  <div class="toolbar mb-3">
+  <div class="toolbar mb-3" data-anim>
     <div class="row g-3 align-items-end">
       <div class="col-lg-6">
         <label class="form-label mb-1">Buscar</label>
@@ -131,21 +245,16 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
       </div>
       <div class="col-md-3">
         <label class="form-label mb-1">Filtrar por cliente</label>
-        <select id="fCliente" class="form-select">
-          <option value="">Todos</option>
-        </select>
+        <select id="fCliente" class="form-select"><option value="">Todos</option></select>
       </div>
       <div class="col-md-3 d-grid d-lg-block">
         <label class="form-label mb-1 d-block"> </label>
         <button id="btnNova" class="btn btn-primary-clean w-100"><i class="bi bi-plus-lg"></i> Nova</button>
       </div>
 
-      <!-- botão Backup -->
       <div class="col-md-3 d-grid d-lg-block">
         <label class="form-label mb-1 d-block"> </label>
-        <button id="btnBackup" class="btn btn-ghost w-100">
-          <i class="bi bi-cloud-download"></i> Backup
-        </button>
+        <button id="btnBackup" class="btn btn-ghost w-100"><i class="bi bi-cloud-download"></i> Backup</button>
       </div>
 
       <div class="col-12"></div>
@@ -161,21 +270,13 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
   </div>
 
   <!-- TABELA -->
-  <div class="card-soft p-0">
+  <div class="card-soft p-0" data-anim>
     <div class="table-responsive" style="max-height:60vh;">
       <table class="table align-middle mb-0">
         <thead>
           <tr>
-            <th>Cliente</th>
-            <th>Modelo Moto</th>
-            <th>Placa</th>
-            <th>Entrada</th>
-            <th>Saída</th>
-            <th>Mecânico</th>
-            <th>Status</th>
-            <th class="text-end">Produtos</th>
-            <th class="text-end">Total</th>
-            <th>Ações</th>
+            <th>Cliente</th><th>Modelo Moto</th><th>Placa</th><th>Entrada</th><th>Saída</th>
+            <th>Mecânico</th><th>Status</th><th class="text-end">Produtos</th><th class="text-end">Total</th><th>Ações</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -192,7 +293,6 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
       <h5 id="modalTitle" class="modal-title">Nova OS</h5>
       <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
-
     <div class="modal-body">
       <form id="formOS" novalidate>
         <div class="row g-3">
@@ -224,22 +324,27 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
           <div class="col-md-3">
             <label class="form-label">Status</label>
             <select id="iStatus" class="form-select">
-              <option>Revisando</option>
-              <option>Aguardando Cliente</option>
-              <option>Concluído</option>
-              <option>Cancelado</option>
+              <option>Revisando</option><option>Aguardando Cliente</option><option>Concluído</option><option>Cancelado</option>
             </select>
           </div>
 
+          <!-- Pagamentos (duas formas) -->
           <div class="col-md-4">
-            <label class="form-label">Forma de Pagamento</label>
+            <label class="form-label">Pagamento 1</label>
             <select id="iPagamento" class="form-select">
-              <option>Dinheiro</option>
-              <option>PIX</option>
-              <option>Cartão Débito</option>
-              <option>Cartão de Crédito</option>
-              <option>Outro</option>
+              <option>Dinheiro</option><option>PIX</option><option>Cartão Débito</option><option>Cartão de Crédito</option><option>Outro</option>
             </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Pagamento 2 (opcional)</label>
+            <select id="iPagamento2" class="form-select">
+              <option value="">—</option><option>Dinheiro</option><option>PIX</option>
+              <option>Cartão Débito</option><option>Cartão de Crédito</option><option>Outro</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Valor do Pagamento 2</label>
+            <input id="iPagamento2Valor" type="number" step="0.01" min="0" value="0" class="form-control mono">
           </div>
 
           <div class="col-12">
@@ -247,7 +352,7 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
             <textarea id="iObs" class="form-control" rows="2" placeholder="Observações gerais..."></textarea>
           </div>
 
-          <!-- Produtos (esquerda) -->
+          <!-- Produtos -->
           <div class="col-lg-6 parts-panel">
             <div class="row g-2">
               <div class="col-8"><input id="pSearch" class="form-control" placeholder="Buscar produto por SKU, nome..."></div>
@@ -256,9 +361,15 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
             </div>
           </div>
 
-          <!-- Carrinho / Valores (direita) -->
+          <!-- Serviços Extras + Carrinho/Valores -->
           <div class="col-lg-6">
-            <div id="cartList"></div>
+            <div class="row g-2">
+              <div class="col-8"><input id="sSearch" class="form-control" placeholder="Buscar serviço extra por nome..."></div>
+              <div class="col-4"><select id="sCategoria" class="form-select"><option value="">Todas as categorias</option></select></div>
+              <div class="col-12" id="servicesList"></div>
+            </div>
+
+            <div id="cartList" class="mt-2"></div>
 
             <div class="row g-2 mt-2">
               <div class="col-md-6">
@@ -272,9 +383,10 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
 
               <div class="col-12">
                 <div class="totals d-flex justify-content-between mono">
-                  <div>Subtotal produtos: <span id="cSubtotal">R$ 0,00</span></div>
+                  <div>Subtotal itens: <span id="cSubtotal">R$ 0,00</span></div>
                   <div>Total (nota): <strong id="cTotal">R$ 0,00</strong></div>
                 </div>
+                <div class="small text-muted mt-1" id="splitHint"></div>
               </div>
 
               <div class="col-12">
@@ -316,120 +428,81 @@ body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;backgroun
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
+  /* ===== Util ===== */
   const BRL  = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
   const $    = id => document.getElementById(id);
   const money = n => BRL.format(+n||0);
   const todayISO = () => new Date().toISOString().slice(0,10);
   const toast = (id)=> new bootstrap.Toast($(id)).show();
 
-  /* ===== BACKUP helpers ===== */
-  function fileTimestamp(){
-    const d = new Date();
-    const p = n => String(n).padStart(2,'0');
-    return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
-  }
+  /* Sidebar toggle (colapsar = ícones apenas) */
+  $('btnToggleSide').addEventListener('click', ()=> document.body.classList.toggle('collapsed'));
+
+  /* Backup helpers */
+  function fileTimestamp(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds()); }
   function downloadJSON(filename, obj){
-    const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
+    const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},200);
   }
 
   /* localStorage check */
-  function storageOK(){
-    try{
-      const k='__rm_test__'+Date.now();
-      localStorage.setItem(k,'1'); localStorage.removeItem(k);
-      return true;
-    }catch(e){ console.error('localStorage bloqueado:', e); return false; }
-  }
-  const canStore = storageOK();
-  if(!canStore){ $('lsWarn').style.display='block'; }
-  $('safeWarn').style.display='block';
+  function storageOK(){ try{ const k='__rm_test__'+Date.now(); localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }catch(e){ console.error('localStorage bloqueado:',e); return false; } }
+  const canStore = storageOK(); if(!canStore){ $('lsWarn').style.display='block'; }
 
-  /* ===== ESTOQUE (somente leitura para não “retirar” nada) ===== */
+  /* ===== ESTOQUE (somente leitura p/ exibir) ===== */
   const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
   function loadStock(){
     for(const k of STOCK_KEYS){
-      try{
-        const raw=localStorage.getItem(k);
-        if(raw){
-          const arr=JSON.parse(raw)||[];
-          return {key:k, items:Array.isArray(arr)?arr:[]};
-        }
-      }catch(e){}
+      try{ const raw=localStorage.getItem(k); if(raw){ const arr=JSON.parse(raw)||[]; return {key:k, items:Array.isArray(arr)?arr:[]}; } }catch(e){}
     }
     return {key:null, items:[]};
   }
-  // NÃO altera estoque (evita diminuir quantidades)
-  function saveStockNoop(){ /* intencionalmente vazio */ }
+  let estoque=loadStock();
+  estoque.items=(estoque.items||[]).map(it=>({ sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""), qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"") }));
 
-  let estoque = loadStock();
-  estoque.items = (estoque.items||[]).map(it=>({
-    sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
-    qtd:Number(it.qtd??0), alerta:Number(it.alerta??0),
-    preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"")
-  }));
+  /* ===== SERVIÇOS EXTRAS ===== */
+  const EXTRAS_KEY='oficina.extras.v1';
+  function loadExtras(){
+    try{ const raw=localStorage.getItem(EXTRAS_KEY); if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)) return arr; } }catch(e){}
+    return [
+      {nome:'Lavagem completa', categoria:'Higienização', preco:30},
+      {nome:'Regulagem de corrente', categoria:'Ajustes', preco:25},
+      {nome:'Troca de óleo', categoria:'Fluidos', preco:45},
+      {nome:'Polimento farol', categoria:'Estética', preco:35},
+    ];
+  }
+  let extras=loadExtras().map(s=>({nome:String(s.nome||'-'), categoria:String(s.categoria||''), preco:Number(s.preco||0)}));
 
   /* ===== OS ===== */
   const OS_KEY="oficina.jobs.v1";
-  const OS_HISTORY_KEY="oficina.jobs.history.v1"; // trilha de alterações (não apaga nada)
-  function loadJobs(){
-    try{
-      const j=JSON.parse(localStorage.getItem(OS_KEY)||'[]');
-      return Array.isArray(j)?j:[];
-    }catch(e){ console.error('Falha ao ler OS:', e); return []; }
-  }
-  let jobs = loadJobs();
+  const OS_HISTORY_KEY="oficina.jobs.history.v1";
+  function loadJobs(){ try{ const j=JSON.parse(localStorage.getItem(OS_KEY)||'[]'); return Array.isArray(j)?j:[]; }catch(e){ console.error('Falha ao ler OS:',e); return []; } }
+  let jobs=loadJobs();
 
-  // Salva de forma NÃO destrutiva:
-  // - Carrega do storage na hora (merge seguro)
-  // - Atualiza o item pelo id (se existir) OU adiciona novo
-  // - Registra snapshot no histórico (apenas append)
   function saveJobsNonDestructive(updatedJob){
-    // 1) snapshot no histórico
     try{
-      const histRaw = localStorage.getItem(OS_HISTORY_KEY);
-      const hist = histRaw ? JSON.parse(histRaw) : [];
-      hist.push({ saved_at: new Date().toISOString(), job: updatedJob });
-      localStorage.setItem(OS_HISTORY_KEY, JSON.stringify(hist));
-    }catch(e){ console.warn('Falha ao escrever histórico de OS:', e); }
-
-    // 2) merge com lista atual para não “perder” itens
-    let current = loadJobs();
-    const idx = current.findIndex(j=>j.id===updatedJob.id);
+      const histRaw=localStorage.getItem(OS_HISTORY_KEY);
+      const hist=histRaw?JSON.parse(histRaw):[];
+      hist.push({saved_at:new Date().toISOString(),job:updatedJob});
+      localStorage.setItem(OS_HISTORY_KEY,JSON.stringify(hist));
+    }catch(e){ console.warn('Falha ao escrever histórico de OS:',e); }
+    let current=loadJobs();
+    const idx=current.findIndex(j=>j.id===updatedJob.id);
     if(idx>=0) current[idx]=updatedJob; else current.push(updatedJob);
-    try{
-      localStorage.setItem(OS_KEY, JSON.stringify(current));
-      jobs = current;
-      return true;
-    }catch(e){
-      console.error('Falha ao salvar OS:', e);
-      return false;
-    }
+    try{ localStorage.setItem(OS_KEY,JSON.stringify(current)); jobs=current; return true; }catch(e){ console.error('Falha ao salvar OS:',e); return false; }
   }
 
   /* ===== Helpers UI ===== */
   function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
   function statusBadge(status){
-    const map={
-      "Revisando":["st-revisando","bi-search"],
-      "Aguardando Cliente":["st-aguardando","bi-hourglass-split"],
-      "Concluído":["st-concluido","bi-check-circle"],
-      "Cancelado":["st-cancelado","bi-x-circle"]
-    };
-    const [cls,icon]=(map[status]||map["Revisando"]);
-    return `<span class="status-badge ${cls}"><i class="bi ${icon}"></i><span>${esc(status||'Revisando')}</span></span>`;
+    const map={"Revisando":["st-revisando","bi-search"],"Aguardando Cliente":["st-aguardando","bi-hourglass-split"],"Concluído":["st-concluido","bi-check-circle"],"Cancelado":["st-cancelado","bi-x-circle"]};
+    const [cls,icon]=(map[status]||map["Revisando"]); return `<span class="status-badge ${cls}"><i class="bi ${icon}"></i><span>${esc(status||'Revisando')}</span></span>`;
   }
   const inRange=(d,de,ate)=>{ if(!d) return true; if(de&&d<de) return false; if(ate&&d>ate) return false; return true; };
 
   function rebuildClientFilter(){
-    const sel=$("fCliente");
-    const set=[...new Set(jobs.map(j=>j.cliente).filter(Boolean))].sort();
+    const sel=$("fCliente"); const set=[...new Set(jobs.map(j=>j.cliente).filter(Boolean))].sort();
     sel.innerHTML='<option value="">Todos</option>'+set.map(c=>`<option>${esc(c)}</option>`).join("");
   }
 
@@ -437,18 +510,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const q=($("search").value||"").toLowerCase(), fc=$("fCliente").value, de=$("dFrom").value, ate=$("dTo").value;
     const data=jobs.filter(r=>{
       const mQ=!q||[r.cliente,r.modelo,r.mecanico,r.placa,r.status].join(" ").toLowerCase().includes(q);
-      const mC=!fc||r.cliente===fc;
-      const mD=inRange(r.entrada,de,ate);
-      return mQ&&mC&&mD;
+      const mC=!fc||r.cliente===fc; const mD=inRange(r.entrada,de,ate); return mQ&&mC&&mD;
     });
-
     const total=data.reduce((s,j)=> s+(+j.maoObra||0)+(+j.subtotal||0)-(+j.desconto||0),0);
     const custo=data.reduce((s,j)=> s+(+j.subtotal||0),0);
     const emOficina=data.filter(j=>j.status!=="Concluído").length;
-    $("mConsertos").textContent=data.length;
-    $("mOficina").textContent=emOficina;
-    $("mValor").textContent=money(total);
-    $("mLucro").textContent=money(total-custo);
+    $("mConsertos").textContent=data.length; $("mOficina").textContent=emOficina; $("mValor").textContent=money(total); $("mLucro").textContent=money(total-custo);
 
     const tbody=$("tbody"), empty=$("empty");
     if(!data.length){ tbody.innerHTML=""; empty.style.display="block"; return; }
@@ -465,11 +532,10 @@ window.addEventListener('DOMContentLoaded', () => {
           <button class="btn btn-sm btn-ghost" data-action="edit" data-id="${j.id}">Editar</button>
           <button class="btn btn-sm btn-ghost" data-action="del" data-id="${j.id}" disabled title="Exclusão desativada">Excluir</button>
         </td>
-      </tr>
-    `).join("");
+      </tr>`).join("");
   }
 
-  /* ===== Produtos modal ===== */
+  /* ===== Produtos & Serviços ===== */
   function rebuildPartCats(){
     const sel=$("pCategoria");
     const cats=[...new Set(estoque.items.map(i=>i.categoria).filter(Boolean))].sort();
@@ -480,10 +546,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const reserved=new Map(cart.map(x=>[x.sku,x.qtd]));
     const items=estoque.items.filter(it=>{
       const mQ=!q||[it.sku,it.nome,it.categoria].join(" ").toLowerCase().includes(q);
-      const mC=!cat||(it.categoria||"")===cat;
-      return mQ&&mC;
+      const mC=!cat||(it.categoria||"")===cat; return mQ&&mC;
     }).slice(0,80);
-    $("partsList").innerHTML = items.map(it=>{
+    $("partsList").innerHTML= items.map(it=>{
       const disp=Math.max(0,(+it.qtd||0)-(reserved.get(it.sku)||0));
       const qid="q_"+String(it.sku).replace(/[^a-z0-9_-]/gi,'_');
       return `
@@ -503,6 +568,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }).join("") || `<div class="text-muted">Nada encontrado…</div>`;
   }
 
+  function rebuildServiceCats(){
+    const sel=$("sCategoria");
+    const cats=[...new Set(extras.map(i=>i.categoria).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  }
+  function renderServices(){
+    const q=($("sSearch").value||"").toLowerCase(), cat=$("sCategoria").value;
+    const items=extras.filter(it=>{
+      const mQ=!q||[it.nome,it.categoria].join(" ").toLowerCase().includes(q);
+      const mC=!cat||(it.categoria||"")===cat; return mQ&&mC;
+    }).slice(0,80);
+    $("servicesList").innerHTML= items.map((it,idx)=>{
+      const qid="sv_"+idx;
+      return `
+        <div class="part-card">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">${esc(it.nome||"-")}</div>
+            <span class="badge-soft">${esc(it.categoria||"-")}</span>
+          </div>
+          <div class="small text-muted">Preço: <strong>${money(+it.preco||0)}</strong></div>
+          <div class="d-flex gap-2 mt-1">
+            <input id="${qid}" type="number" min="1" value="1" class="form-control form-control-sm" style="max-width:90px">
+            <button class="btn btn-sm btn-primary-clean" data-action="addService" data-index="${idx}" data-qid="${qid}">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+        </div>`;
+    }).join("") || `<div class="text-muted">Nenhum serviço…</div>`;
+  }
+
   /* ===== Carrinho ===== */
   let editingId=null, cart=[];
   function renderCart(){
@@ -510,7 +605,8 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="cart-item d-flex justify-content-between align-items-center">
         <div>
           <div class="fw-semibold">${esc(it.nome)}</div>
-          <div class="small text-muted">SKU ${esc(it.sku)} • ${money(it.preco)} • Qtd:
+          <div class="small text-muted">
+            ${it.tipo==='servico' ? 'Serviço' : `SKU ${esc(it.sku)}`} • ${money(it.preco)} • Qtd:
             <input data-action="changeQty" data-idx="${i}" type="number" min="1" value="${it.qtd}" class="form-control form-control-sm d-inline-block ms-1 mono" style="width:80px">
           </div>
         </div>
@@ -525,23 +621,21 @@ window.addEventListener('DOMContentLoaded', () => {
     $("cSubtotal").textContent=money(subtotal);
     const total=(+$("iMaoObra").value||0)+subtotal-(+$("cDesconto").value||0);
     $("cTotal").textContent=money(Math.max(0,total));
+
+    const pg2=$("iPagamento2").value; const v2=+$("iPagamento2Valor").value||0;
+    const hint=pg2?`Pagamento 2 (${pg2}): ${money(v2)} • Restante Pagamento 1: ${money(Math.max(0,total-v2))}`:'';
+    $("splitHint").textContent=hint;
   }
   function resetModal(){
     editingId=null; cart=[];
     $("formOS").reset();
-    $("iEntrada").value=todayISO();
-    $("iStatus").value="Revisando";
-    $("cDesconto").value=0;
-    $("iPagamento").value="Dinheiro";
-    $("iMaoObra").value=0;
-    $("iObs").value="";
-    estoque = loadStock(); // só para exibir
-    rebuildPartCats(); renderParts(); renderCart();
+    $("iEntrada").value=todayISO(); $("iStatus").value="Revisando";
+    $("cDesconto").value=0; $("iPagamento").value="Dinheiro"; $("iPagamento2").value=""; $("iPagamento2Valor").value=0;
+    $("iMaoObra").value=0; $("iObs").value="";
+    estoque=loadStock(); extras=loadExtras();
+    rebuildPartCats(); renderParts(); rebuildServiceCats(); renderServices(); renderCart();
   }
-
-  const modal = new bootstrap.Modal(document.getElementById('modalOS'));
-
-  // Abrir modal
+  const modal=new bootstrap.Modal(document.getElementById('modalOS'));
   $("btnNova").addEventListener("click", ()=>{ $("modalTitle").textContent="Nova OS"; resetModal(); modal.show(); });
 
   // Filtros / busca
@@ -554,86 +648,102 @@ window.addEventListener('DOMContentLoaded', () => {
   $("pSearch").addEventListener("input", renderParts);
   $("pCategoria").addEventListener("change", renderParts);
 
-  // Totais
+  // Serviços
+  $("sSearch").addEventListener("input", renderServices);
+  $("sCategoria").addEventListener("change", renderServices);
+
+  // Totais / split
   $("cDesconto").addEventListener("input", renderCart);
   $("iMaoObra").addEventListener("input", renderCart);
+  $("iPagamento2").addEventListener("change", renderCart);
+  $("iPagamento2Valor").addEventListener("input", renderCart);
 
   // Produtos (delegação)
-  $("partsList").addEventListener("click", (ev)=>{
+  $("partsList").addEventListener("click",(ev)=>{
     const btn=ev.target.closest("[data-action='addPart']"); if(!btn) return;
     const sku=decodeURIComponent(btn.dataset.sku), qid=btn.dataset.qid;
-    const it=estoque.items.find(x=>x.sku===sku);
-    if(!it){ alert("Produto não encontrado no estoque."); return; }
+    const it=estoque.items.find(x=>x.sku===sku); if(!it){ alert("Produto não encontrado no estoque."); return; }
     let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
     const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
     const disp=Math.max(0,(+it.qtd||0)-reserved);
-    if(q>disp) q=disp;
-    if(q<=0){ alert("Sem quantidade disponível."); return; }
-    const i=cart.findIndex(x=>x.sku===sku);
-    if(i>=0) cart[i].qtd+=q; else cart.push({sku, nome:it.nome, preco:+it.preco||0, qtd:q});
+    if(q>disp) q=disp; if(q<=0){ alert("Sem quantidade disponível."); return; }
+    const i=cart.findIndex(x=>x.sku===sku && x.tipo!=='servico');
+    if(i>=0) cart[i].qtd+=q; else cart.push({tipo:'produto', sku, nome:it.nome, preco:+it.preco||0, qtd:q});
     renderCart(); renderParts();
+  });
+
+  // Serviços (delegação)
+  $("servicesList").addEventListener("click",(ev)=>{
+    const btn=ev.target.closest("[data-action='addService']"); if(!btn) return;
+    const idx=+btn.dataset.index; const qid=btn.dataset.qid;
+    const it=extras[idx]; if(!it) return;
+    const q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
+    const i=cart.findIndex(x=>x.tipo==='servico' && x.nome===it.nome && x.preco===+it.preco);
+    if(i>=0) cart[i].qtd+=q; else cart.push({tipo:'servico', sku:`SVC-${idx+1}`, nome:it.nome, preco:+it.preco||0, qtd:q});
+    renderCart();
   });
 
   // Carrinho (delegação)
   $("cartList").addEventListener("input",(ev)=>{
     if(ev.target.dataset.action!=="changeQty") return;
     const i=+ev.target.dataset.idx; let q=Math.max(1, parseInt(ev.target.value||"1",10));
-    const sku=cart[i].sku, stock=+(estoque.items.find(x=>x.sku===sku)?.qtd||0);
-    const others=cart.filter((_,idx)=>idx!==i && _.sku===sku).reduce((s,x)=>s+x.qtd,0);
-    const disp=Math.max(0, stock-others);
-    if(q>disp) q=disp; cart[i].qtd=q; renderCart(); renderParts();
+    if(cart[i].tipo==='produto'){
+      const sku=cart[i].sku, stock=+(estoque.items.find(x=>x.sku===sku)?.qtd||0);
+      const others=cart.filter((_,idx)=>idx!==i && _.sku===sku).reduce((s,x)=>s+x.qtd,0);
+      const disp=Math.max(0, stock-others); if(q>disp) q=disp;
+    }
+    cart[i].qtd=q; renderCart(); renderParts();
   });
   $("cartList").addEventListener("click",(ev)=>{
     const btn=ev.target.closest("[data-action='removePart']"); if(!btn) return;
     cart.splice(+btn.dataset.idx,1); renderCart(); renderParts();
   });
 
-  /* ===== Salvar OS (adiciona/edita sem remover nada) ===== */
+  /* ===== Auto-preencher por placa ===== */
+  $("iPlaca").addEventListener("blur", ()=>{
+    const placa=($("iPlaca").value||"").trim().toUpperCase(); if(!placa) return;
+    const match=jobs.slice().reverse().find(j=>(j.placa||"").toUpperCase()===placa);
+    if(match){ $("iCliente").value=match.cliente||$("iCliente").value; $("iModelo").value=match.modelo||$("iModelo").value; $("iMecanico").value=match.mecanico||$("iMecanico").value; }
+  });
+
+  /* ===== Salvar OS ===== */
   let saving=false;
   $("btnSalvarOS").addEventListener("click", ()=>{
     if(saving) return;
-    const form=$("formOS");
-    if(!form.reportValidity()){ form.classList.add("was-validated"); return; }
+    const form=$("formOS"); if(!form.reportValidity()){ form.classList.add("was-validated"); return; }
     saving=true; $("btnSalvarOS").disabled=true;
+
+    const subtotal=cart.reduce((s,x)=>s+x.qtd*x.preco,0);
+    const total=(+$("iMaoObra").value||0)+subtotal-(+$("cDesconto").value||0);
+    let pg2v=+$("iPagamento2Valor").value||0; if(!$("iPagamento2").value){ pg2v=0; $("iPagamento2Valor").value=0; }
+    if(pg2v>total) pg2v=total;
 
     const job={
       id: editingId || String(Date.now()),
       cliente:$("iCliente").value.trim(),
       modelo:$("iModelo").value.trim(),
       placa:($("iPlaca").value||"").trim().toUpperCase(),
-      entrada:$("iEntrada").value,
-      saida:$("iSaida").value,
+      entrada:$("iEntrada").value, saida:$("iSaida").value,
       mecanico:$("iMecanico").value.trim(),
       status:$("iStatus").value,
-      pagamento:$("iPagamento").value,
-      desconto:+$("cDesconto").value||0,
-      maoObra:+$("iMaoObra").value||0,
+      pagamento:$("iPagamento").value, pagamento2:$("iPagamento2").value||"", pagamento2_valor:pg2v,
+      desconto:+$("cDesconto").value||0, maoObra:+$("iMaoObra").value||0,
       obs:$("iObs").value||"",
-      pecas:cart.map(x=>({sku:x.sku,nome:x.nome,preco:+x.preco||0,qtd:+x.qtd||0})),
-      subtotal:cart.reduce((s,x)=>s+x.qtd*x.preco,0)
+      pecas:cart.map(x=>({tipo:x.tipo, sku:x.sku, nome:x.nome, preco:+x.preco||0, qtd:+x.qtd||0})),
+      subtotal:subtotal
     };
 
     try{
-      // NÃO ajusta estoque (não diminui quantidades)
-      const ok = saveJobsNonDestructive(job);
-      if(!ok) throw new Error('saveJobsNonDestructive falhou');
-
-      rebuildClientFilter(); renderTable();
-      modal.hide(); resetModal();
-      toast('toastOK');
-    }catch(e){
-      console.error('Erro ao salvar OS:', e);
-      toast('toastERR');
-    }finally{
-      saving=false; $("btnSalvarOS").disabled=false;
-    }
+      const ok=saveJobsNonDestructive(job); if(!ok) throw new Error('saveJobsNonDestructive falhou');
+      rebuildClientFilter(); renderTable(); modal.hide(); resetModal(); toast('toastOK');
+    }catch(e){ console.error('Erro ao salvar OS:',e); toast('toastERR'); }
+    finally{ saving=false; $("btnSalvarOS").disabled=false; }
   });
 
   /* ===== Ações tabela ===== */
   $("tbody").addEventListener("click",(ev)=>{
     const btn=ev.target.closest("[data-action]"); if(!btn) return;
     const id=btn.dataset.id, act=btn.dataset.action;
-
     if(act==="edit"){
       const j=jobs.find(x=>x.id===id); if(!j) return;
       editingId=j.id; $("modalTitle").textContent="Editar OS";
@@ -642,218 +752,116 @@ window.addEventListener('DOMContentLoaded', () => {
       $("iSaida").value=j.saida||""; $("iMecanico").value=j.mecanico||"";
       $("iStatus").value=j.status||"Revisando";
       $("cDesconto").value=+j.desconto||0; $("iPagamento").value=j.pagamento||"Dinheiro";
+      $("iPagamento2").value=j.pagamento2||""; $("iPagamento2Valor").value=+j.pagamento2_valor||0;
       $("iMaoObra").value=+j.maoObra||0; $("iObs").value=j.obs||"";
-      cart=(j.pecas||[]).map(p=>({sku:p.sku,nome:p.nome,preco:+p.preco||0,qtd:+p.qtd||0}));
-      renderCart(); rebuildPartCats(); renderParts(); modal.show();
+      cart=(j.pecas||[]).map(p=>({tipo:p.tipo||'produto', sku:p.sku, nome:p.nome, preco:+p.preco||0, qtd:+p.qtd||0}));
+      renderCart(); rebuildPartCats(); renderParts(); rebuildServiceCats(); renderServices(); modal.show();
     }
-
-    if(act==="del"){
-      // Exclusão desativada para não remover dados anteriores
-      alert("🛡️ Exclusão desativada para proteger seus dados. Use Backup para exportar.");
-      return;
-    }
-
-    if(act==="print"){
-      const j=jobs.find(x=>x.id===id); if(!j) return;
-      printReceiptInline(j);
-    }
+    if(act==="del"){ alert("🛡️ Exclusão está desativada para proteger seus dados. Use Backup para exportar."); return; }
+    if(act==="print"){ const j=jobs.find(x=>x.id===id); if(!j) return; printReceiptInline(j); }
   });
 
-/* ===== Impressão via iframe oculto (80mm, sem quebra de nota) ===== */
-function buildReceiptInDoc(doc, j){
-  doc.head.innerHTML=''; 
-  doc.body.innerHTML='';
+  /* ===== Impressão 80mm folha única ===== */
+  function buildReceiptInDoc(doc, j){
+    doc.head.innerHTML=''; doc.body.innerHTML='';
+    const title=doc.createElement('title'); title.textContent=' '; doc.head.appendChild(title);
+    const style=doc.createElement('style'); style.textContent=`
+      @media print { @page{ size:80mm auto; margin:0 } html,body{ margin:0 !important } }
+      *{box-sizing:border-box}
+      body{ margin:0; padding:14px; font-size:14px; line-height:1.3; font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace }
+      .c{text-align:center}.b{font-weight:700}.big{font-size:16px}
+      .ln{border-top:1px dashed #999;margin:10px 0}
+      .block, table, thead, tbody, tr, td, th, div { break-inside:avoid; page-break-inside:avoid; page-break-after:auto }
+      table{width:100%;border-collapse:collapse;margin-top:8px}
+      th,td{padding:6px 0;border-bottom:1px dotted #ddd} th{font-size:14px} td.r{text-align:right}
+      .rowflex{display:flex;justify-content:space-between;align-items:baseline}
+    `; doc.head.appendChild(style);
 
-  const title = doc.createElement('title');
-  title.textContent = ' ';
-  doc.head.appendChild(title);
+    const add=(tag,txt,cls)=>{const el=doc.createElement(tag); if(cls) el.className=cls; if(txt!=null) el.textContent=txt; doc.body.appendChild(el); return el;};
+    add('div','Rota Motos','c b big block'); add('div','CNPJ 60.469.425/0001-76','c block'); add('div','Ordem de Serviço','c b block'); add('div','', 'ln');
+    add('div','Dados do Cliente','c b block');
+    add('div','Nome Cliente: '+(j.cliente||''),'block');
+    add('div','Moto Cliente: '+(j.modelo||''),'block');
+    add('div','Placa da moto: '+(j.placa||''),'block');
+    add('div','Entrada: '+(j.entrada||''),'block');
+    if(j.saida) add('div','Saída: '+(j.saida||''),'block');
+    add('div','', 'ln');
 
-  const style = doc.createElement('style');
-  style.textContent = `
-    @media print {
-      @page { size: 80mm auto; margin: 0; }
-      html, body { margin: 0 !important; }
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      padding:14px;
-      font-size:14px;
-      line-height:1.3;
-      font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace
-    }
-    .c{text-align:center}
-    .b{font-weight:700}
-    .big{font-size:16px}
-    .ln{border-top:1px dashed #999;margin:10px 0}
-    .block, table, thead, tbody, tr, td, th, div { 
-      break-inside: avoid; 
-      page-break-inside: avoid; 
-    }
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:6px 0;border-bottom:1px dotted #ddd}
-    th{font-size:14px}
-    td.r{text-align:right}
-    .rowflex{display:flex;justify-content:space-between;align-items:baseline}
-  `;
-  doc.head.appendChild(style);
+    add('div','Dados do Mecânico','c b block');
+    add('div','Nome Mecânico: '+(j.mecanico||''),'block');
+    add('div','', 'ln');
 
-  const add=(tag,txt,cls)=>{
-    const el=doc.createElement(tag);
-    if(cls) el.className=cls;
-    if(txt!=null) el.textContent=txt;
-    doc.body.appendChild(el);
-    return el;
-  };
+    add('div','Serviços/Produtos','c b block');
+    const maoRow=doc.createElement('div'); maoRow.className='rowflex block';
+    const lbl=doc.createElement('div'); lbl.textContent="Mão de obra";
+    const val=doc.createElement('div'); val.textContent=BRL.format(+j.maoObra||0);
+    maoRow.appendChild(lbl); maoRow.appendChild(val); doc.body.appendChild(maoRow);
 
-  // Cabeçalho
-  add('div','Rota Motos','c b big block');
-  add('div','CNPJ 60.469.425/0001-76','c block');
-  add('div','Ordem de Compra','c b block');
-  add('div','', 'ln');
+    add('div','Itens','b block');
+    if((j.pecas||[]).length){
+      const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
+      ['Item','Qtde','Preço','Total'].forEach((h,i)=>{ const th=doc.createElement('th'); th.textContent=h; if(i>0) th.className='r'; trh.appendChild(th); });
+      thead.appendChild(trh); t.appendChild(thead);
+      const tb=doc.createElement('tbody');
+      (j.pecas||[]).forEach(p=>{
+        const tr=doc.createElement('tr');
+        const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
+        tr.appendChild(td((p.tipo==='servico'?'[S] ':'')+(p.nome||'-')));
+        tr.appendChild(td(p.qtd,'r'));
+        tr.appendChild(td(BRL.format(+p.preco||0),'r'));
+        tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); doc.body.appendChild(t);
+    } else { add('div','Sem itens.','block'); }
 
-  // Cliente
-  add('div','Dados do Cliente','c b block');
-  add('div','Nome Cliente: '+(j.cliente||''), 'block');
-  add('div','Moto Cliente: '+(j.modelo||''), 'block');
-  add('div','Placa da moto: '+(j.placa||''), 'block');
-  add('div','Entrada: '+(j.entrada||''), 'block');
-  add('div','', 'ln');
+    const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
+    const total=(+j.maoObra||0)+subtotal-(+j.desconto||0);
+    add('div','', 'ln');
+    const row=(lbl,val,bold)=>{ const d=doc.createElement('div'); d.className='rowflex block'; const l=doc.createElement('div'); l.textContent=lbl; const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b'; d.appendChild(l); d.appendChild(r); doc.body.appendChild(d); };
+    row('Mão de obra:', +j.maoObra||0, false); row('Subtotal (itens):', subtotal, false); row('Descontos:', +j.desconto||0, false); row('Valor Total (nota):', Math.max(0,total), true);
 
-  // Mecânico
-  add('div','Dados do Mecânico','c b block');
-  add('div','Nome Mecânico: '+(j.mecanico||''), 'block');
-  add('div','', 'ln');
+    add('div','', 'ln');
+    const pg1=j.pagamento||''; const pg2=j.pagamento2||''; const pg2v=+j.pagamento2_valor||0; const pg1v=Math.max(0,Math.max(0,total)-pg2v);
+    add('div','Pagamentos','c b block'); add('div',`Pagamento 1: ${pg1} — ${BRL.format(pg1v)}`,'block'); if(pg2) add('div',`Pagamento 2: ${pg2} — ${BRL.format(pg2v)}`,'block');
 
-  // Compras / Produtos
-  add('div','Dados de Compra','c b block');
-
-  // Mão de obra (linha separada)
-  const maoRow=doc.createElement('div');
-  maoRow.className='rowflex block';
-  const lbl=doc.createElement('div'); lbl.textContent="Mão de obra";
-  const val=doc.createElement('div'); val.textContent=BRL.format(+j.maoObra||0);
-  maoRow.appendChild(lbl); maoRow.appendChild(val);
-  doc.body.appendChild(maoRow);
-
-  // Subtítulo Produtos
-  add('div','Produtos','b block');
-
-  if((j.pecas||[]).length){
-    const t=doc.createElement('table');
-    const thead=doc.createElement('thead');
-    const trh=doc.createElement('tr');
-    ['Item','Qtde','Preço','Total'].forEach((h,i)=>{
-      const th=doc.createElement('th');
-      th.textContent=h;
-      if(i>0) th.className='r';
-      trh.appendChild(th);
-    });
-    thead.appendChild(trh);
-    t.appendChild(thead);
-
-    const tb=doc.createElement('tbody');
-    (j.pecas||[]).forEach(p=>{
-      const tr=doc.createElement('tr');
-      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-      tr.appendChild(td(p.nome||'-'));
-      tr.appendChild(td(p.qtd,'r'));
-      tr.appendChild(td(BRL.format(+p.preco||0),'r'));
-      tr.appendChild(td(BRL.format((+p.preco||0)*(+p.qtd||0)),'r'));
-      tb.appendChild(tr);
-    });
-    t.appendChild(tb);
-    doc.body.appendChild(t);
-  } else {
-    add('div','Sem produtos.','block');
+    add('div','', 'ln');
+    const obsText=(j.obs&&j.obs.trim())?j.obs.trim():'Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!';
+    add('div','Observações','c b block'); add('div',obsText,'block');
+  }
+  function printReceiptInline(j){
+    const iframe=document.createElement("iframe");
+    iframe.style.position="fixed"; iframe.style.right="-9999px"; iframe.style.bottom="0";
+    iframe.width="0"; iframe.height="0"; iframe.setAttribute("aria-hidden","true");
+    iframe.setAttribute("sandbox","allow-modals allow-same-origin");
+    document.body.appendChild(iframe);
+    const d=iframe.contentDocument||iframe.contentWindow.document; buildReceiptInDoc(d,j);
+    setTimeout(()=>{ try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){} setTimeout(()=>iframe.remove(),1200); },100);
   }
 
-  const subtotal=(j.pecas||[]).reduce((s,p)=>s+(+p.preco||0)*(+p.qtd||0),0);
-  const total=(+j.maoObra||0)+subtotal-(+j.desconto||0);
-
-  add('div','', 'ln');
-  add('div','Forma de Pagamento: '+(j.pagamento||''), 'block');
-
-  const row=(lbl,val,bold)=>{
-    const d=doc.createElement('div');
-    d.className='rowflex block';
-    const l=doc.createElement('div'); l.textContent=lbl;
-    const r=doc.createElement('div'); r.textContent=BRL.format(val); if(bold) r.className='b';
-    d.appendChild(l); d.appendChild(r); doc.body.appendChild(d);
-  };
-  row('Mão de obra:', +j.maoObra||0, false);
-  row('Subtotal (produtos):', subtotal, false);
-  row('Descontos:', +j.desconto||0, false);
-  row('Valor Total (nota):', Math.max(0,total), true);
-
-  add('div','', 'ln');
-  add('div','Observações','c b block');
-  const obsText = (j.obs && j.obs.trim()) ? j.obs.trim() : 'Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!';
-  add('div', obsText, 'block');
-}
-
-function printReceiptInline(j){
-  const iframe=document.createElement("iframe");
-  iframe.style.position="fixed";
-  iframe.style.right="-9999px";
-  iframe.style.bottom="0";
-  iframe.width="0";
-  iframe.height="0";
-  iframe.setAttribute("aria-hidden","true");
-  iframe.setAttribute("sandbox","allow-modals allow-same-origin");
-  document.body.appendChild(iframe);
-
-  const d=iframe.contentDocument||iframe.contentWindow.document;
-  buildReceiptInDoc(d,j);
-
-  setTimeout(()=>{
-    try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
-    setTimeout(()=>iframe.remove(), 1200);
-  }, 80);
-}
-
-  /* Init */
+  /* ===== Init ===== */
   (function init(){
     $("iEntrada").value=todayISO();
     const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0');
     $("dFrom").value=`${y}-${m}-01`; $("dTo").value=todayISO();
-    rebuildClientFilter(); rebuildPartCats(); renderParts(); renderTable();
+    rebuildClientFilter(); rebuildPartCats(); rebuildServiceCats();
+    renderParts(); renderServices(); renderTable();
   })();
 
-  /* ===== Botão Backup ===== */
+  /* ===== Backup ===== */
   $("btnBackup").addEventListener("click", ()=>{
     try{
-      // monta payload com tudo para exportar
-      const stockDump = {};
-      for(const k of STOCK_KEYS){
-        try{
-          const raw = localStorage.getItem(k);
-          if(raw!=null) stockDump[k] = JSON.parse(raw);
-        }catch(e){}
-      }
-      let osDump = loadJobs();
-      const payload = {
-        meta: {
-          app: 'Rota Motos',
-          type: 'backup',
-          version: '1.0',
-          created_at: new Date().toISOString(),
-          origin: location.href,
-          user_agent: navigator.userAgent
-        },
-        resumo: {
-          estoque_chaves: Object.keys(stockDump),
-          itens_estoque_estimado: Object.values(stockDump).reduce((s,v)=>s + (Array.isArray(v)?v.length:0), 0),
-          ordens_servico: Array.isArray(osDump)? osDump.length : 0
-        },
-        dados: { estoque: stockDump, oficina_os: osDump }
+      const stockDump={}; for(const k of STOCK_KEYS){ try{ const raw=localStorage.getItem(k); if(raw!=null) stockDump[k]=JSON.parse(raw); }catch(e){} }
+      let osDump=loadJobs();
+      const payload={
+        meta:{app:'Rota Motos',type:'backup',version:'1.1',created_at:new Date().toISOString(),origin:location.href,user_agent:navigator.userAgent},
+        resumo:{ estoque_chaves:Object.keys(stockDump),
+          itens_estoque_estimado:Object.values(stockDump).reduce((s,v)=>s+(Array.isArray(v)?v.length:0),0),
+          ordens_servico:Array.isArray(osDump)?osDump.length:0 },
+        dados:{ estoque:stockDump, oficina_os:osDump, servicos_extras:loadExtras() }
       };
-      const fname = `rota-motos-backup-${fileTimestamp()}.json`;
-      downloadJSON(fname, payload);
-    }catch(e){
-      console.error('Erro ao gerar backup:', e);
-      alert('Não foi possível gerar o backup. Veja o console para detalhes.');
-    }
+      const fname=`rota-motos-backup-${fileTimestamp()}.json`; downloadJSON(fname,payload);
+    }catch(e){ console.error('Erro ao gerar backup:',e); alert('Não foi possível gerar o backup. Veja o console para detalhes.'); }
   });
 });
 </script>

@@ -11,103 +11,173 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
-:root{--ink:#0f172a;--muted:#6b7280;--border:#e6e8ef;--accent:#f59e0b;--nav-h:64px}
+:root{
+  --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b;
+  --bg:#f6f8fb; --card:#fff;
+  --sidebar:#ffffff; --side-txt:#0f172a; --side-dim:#6b7280;
+  --side-w:260px; --side-collapsed:74px;
+  --shadow:0 10px 30px rgba(2,6,23,.06); --shadow-strong:0 14px 40px rgba(2,6,23,.12);
+}
 *{box-sizing:border-box}
-body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
-.container{max-width:1180px}
-.navbar{background:#fff;border-bottom:1px solid var(--border)}
-.brand{display:flex;gap:.5rem;align-items:center;font-weight:800}
-.brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center}
-.nav-link{color:var(--ink);font-weight:600;border-radius:8px}
-.nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+html,body{height:100%; overflow-x:hidden} /* evita rolagem p/ os lados */
+body{
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg); color:var(--ink); margin:0;
+  overflow-y:overlay; /* só vertical */
+  transition:padding .25s ease;
+  padding-left:var(--side-w);
+}
 
-.card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
-.metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
-.metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
-.i-balance{background:#0ea5e9}.i-in{background:#10b981}.i-out{background:#ef4444}.i-work{background:#f59e0b}
+/* ===== Sidebar (branca, colapsável p/ ícones) ===== */
+.sidebar{
+  position:fixed; inset:0 auto 0 0; width:var(--side-w);
+  background:var(--sidebar); color:var(--side-txt);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:1030;
+  transition:width .25s ease; box-shadow:var(--shadow);
+  will-change: width;
+}
+.brand{ display:flex; align-items:center; gap:.6rem; padding:16px 16px 14px; font-weight:800 }
+.brand .logo{ width:36px; height:36px; border-radius:10px; background:#111; color:#fff; display:grid; place-items:center }
+.nav-scroll{flex:1; overflow:auto; padding:8px 8px 16px}
+.side-group{margin:8px 8px 14px}
+.side-divider{height:1px; background:var(--border); margin:6px 10px 8px; border-radius:99px}
+.side-sub{font-size:.8rem; color:var(--side-dim); margin:8px 10px 6px}
+.side-item{
+  display:flex; align-items:center; gap:.7rem; color:var(--side-txt); text-decoration:none;
+  padding:10px 12px; border-radius:12px; font-weight:600;
+  transition:transform .1s ease, background .2s ease, box-shadow .2s ease;
+}
+.side-item:hover{ background:rgba(15,23,42,.05); transform:translateY(-1px) }
+.side-item.active{ background:#fff7ed; box-shadow:inset 0 0 0 2px #fde68a; color:#7c2d12 }
+.side-toggle{
+  display:flex; align-items:center; justify-content:center;
+  margin:10px; border:1px solid var(--border); border-radius:12px; height:44px;
+  background:#fff; color:#111; width:calc(100% - 20px);
+  box-shadow:var(--shadow); transition:transform .1s ease, box-shadow .2s ease;
+}
+.side-toggle:hover{ transform:translateY(-1px); box-shadow:var(--shadow-strong) }
+
+body.collapsed{ padding-left:var(--side-collapsed) }
+body.collapsed .sidebar{ width:var(--side-collapsed) }
+.hide-on-collapse{ transition:opacity .15s ease }
+body.collapsed .hide-on-collapse{ opacity:0; pointer-events:none; width:0 !important; display:none !important }
+.show-on-collapse{ display:none }
+body.collapsed .show-on-collapse{ display:flex }
+
+/* ===== Topbar ===== */
+.topbar{
+  position:sticky; top:0; z-index:1010; padding:12px 0; margin-bottom:8px;
+  background:linear-gradient(180deg,#ffffffcc,#ffffffaa 60%,#ffffff00);
+  backdrop-filter:saturate(1.2) blur(6px); border-bottom:1px solid var(--border);
+}
+
+/* ===== Layout/UI ===== */
+.container{max-width:1180px; width:calc(100% - 24px)} /* evita sangrar */
+.card-soft{
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  box-shadow:var(--shadow); transition:transform .12s ease, box-shadow .2s ease;
+}
+.card-soft:hover{ transform:translateY(-2px); box-shadow:var(--shadow-strong) }
+
+.metric{display:flex; gap:.8rem; align-items:center; padding:1rem}
+.metric .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff; box-shadow:inset 0 -8px 18px rgba(0,0,0,.08)}
+.i-balance{background:#0ea5e9}.i-in{background:#10b981}.i-out{background:#ef4444}.i-work{background:#f59e0b}.i-serv{background:#6366f1}.i-parts{background:#06b6d4}
 .metric .label{color:var(--muted);font-size:.9rem}
 .metric .value{font-weight:800;font-size:1.35rem}
 
-.toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem;overflow:visible}
-.form-control,.form-select{border-radius:10px;border-color:var(--border)}
+.toolbar{
+  background:#fff; border:1px solid var(--border); border-left:4px solid var(--accent);
+  border-radius:16px; padding:1rem; box-shadow:var(--shadow)
+}
+.form-control,.form-select{border-radius:12px;border-color:var(--border)}
 .form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
-.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
-.btn-ghost:hover{background:#f9fafb}
-.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+.btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600;border-radius:12px; transition:transform .1s ease, box-shadow .2s ease}
+.btn-ghost:hover{background:#f9fafb; transform:translateY(-1px); box-shadow:var(--shadow)}
+.btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700;border-radius:12px; transition:transform .1s ease, box-shadow .2s ease}
+.btn-primary-clean:hover{ transform:translateY(-1px); box-shadow:var(--shadow-strong) }
 
 .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700}
-.empty{color:#6b7280;text-align:center;padding:2rem 0}
-
-.chart-card{padding:1rem}
+.table{width:100%}
+.table-responsive{overflow-x:auto} /* garante que a tabela não estoure layout */
 canvas{max-height:300px}
 
-/* ===== Ferramentas (dropdown melhorado) ===== */
-.tools-menu.dropdown-menu{
-  width:min(360px,calc(100vw - 32px));
-  min-width:300px;
-  white-space:normal;
-  word-break:break-word;
-  border-radius:12px;
-  border:1px solid var(--border);
-  box-shadow:0 12px 28px rgba(2,6,23,.12);
-  padding:.5rem;
-  z-index:1055;
-}
-.tools-menu .dropdown-item{
-  display:flex;align-items:center;gap:.5rem;
-  padding:.55rem .65rem;line-height:1.25;border-radius:8px;
-}
-.tools-menu .dropdown-item i{flex:0 0 18px;font-size:1rem}
-@media (max-width:480px){ .tools-menu.dropdown-menu{min-width:260px} }
+/* Offcanvas */
+.offcanvas{--bs-offcanvas-width: 560px}
+
+/* Prints */
+@media print{ @page{size:A4 portrait; margin:12mm} }
 </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg fixed-top">
-  <div class="container">
-    <a class="navbar-brand brand" href="#"><span class="logo">RM</span>Rota Motos</a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="topnav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-        <li class="nav-item"><a class="nav-link" href="oficina.html">Oficina</a></li>
-        <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-        <li class="nav-item"><a class="nav-link active" href="financeiro.html">Financeiro</a></li>
-      </ul>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">RM</span>
+    <div class="hide-on-collapse">Rota Motos</div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="side-divider"></div>
+
+    <div class="side-group">
+      <div class="side-sub">Estoque</div>
+      <a class="side-item" href="index.html"><i class="bi bi-box-seam"></i><span class="hide-on-collapse">Gerenciar</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Mecânica</div>
+      <a class="side-item" href="oficina.html"><i class="bi bi-wrench-adjustable"></i><span class="hide-on-collapse">Oficina</span></a>
+      <a class="side-item" href="oficinaextras.html"><i class="bi bi-gear-wide-connected"></i><span class="hide-on-collapse">Serviços Extras</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Financeiro</div>
+      <a class="side-item active" href="financeiro.html"><i class="bi bi-currency-dollar"></i><span class="hide-on-collapse">Faturamento</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Vendas</div>
+      <a class="side-item" href="vendas.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Vendas</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Configurações</div>
+      <a class="side-item" href="backup.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Backups</span></a>
     </div>
   </div>
-</nav>
 
-<div class="container py-4">
+  <button id="btnToggleSide" class="side-toggle">
+    <i class="bi bi-chevron-left"></i>
+    <span class="hide-on-collapse ms-2">Recolher</span>
+    <i class="bi bi-chevron-right show-on-collapse"></i>
+  </button>
+</aside>
 
-  <!-- Cards -->
+<!-- CONTEÚDO -->
+<div class="topbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <h1 class="h5 m-0 fw-bold">Financeiro</h1>
+    <div class="text-muted small">Rota Motos</div>
+  </div>
+</div>
+
+<div class="container pb-4">
+
+  <!-- KPIs -->
   <div class="row g-3 mb-3">
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-balance"><i class="bi bi-cash-stack"></i></div>
-        <div><div class="label">Saldo no período</div><div id="kSaldo" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-in"><i class="bi bi-arrow-down-circle"></i></div>
-        <div><div class="label">Entradas</div><div id="kIn" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-out"><i class="bi bi-arrow-up-circle"></i></div>
-        <div><div class="label">Saídas</div><div id="kOut" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-soft metric">
-        <div class="icon i-work"><i class="bi bi-hammer"></i></div>
-        <div><div class="label">Mão de Obra</div><div id="kMO" class="value">R$ 0,00</div></div>
-      </div>
-    </div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-balance"><i class="bi bi-cash-stack"></i></div><div><div class="label">Saldo no período</div><div id="kSaldo" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-in"><i class="bi bi-arrow-down-circle"></i></div><div><div class="label">Entradas</div><div id="kIn" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-out"><i class="bi bi-arrow-up-circle"></i></div><div><div class="label">Saídas</div><div id="kOut" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-3"><div class="card-soft metric"><div class="icon i-work"><i class="bi bi-hammer"></i></div><div><div class="label">Mão de Obra</div><div id="kMO" class="value">R$ 0,00</div></div></div></div>
+
+    <div class="col-md-4"><div class="card-soft metric"><div class="icon i-serv"><i class="bi bi-stars"></i></div><div><div class="label">Serviços (OS)</div><div id="kServ" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-4"><div class="card-soft metric"><div class="icon i-serv"><i class="bi bi-magic"></i></div><div><div class="label">Serviços Extras (total)</div><div id="kServExtra" class="value">R$ 0,00</div></div></div></div>
+    <div class="col-md-4"><div class="card-soft metric"><div class="icon i-parts"><i class="bi bi-tools"></i></div><div><div class="label">Peças (OS)</div><div id="kParts" class="value">R$ 0,00</div></div></div></div>
   </div>
 
-  <!-- Filtros + Ferramentas + Botões de inclusão -->
+  <!-- Filtros + Ações -->
   <div class="toolbar mb-3">
     <div class="row g-3 align-items-end">
       <div class="col-md-3">
@@ -119,492 +189,610 @@ canvas{max-height:300px}
         <input id="fAte" type="date" class="form-control">
       </div>
 
-      <!-- Ferramentas -->
-      <div class="col-md-2 d-grid position-static">
-        <div class="dropdown" data-bs-display="static">
-          <button class="btn btn-ghost dropdown-toggle w-100" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-tools"></i> Ferramentas
-          </button>
-          <ul class="tools-menu dropdown-menu">
-            <li>
-              <button class="dropdown-item" id="exAll">
-                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Tudo (Resumo)</span>
-              </button>
-            </li>
-            <li>
-              <button class="dropdown-item" id="exIn">
-                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Entradas</span>
-              </button>
-            </li>
-            <li>
-              <button class="dropdown-item" id="exOut">
-                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Saídas</span>
-              </button>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <button class="dropdown-item" id="exMO">
-                <i class="bi bi-filetype-pdf"></i><span>Exportar PDF – Mão de Obra</span>
-              </button>
-            </li>
-          </ul>
-        </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-ghost flex-fill" id="btnMAtual"><i class="bi bi-calendar-event"></i> Mês atual</button>
+        <button class="btn btn-ghost flex-fill" id="btn7d"><i class="bi bi-clock-history"></i> Últimos 7d</button>
       </div>
 
-      <!-- Botões de inclusão -->
-      <div class="col-md-4 d-grid d-md-flex gap-2">
-        <button id="btnAddEntrada" class="btn btn-primary-clean flex-fill">
-          <i class="bi bi-plus-circle"></i> Adicionar Entradas
-        </button>
-        <button id="btnAddSaida" class="btn btn-ghost flex-fill">
-          <i class="bi bi-dash-circle"></i> Adicionar Saídas
-        </button>
-        <button id="btnAddDesp" class="btn btn-ghost flex-fill">
-          <i class="bi bi-receipt"></i> Adicionar Despesas
-        </button>
+      <div class="col-md-3 d-grid d-md-flex gap-2">
+        <div class="dropdown">
+          <button class="btn btn-ghost dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-tools"></i> Relatórios</button>
+          <ul class="dropdown-menu p-2" style="min-width:300px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-strong)">
+            <li><a class="dropdown-item" href="#" id="exAll"><i class="bi bi-filetype-pdf me-2"></i>PDF — Resumo</a></li>
+            <li><a class="dropdown-item" href="#" id="exIn"><i class="bi bi-filetype-pdf me-2"></i>PDF — Entradas</a></li>
+            <li><a class="dropdown-item" href="#" id="exOut"><i class="bi bi-filetype-pdf me-2"></i>PDF — Saídas</a></li>
+            <li><a class="dropdown-item" href="#" id="exMO"><i class="bi bi-filetype-pdf me-2"></i>PDF — Mão de Obra</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" id="csvIn"><i class="bi bi-filetype-csv me-2"></i>CSV — Entradas</a></li>
+            <li><a class="dropdown-item" href="#" id="csvOut"><i class="bi bi-filetype-csv me-2"></i>CSV — Saídas</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-primary-clean dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-plus-circle"></i> Nova entrada</button>
+          <ul class="dropdown-menu p-2" style="min-width:280px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-strong)">
+            <li><a class="dropdown-item" href="#" id="btnAddEntrada"><i class="bi bi-cash-coin me-2"></i> Avulsa</a></li>
+            <li><a class="dropdown-item" href="#" id="btnAddMO"><i class="bi bi-hammer me-2"></i> Mão de Obra</a></li>
+            <li><a class="dropdown-item" href="#" id="btnAddExtra"><i class="bi bi-stars me-2"></i> Serviço Extra</a></li>
+          </ul>
+        </div>
+        <button id="btnAddSaida" class="btn btn-ghost"><i class="bi bi-dash-circle"></i> Saída</button>
+        <button id="btnAddDesp" class="btn btn-ghost"><i class="bi bi-receipt"></i> Despesa</button>
       </div>
     </div>
   </div>
 
   <!-- Gráficos -->
   <div class="row g-3 mb-3">
-    <div class="col-lg-4">
-      <div class="card-soft chart-card">
-        <h6 class="mb-2">Entradas x Saídas</h6>
-        <canvas id="chES"></canvas>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card-soft chart-card">
-        <h6 class="mb-2">Entradas por Forma de Pagamento</h6>
-        <canvas id="chFP"></canvas>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card-soft chart-card">
-        <h6 class="mb-2">Composição de Entradas</h6>
-        <canvas id="chComp"></canvas>
-      </div>
-    </div>
+    <div class="col-xl-4"><div class="card-soft p-3"><h6 class="mb-2">Entradas × Saídas</h6><canvas id="chES"></canvas></div></div>
+    <div class="col-xl-4"><div class="card-soft p-3"><h6 class="mb-2">Formas de pagamento</h6><canvas id="chFP"></canvas></div></div>
+    <div class="col-xl-4"><div class="card-soft p-3"><h6 class="mb-2">Composição das entradas</h6><canvas id="chComp"></canvas></div></div>
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-xl-6"><div class="card-soft p-3"><h6 class="mb-2">Entradas por mecânico (OS)</h6><canvas id="chMec"></canvas></div></div>
+    <div class="col-xl-6"><div class="card-soft p-3"><h6 class="mb-2">Saídas por categoria</h6><canvas id="chCat"></canvas></div></div>
   </div>
 
-  <div class="card-soft chart-card mb-3">
-    <h6 class="mb-2">Fluxo Diário</h6>
+  <div class="card-soft p-3 mb-3">
+    <h6 class="mb-2">Fluxo diário</h6>
     <canvas id="chFlux"></canvas>
   </div>
 
-  <!-- Tabela (entradas de OS) -->
-  <div class="card-soft p-0">
-    <div class="table-responsive" style="max-height:60vh;">
-      <table class="table align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Cliente</th>
-            <th>Mecânico</th>
-            <th class="text-end">Serviço</th>
-            <th class="text-end">Peças</th>
-            <th class="text-end">Desconto</th>
-            <th class="text-end">Mão de Obra</th>
-            <th class="text-end">Total (Entrada)</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div id="empty" class="empty">Sem lançamentos no período.</div>
+  <!-- Tabelas simples -->
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card-soft p-0">
+        <div class="p-3 pb-0 d-flex justify-content-between align-items-center"><h6 class="m-0">Entradas</h6><small class="text-muted" id="sumEntradas">—</small></div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Data</th><th>Origem</th><th>Detalhe</th><th class="text-end">Valor</th></tr></thead>
+            <tbody id="tbIn"></tbody>
+          </table>
+          <div id="emptyIn" class="text-center text-muted py-3">Sem entradas.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card-soft p-0">
+        <div class="p-3 pb-0 d-flex justify-content-between align-items-center"><h6 class="m-0">Saídas</h6><small class="text-muted" id="sumSaidas">—</small></div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="text-end">Valor</th></tr></thead>
+            <tbody id="tbOut"></tbody>
+          </table>
+          <div id="emptyOut" class="text-center text-muted py-3">Sem saídas.</div>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
+<!-- OFFCANVAS Detalhe OS -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="ocDetalhe">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Detalhe da OS</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div id="ocInfo" class="mb-2 small text-muted"></div>
+    <div class="mb-2 fw-bold">Serviços</div>
+    <div id="ocServ" class="mb-3"></div>
+    <div class="mb-2 fw-bold">Peças</div>
+    <div id="ocPecas" class="mb-3"></div>
+    <div class="mb-2 fw-bold">Totais</div>
+    <div id="ocTotais" class="mb-2"></div>
+  </div>
 </div>
 
 <!-- MODAL: Entrada avulsa -->
 <div class="modal fade" id="modalEntrada" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header">
-      <h5 class="modal-title">Adicionar Entrada</h5>
-      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-    </div>
+    <div class="modal-header"><h5 class="modal-title">Adicionar Entrada Avulsa</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Data</label>
-          <input id="eData" type="date" class="form-control" required>
+        <div class="col-md-6"><label class="form-label">Data</label><input id="eData" type="date" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Forma de Pagamento</label>
+          <select id="eFP" class="form-select"><option>Dinheiro</option><option>PIX</option><option>Cartão Débito</option><option>Cartão de Crédito</option><option>Outro</option></select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Forma de Pagamento</label>
-          <select id="eFP" class="form-select">
-            <option>Dinheiro</option>
-            <option>PIX</option>
-            <option>Cartão Débito</option>
-            <option>Cartão de Crédito</option>
-            <option>Outro</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Descrição</label>
-          <input id="eDesc" type="text" class="form-control" placeholder="Ex.: Venda balcão / Serviço avulso">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Valor</label>
-          <input id="eValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00">
-        </div>
+        <div class="col-12"><label class="form-label">Descrição</label><input id="eDesc" type="text" class="form-control" placeholder="Ex.: Venda balcão / Serviço avulso"></div>
+        <div class="col-12"><label class="form-label">Valor</label><input id="eValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00"></div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
-      <button id="saveEntrada" class="btn btn-primary-clean">Salvar</button>
+    <div class="modal-footer"><button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button><button id="saveEntrada" class="btn btn-primary-clean">Salvar</button></div>
+  </div></div>
+</div>
+
+<!-- MODAL: Mão de Obra avulsa -->
+<div class="modal fade" id="modalMO" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Adicionar Mão de Obra</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Data</label><input id="moData" type="date" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Forma de Pagamento</label>
+          <select id="moFP" class="form-select"><option>Dinheiro</option><option>PIX</option><option>Cartão Débito</option><option>Cartão de Crédito</option><option>Outro</option></select>
+        </div>
+        <div class="col-12"><label class="form-label">Descrição</label><input id="moDesc" type="text" class="form-control" placeholder="Ex.: MO avulsa mecânico João"></div>
+        <div class="col-12"><label class="form-label">Valor</label><input id="moValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00"></div>
+      </div>
     </div>
+    <div class="modal-footer"><button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button><button id="saveMO" class="btn btn-primary-clean">Salvar</button></div>
+  </div></div>
+</div>
+
+<!-- MODAL: Serviço Extra avulso -->
+<div class="modal fade" id="modalExtra" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Adicionar Serviço Extra</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Data</label><input id="sxData" type="date" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Forma de Pagamento</label>
+          <select id="sxFP" class="form-select"><option>Dinheiro</option><option>PIX</option><option>Cartão Débito</option><option>Cartão de Crédito</option><option>Outro</option></select>
+        </div>
+        <div class="col-md-8"><label class="form-label">Serviço</label><input id="sxNome" class="form-control" list="sxList" placeholder="ex.: Higienização completa"></div>
+        <div class="col-md-4"><label class="form-label">Valor</label><input id="sxValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00"></div>
+        <datalist id="sxList"></datalist>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button><button id="saveExtra" class="btn btn-primary-clean">Salvar</button></div>
   </div></div>
 </div>
 
 <!-- MODAL: Saída / Despesa -->
 <div class="modal fade" id="modalGasto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header">
-      <h5 id="gTitle" class="modal-title">Adicionar Saída</h5>
-      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-    </div>
+    <div class="modal-header"><h5 id="gTitle" class="modal-title">Adicionar Saída</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Data</label>
-          <input id="gData" type="date" class="form-control" required>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Categoria (opcional)</label>
-          <input id="gCat" type="text" class="form-control" placeholder="Ex.: Aluguel, Energia...">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Descrição</label>
-          <input id="gDesc" type="text" class="form-control" placeholder="Ex.: Pagamento fornecedor">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Valor</label>
-          <input id="gValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00">
-        </div>
+        <div class="col-md-6"><label class="form-label">Data</label><input id="gData" type="date" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Categoria (opcional)</label><input id="gCat" type="text" class="form-control" placeholder="Ex.: Aluguel, Energia..."></div>
+        <div class="col-12"><label class="form-label">Descrição</label><input id="gDesc" type="text" class="form-control" placeholder="Ex.: Pagamento fornecedor"></div>
+        <div class="col-12"><label class="form-label">Valor</label><input id="gValor" type="number" step="0.01" min="0" class="form-control" placeholder="0,00"></div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
-      <button id="saveGasto" class="btn btn-primary-clean">Salvar</button>
-    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button><button id="saveGasto" class="btn btn-primary-clean">Salvar</button></div>
   </div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-(function(){
-  if (window.__RM_FIN_INIT__) return; window.__RM_FIN_INIT__ = true;
+(() => {
+  if (window.__RM_FIN_V3__) return; window.__RM_FIN_V3__ = true;
 
-  const BRL  = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-  const $    = id => document.getElementById(id);
-  const num  = v => isNaN(+v)?0:+v;
+  const $ = id => document.getElementById(id);
+  const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  const money = v => BRL.format(+v||0);
+  const num = v => isNaN(+v)?0:+v;
   const todayISO = () => new Date().toISOString().slice(0,10);
+  document.getElementById('btnToggleSide').addEventListener('click', ()=> document.body.classList.toggle('collapsed'));
 
-  /* ===== Storage helpers ===== */
-  const OS_KEYS   = ["oficina.jobs.v1","oficina.jobs","oficina"];          // OS (entradas)
-  const IN_KEY    = "finance.incomes.v1";                                  // entradas avulsas
-  const EXP_KEYS  = ["finance.expenses.v1","finance.expenses"];            // saídas/despesas
+  /* ===== Storage ===== */
+  const OS_KEYS   = ["oficina.jobs.v1","oficina.jobs","oficina"];            // OS
+  const IN_KEY    = "finance.incomes.v1";                                    // entradas avulsas
+  const IN_MO_KEY = "finance.incomes.mo.v1";                                 // mão de obra avulsa
+  const IN_EX_KEY = "finance.incomes.extras.v1";                             // serviços extras avulsos
+  const EXP_KEYS  = ["finance.expenses.v1","finance.expenses"];              // saídas
 
   function readArray(key){ try{ const r=localStorage.getItem(key); const a=JSON.parse(r); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
   function writeArray(key, arr){ localStorage.setItem(key, JSON.stringify(arr||[])); }
-  function readFirst(keys){
-    for(const k of keys){
-      try{ const r=localStorage.getItem(k); const a=JSON.parse(r); if(Array.isArray(a)) return {key:k, data:a}; }catch(e){}
-    }
-    return {key:null, data:[]};
+  function readFirst(keys){ for(const k of keys){ try{ const r=localStorage.getItem(k); const a=JSON.parse(r); if(Array.isArray(a)) return {key:k, data:a}; }catch(e){} } return {key:null, data:[]}; }
+
+  // Serviços extras cadastrados (para sugestões)
+  function loadExtrasList(){
+    try{ const raw=localStorage.getItem('oficina.extras.v1'); const arr=JSON.parse(raw); if(Array.isArray(arr)) return arr; }catch(e){}
+    return [];
+  }
+  function fillExtrasDatalist(){
+    const list = loadExtrasList();
+    $('sxList').innerHTML = list.map(s=>`<option value="${String(s.nome||'')}">`).join('');
   }
 
-  // OS da Oficina (entradas)
-  let jobs = readFirst(OS_KEYS).data.map(j=>({
-    entrada: String(j.entrada||""),
-    cliente: String(j.cliente||""),
-    mecanico:String(j.mecanico||""),
-    pagamento:String(j.pagamento||"Outro"),
-    valor:   num(j.valor),     // Serviço
-    subtotal:num(j.subtotal),  // Peças (preço venda)
-    desconto:num(j.desconto),
-    maoObra: num(j.maoObra||0)
-  }));
+  /* ===== OS ===== */
+  const osRaw = readFirst(OS_KEYS).data;
+  function splitOS(j){
+    const pecas = Array.isArray(j.pecas)? j.pecas : [];
+    const isServ = p => (p.tipo||'')==='servico' || String(p.sku||'').startsWith('SVC-');
+    const servicosItems = pecas.filter(isServ).map(p=>({nome:String(p.nome||p.sku||'-'), qtd:num(p.qtd), preco:num(p.preco)}));
+    const pecasItems    = pecas.filter(p=>!isServ(p)).map(p=>({nome:String(p.nome||p.sku||'-'), qtd:num(p.qtd), preco:num(p.preco)}));
+    const soma = arr => arr.reduce((s,p)=> s + p.qtd*p.preco, 0);
+    const servicos = soma(servicosItems);
+    const pecasTot = soma(pecasItems);
+    const mo       = num(j.maoObra||0);
+    const desc     = Math.max(0, num(j.desconto||0));
+    const total    = mo + servicos + pecasTot - desc;
 
-  // Entradas avulsas
-  let incomes = readArray(IN_KEY).map(i=>({
-    data:String(i.data||""), descricao:String(i.descricao||""), valor:num(i.valor), pagamento:String(i.pagamento||"Outro")
-  }));
+    // split pagamento
+    const pg1 = String(j.pagamento||'Outro');
+    const pg2 = String(j.pagamento2||'');
+    const pg2v = Math.min(total, Math.max(0, num(j.pagamento2_valor||0)));
+    const pg1v = Math.max(0, total - pg2v);
 
-  // Saídas/Despesas
+    return {
+      id:String(j.id||''), data:String(j.entrada||''), cliente:String(j.cliente||''), mecanico:String(j.mecanico||''),
+      servicos, pecas:pecasTot, maoObra:mo, desconto:desc, total,
+      pagamento1:pg1, pagamento1_valor:pg1v, pagamento2:pg2, pagamento2_valor:pg2v,
+      servicosItems, pecasItems
+    };
+  }
+  let os = osRaw.map(splitOS);
+
+  // ====== CORREÇÃO (linhas 411–413): removido parêntese extra ======
+  let incomes   = readArray(IN_KEY).map(i => ({
+    data:String(i.data||''), descricao:String(i.descricao||''), valor:num(i.valor),
+    pagamento:String(i.pagamento||'Outro'), tipo:String(i.tipo||'avulsa')
+  }));
+  let incomesMO = readArray(IN_MO_KEY).map(i => ({
+    data:String(i.data||''), descricao:String(i.descricao||''), valor:num(i.valor),
+    pagamento:String(i.pagamento||'Outro'), tipo:'mo'
+  }));
+  let incomesEX = readArray(IN_EX_KEY).map(i => ({
+    data:String(i.data||''), nome:String(i.nome||''), valor:num(i.valor),
+    pagamento:String(i.pagamento||'Outro'), tipo:'extra'
+  }));
+  // ====== FIM DA CORREÇÃO ======
+
+  // Saídas
   const expStore = readFirst(EXP_KEYS);
-  let expenses = expStore.data.map(e=>({
-    data:String(e.data||""), descricao:String(e.descricao||""), categoria:String(e.categoria||""), valor:Math.abs(num(e.valor)), tipo:(e.tipo||"saida")
-  }));
+  let expenses = expStore.data.map(e=>({data:String(e.data||''), descricao:String(e.descricao||''), categoria:String(e.categoria||''), valor:Math.abs(num(e.valor)), tipo:(e.tipo||'saida')}));
 
-  /* ===== Filtros ===== */
-  function inRange(d, de, ate){
-    if(!d) return false;
-    if(de && d < de) return false;
-    if(ate && d > ate) return false;
-    return true;
-  }
+  /* ===== Filtros / Período ===== */
+  function setMesAtual(){ const now=new Date(), y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'); $('fDe').value=`${y}-${m}-01`; $('fAte').value=todayISO(); }
+  function setUltimos7(){ const d=new Date(); const d7=new Date(Date.now()-6*86400000); $('fDe').value=d7.toISOString().slice(0,10); $('fAte').value=d.toISOString().slice(0,10); }
+
+  function inRange(d, de, ate){ if(!d) return false; if(de && d < de) return false; if(ate && d > ate) return false; return true; }
   function filtered(){
     const de=$('fDe').value, ate=$('fAte').value;
-    const os   = jobs.filter(j=> inRange(j.entrada, de, ate));
-    const incs = incomes.filter(i=> inRange(i.data, de, ate));
-    const outs = expenses.filter(e=> inRange(e.data, de, ate));
-    return {os, incs, outs, periodoTxt:(de?`De ${de}`:'')+(de||ate?' ':'')+(ate?`até ${ate}`:'')};
+    return {
+      os:   os.filter(j=> inRange(j.data,de,ate)),
+      incs: incomes.filter(i=> inRange(i.data,de,ate)),
+      incsMO: incomesMO.filter(i=> inRange(i.data,de,ate)),
+      incsEX: incomesEX.filter(i=> inRange(i.data,de,ate)),
+      outs: expenses.filter(e=> inRange(e.data,de,ate))
+    };
   }
 
   /* ===== Render ===== */
-  let chES, chFP, chFlux, chComp;
-  function destroyCharts(){ [chES,chFP,chFlux,chComp].forEach(c=>{ try{c&&c.destroy();}catch(e){} }); chES=chFP=chFlux=chComp=null; }
+  let chES, chFP, chFlux, chComp, chMec, chCat;
+  function destroyCharts(){ [chES,chFP,chFlux,chComp,chMec,chCat].forEach(c=>{try{c&&c.destroy();}catch(e){}}); chES=chFP=chFlux=chComp=chMec=chCat=null; }
+  let lastRenderedOS = []; // para offcanvas
 
   function render(){
-    const {os, incs, outs} = filtered();
+    const {os:O, incs:I, incsMO:IMO, incsEX:IEX, outs:E} = filtered();
 
-    // Total de OS: Serviço + Mão de Obra + Peças − Desconto
-    const entradasOS   = os.reduce((s,j)=> s + (j.valor + j.maoObra + j.subtotal - j.desconto), 0);
-    const entradasAv   = incs.reduce((s,i)=> s + i.valor, 0);
-    const entradasTot  = entradasOS + entradasAv;
-    const saidasTot    = outs.reduce((s,e)=> s + e.valor, 0);
-    const saldo        = entradasTot - saidasTot;
-    const maoObraTot   = os.reduce((s,j)=> s + j.maoObra, 0);
+    // Totais
+    const totalServOS = O.reduce((s,j)=> s + j.servicos, 0);
+    const totalParts  = O.reduce((s,j)=> s + j.pecas, 0);
+    const totalMO_OS  = O.reduce((s,j)=> s + j.maoObra, 0);
+    const totalDesc   = O.reduce((s,j)=> s + j.desconto, 0);
+    const totalOS     = O.reduce((s,j)=> s + j.total, 0);
 
-    $('kIn').textContent    = BRL.format(entradasTot);
-    $('kOut').textContent   = BRL.format(saidasTot);
-    $('kSaldo').textContent = BRL.format(saldo);
-    $('kMO').textContent    = BRL.format(maoObraTot);
+    const totalMO_Av  = IMO.reduce((s,i)=> s + i.valor, 0);
+    const totalEX_Av  = IEX.reduce((s,i)=> s + i.valor, 0);
+    const totalInAv   = I.reduce((s,i)=> s + i.valor, 0);
 
-    // Tabela (somente OS, como referência)
-    const tb=$('tbody'), empty=$('empty');
-    tb.innerHTML='';
-    if(!os.length){ empty.style.display='block'; } else {
-      empty.style.display='none';
-      os.forEach(j=>{
-        const tr=document.createElement('tr');
-        const td=(t,c)=>{const e=document.createElement('td'); if(c) e.className=c; e.textContent=t; return e;};
-        tr.appendChild(td(j.entrada||'-'));
-        tr.appendChild(td(j.cliente||'-'));
-        tr.appendChild(td(j.mecanico||'-'));
-        tr.appendChild(td(BRL.format(j.valor),'text-end'));      // Serviço
-        tr.appendChild(td(BRL.format(j.subtotal),'text-end'));    // Peças
-        tr.appendChild(td(BRL.format(j.desconto),'text-end'));    // Desconto
-        tr.appendChild(td(BRL.format(j.maoObra),'text-end'));     // Mão de Obra
-        // TOTAL inclui MÃO DE OBRA
-        tr.appendChild(td(BRL.format(j.valor + j.maoObra + j.subtotal - j.desconto),'text-end'));
-        tb.appendChild(tr);
-      });
+    const entradasTot = totalOS + totalMO_Av + totalEX_Av + totalInAv;
+    const saidasTot   = E.reduce((s,e)=> s + e.valor, 0);
+    const saldo       = entradasTot - saidasTot;
+
+    // KPIs
+    $('kIn').textContent    = money(entradasTot);
+    $('kOut').textContent   = money(saidasTot);
+    $('kSaldo').textContent = money(saldo);
+    $('kMO').textContent    = money(totalMO_OS + totalMO_Av);
+    $('kServ').textContent  = money(totalServOS);
+    $('kServExtra').textContent = money(totalServOS + totalEX_Av);
+    $('kParts').textContent = money(totalParts);
+
+    // Tabelas
+    const tbIn=$('tbIn'), tbOut=$('tbOut'), emptyIn=$('emptyIn'), emptyOut=$('emptyOut');
+
+    lastRenderedOS = O.slice(); // snapshot
+
+    const rowsIn = [
+      ...O.map((j,idx)=>({data:j.data, origem:'Oficina', detalhe:`${j.cliente} • Mec.: ${j.mecanico}`, valor:j.total, _osIdx:idx})),
+      ...IMO.map(i=>({data:i.data, origem:'Mão de Obra', detalhe:`${i.descricao||'-'} • ${i.pagamento}`, valor:i.valor})),
+      ...IEX.map(i=>({data:i.data, origem:'Serviço Extra', detalhe:`${i.nome||'-'} • ${i.pagamento}`, valor:i.valor})),
+      ...I.map(i=>({data:i.data, origem:'Avulsa', detalhe:`${i.descricao||'-'} • ${i.pagamento}`, valor:i.valor}))
+    ].sort((a,b)=> a.data.localeCompare(b.data));
+
+    if(!rowsIn.length){ tbIn.innerHTML=''; emptyIn.style.display='block'; } else {
+      emptyIn.style.display='none';
+      tbIn.innerHTML = rowsIn.map(r=>`
+        <tr ${typeof r._osIdx==='number' ? `data-os="${r._osIdx}" style="cursor:pointer"` : ''}>
+          <td>${r.data||'-'}</td>
+          <td>${r.origem}</td>
+          <td>${escapeHTML(r.detalhe||'-')}</td>
+          <td class="text-end">${money(r.valor)}</td>
+        </tr>
+      `).join('');
     }
+    const sumIn = rowsIn.reduce((s,x)=>s+x.valor,0); $('sumEntradas').textContent = `Total: ${money(sumIn)}`;
+
+    const rowsOut = E.map(e=>({data:e.data, categoria:e.categoria||'-', descricao:e.descricao||'-', valor:e.valor}))
+      .sort((a,b)=> a.data.localeCompare(b.data));
+    if(!rowsOut.length){ tbOut.innerHTML=''; emptyOut.style.display='block'; } else {
+      emptyOut.style.display='none';
+      tbOut.innerHTML = rowsOut.map(r=>`
+        <tr><td>${r.data||'-'}</td><td>${escapeHTML(r.categoria)}</td><td>${escapeHTML(r.descricao)}</td><td class="text-end">${money(r.valor)}</td></tr>
+      `).join('');
+    }
+    const sumOut = rowsOut.reduce((s,x)=>s+x.valor,0); $('sumSaidas').textContent = `Total: ${money(sumOut)}`;
 
     // Gráficos
     destroyCharts();
 
-    // Entradas x Saídas
     chES = new Chart(document.getElementById('chES'),{
-      type:'doughnut',
-      data:{labels:['Entradas','Saídas'],datasets:[{data:[entradasTot,saidasTot]}]},
+      type:'doughnut', data:{labels:['Entradas','Saídas'],datasets:[{data:[entradasTot,saidasTot]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
 
-    // Entradas por Forma de Pagamento (total da OS inclui mão de obra)
+    // Formas de pagamento (split + avulsos + MO avulsa + Extras avulsos)
     const mapFP = new Map([['Dinheiro',0],['PIX',0],['Cartão Débito',0],['Cartão de Crédito',0],['Outro',0]]);
-    os.forEach(j=>{ const fp=mapFP.has(j.pagamento)?j.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+(j.valor+j.maoObra+j.subtotal-j.desconto)); });
-    incs.forEach(i=>{ const fp=mapFP.has(i.pagamento)?i.pagamento:'Outro'; mapFP.set(fp, mapFP.get(fp)+i.valor); });
+    O.forEach(j=>{
+      const fp1 = mapFP.has(j.pagamento1)? j.pagamento1 : 'Outro';
+      const fp2 = j.pagamento2 && mapFP.has(j.pagamento2) ? j.pagamento2 : (j.pagamento2 ? 'Outro' : '');
+      mapFP.set(fp1, (mapFP.get(fp1)||0) + j.pagamento1_valor);
+      if(fp2) mapFP.set(fp2, (mapFP.get(fp2)||0) + j.pagamento2_valor);
+    });
+    [...I, ...IMO, ...IEX].forEach(i=>{ const fp=mapFP.has(i.pagamento)?i.pagamento:'Outro'; mapFP.set(fp,(mapFP.get(fp)||0)+i.valor); });
     chFP = new Chart(document.getElementById('chFP'),{
-      type:'doughnut',
-      data:{labels:[...mapFP.keys()],datasets:[{data:[...mapFP.values()]}]},
+      type:'doughnut', data:{labels:[...mapFP.keys()],datasets:[{data:[...mapFP.values()]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
 
-    // Composição de Entradas (inclui Mão de Obra)
-    const compServ = os.reduce((s,j)=> s+j.valor,0);
-    const compMO   = os.reduce((s,j)=> s+j.maoObra,0);
-    const compPcs  = os.reduce((s,j)=> s+j.subtotal,0);
-    const compDesc = os.reduce((s,j)=> s+Math.max(0,j.desconto),0);
-    const compAv   = incs.reduce((s,i)=> s+i.valor,0);
+    // Composição
+    const compServOS = totalServOS;
+    const compExtra  = totalEX_Av;
+    const compPecas  = totalParts;
+    const compDesc   = totalDesc;
+    const compAv     = totalInAv;
+    const compMO     = totalMO_OS + totalMO_Av;
     chComp = new Chart(document.getElementById('chComp'),{
       type:'doughnut',
-      data:{labels:['Serviço','Mão de Obra','Peças','(-) Descontos','Entradas Avulsas'],datasets:[{data:[compServ,compMO,compPcs,compDesc,compAv]}]},
+      data:{labels:['Serviços (OS)','Serviços Extras (avulso)','Peças','(-) Descontos','Entradas Avulsas','Mão de Obra'],
+            datasets:[{data:[compServOS,compExtra,compPecas,compDesc,compAv,compMO]}]},
       options:{plugins:{legend:{position:'bottom'}}}
     });
 
-    // Fluxo diário das entradas (inclui Mão de Obra)
+    // Entradas por mecânico (apenas OS)
+    const byMec = new Map();
+    O.forEach(j=> byMec.set(j.mecanico||'—', (byMec.get(j.mecanico||'—')||0) + j.total));
+    chMec = new Chart(document.getElementById('chMec'),{
+      type:'bar', data:{labels:[...byMec.keys()], datasets:[{label:'Entradas', data:[...byMec.values()]}]},
+      options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+    });
+
+    // Saídas por categoria
+    const byCat = new Map();
+    E.forEach(e=> byCat.set(e.categoria||'—', (byCat.get(e.categoria||'—')||0)+e.valor));
+    chCat = new Chart(document.getElementById('chCat'),{
+      type:'doughnut', data:{labels:[...byCat.keys()], datasets:[{data:[...byCat.values()]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+
+    // Fluxo diário
     const de=$('fDe').value, ate=$('fAte').value;
     const labels=(de&&ate)?(function(){const a=[],d0=new Date(de),d1=new Date(ate);for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))a.push(d.toISOString().slice(0,10));return a;})():[];
     const mapIn=new Map(labels.map(d=>[d,0])), mapOut=new Map(labels.map(d=>[d,0]));
-    os.forEach(j=>{ if(mapIn.has(j.entrada)) mapIn.set(j.entrada, mapIn.get(j.entrada)+(j.valor+j.maoObra+j.subtotal-j.desconto)); });
-    incs.forEach(i=>{ if(mapIn.has(i.data)) mapIn.set(i.data, mapIn.get(i.data)+i.valor); });
-    outs.forEach(e=>{ if(mapOut.has(e.data)) mapOut.set(e.data, mapOut.get(e.data)+e.valor); });
+    rowsIn.forEach(r=>{ if(mapIn.has(r.data)) mapIn.set(r.data,(mapIn.get(r.data)||0)+r.valor); });
+    rowsOut.forEach(r=>{ if(mapOut.has(r.data)) mapOut.set(r.data,(mapOut.get(r.data)||0)+r.valor); });
     chFlux = new Chart(document.getElementById('chFlux'),{
-      type:'line',
-      data:{labels,datasets:[
+      type:'line', data:{labels,datasets:[
         {label:'Entradas',data:labels.map(d=>mapIn.get(d)||0),tension:.2},
         {label:'Saídas',  data:labels.map(d=>mapOut.get(d)||0),tension:.2}
-      ]},
-      options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}
+      ]}, options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}
     });
   }
 
-  /* ===== PDF ===== */
-  function buildStyles(doc){ const st=doc.createElement('style'); st.textContent=`*{box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace} body{margin:0;padding:12px;font-size:12px} .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0} table{width:100%;border-collapse:collapse;margin-top:6px} th,td{padding:4px 0;border-bottom:1px dotted #ddd} td.r{text-align:right} h4{margin:.25rem 0}`; doc.head.appendChild(st); }
-  function wipe(doc){ while(doc.head.firstChild) doc.head.removeChild(doc.head.firstChild); while(doc.body.firstChild) doc.body.removeChild(doc.body.firstChild); }
-  function header(doc,t,per){ const add=(tx,cls,b)=>{const d=doc.createElement('div'); if(cls) d.className=cls; if(b) d.style.fontWeight='700'; d.textContent=tx; doc.body.appendChild(d);}; add('Rota Motos','c b',true); add(t,'c'); if(per) add(per,'c'); const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln); }
+  /* ===== Offcanvas detalhe OS ===== */
+  document.getElementById('tbIn').addEventListener('click',(ev)=>{
+    const tr = ev.target.closest('tr[data-os]'); if(!tr) return;
+    const idx = +tr.getAttribute('data-os'); const j = lastRenderedOS[idx]; if(!j) return;
+    const oc = new bootstrap.Offcanvas('#ocDetalhe');
+    $('ocInfo').textContent = `${j.data} • Cliente: ${j.cliente} • Mecânico: ${j.mecanico}`;
+    $('ocServ').innerHTML = j.servicosItems.length ? j.servicosItems.map(i=>`<div class="d-flex justify-content-between"><div>${escapeHTML(i.nome)} × ${i.qtd}</div><div>${money(i.qtd*i.preco)}</div></div>`).join('') : '<div class="text-muted">Sem serviços.</div>';
+    $('ocPecas').innerHTML = j.pecasItems.length ? j.pecasItems.map(i=>`<div class="d-flex justify-content-between"><div>${escapeHTML(i.nome)} × ${i.qtd}</div><div>${money(i.qtd*i.preco)}</div></div>`).join('') : '<div class="text-muted">Sem peças.</div>';
+    $('ocTotais').innerHTML = `
+      <div class="d-flex justify-content-between"><div>Serviços</div><div>${money(j.servicos)}</div></div>
+      <div class="d-flex justify-content-between"><div>Peças</div><div>${money(j.pecas)}</div></div>
+      <div class="d-flex justify-content-between"><div>Mão de Obra</div><div>${money(j.maoObra)}</div></div>
+      <div class="d-flex justify-content-between"><div>Descontos</div><div>- ${money(j.desconto)}</div></div>
+      <hr class="my-2">
+      <div class="d-flex justify-content-between fw-bold"><div>Total</div><div>${money(j.total)}</div></div>
+      <div class="mt-2 small text-muted">Pagamento: ${escapeHTML(j.pagamento1)} ${money(j.pagamento1_valor)} ${j.pagamento2?(' + '+escapeHTML(j.pagamento2)+' '+money(j.pagamento2_valor)):''}</div>
+    `;
+    oc.show();
+  });
 
-  // Entradas (Oficina) com coluna de Mão de Obra e total incluindo MO
+  /* ===== PDF/CSV ===== */
+  function buildStyles(doc){
+    const st=doc.createElement('style');
+    st.textContent=`*{box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace}
+      body{margin:0;padding:12px;font-size:12px} .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
+      table{width:100%;border-collapse:collapse;margin-top:6px} th,td{padding:4px 0;border-bottom:1px dotted #ddd} td.r{text-align:right} h4{margin:.25rem 0}`;
+    doc.head.appendChild(st);
+  }
+  function wipe(doc){ doc.head.innerHTML=''; doc.body.innerHTML=''; }
+  function header(doc,t,per){ const add=(tx,cls)=>{const d=doc.createElement('div'); if(cls) d.className=cls; d.textContent=tx; doc.body.appendChild(d);};
+    add('Rota Motos','c b'); add(t,'c'); if(per) add(per,'c'); const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln); }
+
   function tEntradasOS(doc, list){
     const h4=doc.createElement('h4'); h4.textContent='Entradas (Oficina)'; doc.body.appendChild(h4);
-    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
-    ['Data','Cliente','Mecânico','Serviço','Peças','Desconto','Mão de Obra','Total'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i>=3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
-    const tb=doc.createElement('tbody'); let total=0;
-    list.forEach(j=>{
-      const tr=doc.createElement('tr');
-      const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-      const tot=j.valor + j.maoObra + j.subtotal - j.desconto;
-      tr.appendChild(td(j.entrada||'-'));
-      tr.appendChild(td(j.cliente||'-'));
-      tr.appendChild(td(j.mecanico||'-'));
-      tr.appendChild(td(BRL.format(j.valor),'r'));
-      tr.appendChild(td(BRL.format(j.subtotal),'r'));
-      tr.appendChild(td(BRL.format(j.desconto),'r'));
-      tr.appendChild(td(BRL.format(j.maoObra),'r'));
-      tr.appendChild(td(BRL.format(tot),'r'));
-      tb.appendChild(tr); total+=tot;
-    });
-    t.appendChild(tb); doc.body.appendChild(t);
+    const t=doc.createElement('table'), H=doc.createElement('thead'), R=doc.createElement('tr');
+    ['Data','Cliente','Mecânico','Serviços','Peças','Desconto','Mão de Obra','Total'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i>=3) th.className='r'; R.appendChild(th);}); H.appendChild(R); t.appendChild(H);
+    const B=doc.createElement('tbody'); let tot=0;
+    list.forEach(j=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const e=doc.createElement('td'); if(c) e.className=c; e.textContent=tx; return e;};
+      tr.appendChild(td(j.data||'-')); tr.appendChild(td(j.cliente||'-')); tr.appendChild(td(j.mecanico||'-'));
+      tr.appendChild(td(BRL.format(j.servicos),'r')); tr.appendChild(td(BRL.format(j.pecas),'r')); tr.appendChild(td(BRL.format(j.desconto),'r')); tr.appendChild(td(BRL.format(j.maoObra),'r')); tr.appendChild(td(BRL.format(j.total),'r'));
+      B.appendChild(tr); tot+=j.total; });
+    t.appendChild(B); doc.body.appendChild(t);
     const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
     const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
-    const l=doc.createElement('div'); l.textContent='Total (Oficina):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
-    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+    const l=doc.createElement('div'); l.textContent='Total (Oficina):'; const r=doc.createElement('div'); r.textContent=BRL.format(tot); r.className='b'; row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
-
-  function tEntradasAvulsas(doc, list){
-    const h4=doc.createElement('h4'); h4.textContent='Entradas (Avulsas)'; doc.body.appendChild(h4);
-    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
-    ['Data','Descrição','Forma de Pagamento','Valor'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
-    const tb=doc.createElement('tbody'); let total=0;
-    list.forEach(i=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const e=doc.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-      tr.appendChild(td(i.data||'-')); tr.appendChild(td(i.descricao||'-')); tr.appendChild(td(i.pagamento||'-')); tr.appendChild(td(BRL.format(i.valor),'r')); tb.appendChild(tr); total+=i.valor;});
-    t.appendChild(tb); doc.body.appendChild(t);
+  function tEntradasAv(doc, av, mo, ex){
+    const h4=doc.createElement('h4'); h4.textContent='Entradas (Avulsas / Mão de Obra / Serviços Extras)'; doc.body.appendChild(h4);
+    const t=doc.createElement('table'), H=doc.createElement('thead'), R=doc.createElement('tr');
+    ['Data','Origem','Descrição','Forma','Valor'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===4) th.className='r'; R.appendChild(th);}); H.appendChild(R); t.appendChild(H);
+    const B=doc.createElement('tbody'); let tot=0;
+    av.forEach(i=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const e=doc.createElement('td'); if(c) e.className=c; e.textContent=tx; return e;}
+      tr.appendChild(td(i.data)); tr.appendChild(td('Avulsa')); tr.appendChild(td(i.descricao||'-')); tr.appendChild(td(i.pagamento||'-')); tr.appendChild(td(BRL.format(i.valor),'r')); B.appendChild(tr); tot+=i.valor; });
+    mo.forEach(i=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const e=doc.createElement('td'); if(c) e.className=c; e.textContent=tx; return e;}
+      tr.appendChild(td(i.data)); tr.appendChild(td('Mão de Obra')); tr.appendChild(td(i.descricao||'-')); tr.appendChild(td(i.pagamento||'-')); tr.appendChild(td(BRL.format(i.valor),'r')); B.appendChild(tr); tot+=i.valor; });
+    ex.forEach(i=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const e=doc.createElement('td'); if(c) e.className=c; e.textContent=tx; return e;}
+      tr.appendChild(td(i.data)); tr.appendChild(td('Serviço Extra')); tr.appendChild(td(i.nome||'-')); tr.appendChild(td(i.pagamento||'-')); tr.appendChild(td(BRL.format(i.valor),'r')); B.appendChild(tr); tot+=i.valor; });
+    t.appendChild(B); doc.body.appendChild(t);
     const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
     const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
-    const l=doc.createElement('div'); l.textContent='Total (Avulsas):'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
-    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+    const l=doc.createElement('div'); l.textContent='Total (Avulsas + MO + Extras):'; const r=doc.createElement('div'); r.textContent=BRL.format(tot); r.className='b'; row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
-
   function tSaidas(doc, list){
-    const h4=doc.createElement('h4'); h4.textContent='Saídas (Despesas)'; doc.body.appendChild(h4);
-    const t=doc.createElement('table'), thead=doc.createElement('thead'), trh=doc.createElement('tr');
-    ['Data','Descrição','Categoria','Valor','Tipo'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; trh.appendChild(th);}); thead.appendChild(trh); t.appendChild(thead);
-    const tb=doc.createElement('tbody'); let total=0;
-    list.forEach(e=>{const tr=doc.createElement('tr'); const td=(tx,cls)=>{const el=doc.createElement('td'); if(cls) el.className=cls; el.textContent=tx; return el;};
-      tr.appendChild(td(e.data||'-')); tr.appendChild(td(e.descricao||'-')); tr.appendChild(td(e.categoria||'-')); tr.appendChild(td(BRL.format(e.valor),'r')); tr.appendChild(td(e.tipo||'-')); tb.appendChild(tr); total+=e.valor;});
-    t.appendChild(tb); doc.body.appendChild(t);
+    const h4=doc.createElement('h4'); h4.textContent='Saídas'; doc.body.appendChild(h4);
+    const t=doc.createElement('table'), H=doc.createElement('thead'), R=doc.createElement('tr');
+    ['Data','Descrição','Categoria','Valor'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; R.appendChild(th);}); H.appendChild(R); t.appendChild(H);
+    const B=doc.createElement('tbody'); let tot=0;
+    list.forEach(e=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const el=doc.createElement('td'); if(c) el.className=c; el.textContent=tx; return el;}
+      tr.appendChild(td(e.data||'-')); tr.appendChild(td(e.descricao||'-')); tr.appendChild(td(e.categoria||'-')); tr.appendChild(td(BRL.format(e.valor),'r')); B.appendChild(tr); tot+=e.valor; });
+    t.appendChild(B); doc.body.appendChild(t);
     const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
     const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
-    const l=doc.createElement('div'); l.textContent='Total de Saídas:'; const r=doc.createElement('div'); r.textContent=BRL.format(total); r.className='b';
-    row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
+    const l=doc.createElement('div'); l.textContent='Total de Saídas:'; const r=doc.createElement('div'); r.textContent=BRL.format(tot); r.className='b'; row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
   }
-
   function exportPDF(kind){
-    const {os, incs, outs, periodoTxt} = filtered();
+    const de=$('fDe').value, ate=$('fAte').value;
+    const per = (de?`De ${de}`:'') + (de||ate?' ':'') + (ate?`até ${ate}`:'');
+    const {os:O, incs:I, incsMO:IMO, incsEX:IEX, outs:E} = filtered();
+
     const iframe=document.createElement('iframe');
     iframe.style.position='fixed'; iframe.style.right='-9999px'; iframe.style.bottom='0';
     iframe.width='0'; iframe.height='0'; iframe.setAttribute('aria-hidden','true');
     document.body.appendChild(iframe);
-    const build=(d)=>{
-      wipe(d); buildStyles(d);
-      if(kind==='in'){
-        header(d,'Relatório — Entradas',periodoTxt);
-        tEntradasOS(d,os); tEntradasAvulsas(d,incs);
-      } else if(kind==='out'){
-        header(d,'Relatório — Saídas',periodoTxt);
-        tSaidas(d,outs);
-      } else if(kind==='mo'){
-        header(d,'Relatório — Mão de Obra',periodoTxt);
-        const onlyMO=os.filter(j=>num(j.maoObra)>0);
-        // tabela MO
-        const h4=d.createElement('h4'); h4.textContent='Mão de Obra (Oficina)'; d.body.appendChild(h4);
-        const t=d.createElement('table'), H=d.createElement('thead'), R=d.createElement('tr');
-        ['Data','Cliente','Mecânico','Mão de Obra'].forEach((tx,i)=>{const th=d.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; R.appendChild(th);}); H.appendChild(R); t.appendChild(H);
-        const B=d.createElement('tbody'); let total=0;
-        onlyMO.forEach(j=>{const tr=d.createElement('tr'); const td=(tx,cls)=>{const e=d.createElement('td'); if(cls) e.className=cls; e.textContent=tx; return e;};
-          tr.appendChild(td(j.entrada||'-')); tr.appendChild(td(j.cliente||'-')); tr.appendChild(td(j.mecanico||'-')); tr.appendChild(td(BRL.format(j.maoObra),'r'));
-          B.appendChild(tr); total+=j.maoObra;});
-        t.appendChild(B); d.body.appendChild(t);
-        const ln=d.createElement('div'); ln.className='ln'; d.body.appendChild(ln);
-        const row=d.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
-        const l=d.createElement('div'); l.textContent='Total de Mão de Obra:'; const r=d.createElement('div'); r.textContent=BRL.format(total); r.className='b';
-        row.appendChild(l); row.appendChild(r); d.body.appendChild(row);
+
+    const d=iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+    const build=(doc)=>{
+      wipe(doc); buildStyles(doc);
+      if(kind==='in'){ header(doc,'Relatório — Entradas',per); tEntradasOS(doc,O); tEntradasAv(doc,I,IMO,IEX); }
+      else if(kind==='out'){ header(doc,'Relatório — Saídas',per); tSaidas(doc,E); }
+      else if(kind==='mo'){
+        header(doc,'Relatório — Mão de Obra',per);
+        const only=[...O.filter(j=> j.maoObra>0).map(j=>({data:j.data, cliente:j.cliente, mecanico:j.mecanico, valor:j.maoObra})), ...IMO.map(i=>({data:i.data, cliente:'—', mecanico:'—', valor:i.valor}))];
+        const t=doc.createElement('table'), H=doc.createElement('thead'), R=doc.createElement('tr');
+        ['Data','Cliente','Mecânico','Mão de Obra'].forEach((tx,i)=>{const th=doc.createElement('th'); th.textContent=tx; if(i===3) th.className='r'; R.appendChild(th);});
+        H.appendChild(R); t.appendChild(H);
+        const B=doc.createElement('tbody'); let tot=0;
+        only.forEach(j=>{ const tr=doc.createElement('tr'); const td=(tx,c)=>{const e=doc.createElement('td'); if(c) e.className=c; e.textContent=tx; return e;};
+          tr.appendChild(td(j.data)); tr.appendChild(td(j.cliente)); tr.appendChild(td(j.mecanico)); tr.appendChild(td(BRL.format(j.valor),'r')); B.appendChild(tr); tot+=j.valor; });
+        t.appendChild(B); doc.body.appendChild(t);
+        const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
+        const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+        const l=doc.createElement('div'); l.textContent='Total Mão de Obra:'; const r=doc.createElement('div'); r.textContent=BRL.format(tot); r.className='b'; row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
       } else {
-        header(d,'Resumo Financeiro',periodoTxt);
-        tEntradasOS(d,os); tEntradasAvulsas(d,incs); tSaidas(d,outs);
-        // totalIn inclui MÃO DE OBRA
-        const totalIn = os.reduce((s,j)=>s+(j.valor + j.maoObra + j.subtotal - j.desconto),0) + incs.reduce((s,i)=>s+i.valor,0);
-        const totalOut= outs.reduce((s,e)=>s+e.valor,0);
-        const saldo= totalIn-totalOut;
-        const ln=d.createElement('div'); ln.className='ln'; d.body.appendChild(ln);
-        const row=d.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
-        const l=d.createElement('div'); l.textContent='Saldo do Período:'; const r=d.createElement('div'); r.textContent=BRL.format(saldo); r.className='b';
-        row.appendChild(l); row.appendChild(r); d.body.appendChild(row);
+        header(doc,'Resumo Financeiro',per); tEntradasOS(doc,O); tEntradasAv(doc,I,IMO,IEX); tSaidas(doc,E);
+        const totalIn = O.reduce((s,j)=>s+j.total,0) + I.reduce((s,i)=>s+i.valor,0) + IMO.reduce((s,i)=>s+i.valor,0) + IEX.reduce((s,i)=>s+i.valor,0);
+        const totalOut= E.reduce((s,e)=>s+e.valor,0);
+        const saldo = totalIn-totalOut;
+        const ln=doc.createElement('div'); ln.className='ln'; doc.body.appendChild(ln);
+        const row=doc.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between';
+        const l=doc.createElement('div'); l.textContent='Saldo do Período:'; const r=doc.createElement('div'); r.textContent=BRL.format(saldo); r.className='b';
+        row.appendChild(l); row.appendChild(r); doc.body.appendChild(row);
       }
-      setTimeout(()=>{ try{iframe.contentWindow.focus(); iframe.contentWindow.print();}catch(e){} setTimeout(()=>iframe.remove(),1200); },60);
+      setTimeout(()=>{ try{iframe.contentWindow.focus(); iframe.contentWindow.print();}catch(e){} setTimeout(()=>iframe.remove(),1000); },80);
     };
-    const d=iframe.contentDocument || (iframe.contentWindow?iframe.contentWindow.document:null);
     if(d) build(d); else iframe.addEventListener('load',()=>build(iframe.contentDocument||iframe.contentWindow.document));
   }
 
-  /* ===== Inclusão: Entradas / Saídas / Despesas ===== */
+  function exportCSV(filename, rows, headers){
+    const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+    const csv = [headers.map(esc).join(',')].concat(rows.map(r=> headers.map(h=>esc(r[h])).join(','))).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
+  }
+
+  // Eventos PDF/CSV
+  $('exAll').addEventListener('click', e=>{e.preventDefault(); exportPDF('all');});
+  $('exIn').addEventListener('click',  e=>{e.preventDefault(); exportPDF('in');});
+  $('exOut').addEventListener('click', e=>{e.preventDefault(); exportPDF('out');});
+  $('exMO').addEventListener('click',  e=>{e.preventDefault(); exportPDF('mo');});
+  $('csvIn').addEventListener('click', e=>{
+    e.preventDefault();
+    const {os:O, incs:I, incsMO:IMO, incsEX:IEX} = filtered();
+    const rows = [
+      ...O.map(j=>({data:j.data, origem:'Oficina', detalhe:`${j.cliente} • ${j.mecanico}`, servicos:j.servicos, maoDeObra:j.maoObra, pecas:j.pecas, desconto:j.desconto, total:j.total})),
+      ...IMO.map(i=>({data:i.data, origem:'Mão de Obra', detalhe:i.descricao||'', servicos:0, maoDeObra:i.valor, pecas:0, desconto:0, total:i.valor})),
+      ...IEX.map(i=>({data:i.data, origem:'Serviço Extra', detalhe:i.nome||'', servicos:i.valor, maoDeObra:0, pecas:0, desconto:0, total:i.valor})),
+      ...I.map(i=>({data:i.data, origem:'Avulsa', detalhe:i.descricao||'', servicos:0, maoDeObra:0, pecas:0, desconto:0, total:i.valor}))
+    ];
+    exportCSV(`entradas-${$('fDe').value}_a_${$('fAte').value}.csv`, rows,
+      ['data','origem','detalhe','servicos','maoDeObra','pecas','desconto','total']);
+  });
+  $('csvOut').addEventListener('click', e=>{
+    e.preventDefault();
+    const {outs:E} = filtered();
+    const rows = E.map(r=>({data:r.data, categoria:r.categoria, descricao:r.descricao, valor:r.valor}));
+    exportCSV(`saidas-${$('fDe').value}_a_${$('fAte').value}.csv`, rows, ['data','categoria','descricao','valor']);
+  });
+
+  /* ===== Inclusão rápida ===== */
   const modalEntrada = new bootstrap.Modal(document.getElementById('modalEntrada'));
+  const modalMO      = new bootstrap.Modal(document.getElementById('modalMO'));
+  const modalExtra   = new bootstrap.Modal(document.getElementById('modalExtra'));
   const modalGasto   = new bootstrap.Modal(document.getElementById('modalGasto'));
   let tipoGasto = 'saida';
 
-  $('btnAddEntrada').addEventListener('click', ()=>{
-    $('eData').value = todayISO(); $('eDesc').value=''; $('eValor').value=''; $('eFP').value='Dinheiro';
-    modalEntrada.show();
-  });
+  // Avulsa
+  $('btnAddEntrada').addEventListener('click', ()=>{ $('eData').value=todayISO(); $('eDesc').value=''; $('eValor').value=''; $('eFP').value='Dinheiro'; modalEntrada.show(); });
   $('saveEntrada').addEventListener('click', ()=>{
     const data=$('eData').value, descricao=$('eDesc').value.trim(), valor=num($('eValor').value), pagamento=$('eFP').value;
     if(!data || !valor){ alert('Informe data e valor.'); return; }
-    const arr = readArray(IN_KEY);
-    arr.push({data, descricao, valor, pagamento});
-    writeArray(IN_KEY, arr);
-    incomes = arr.map(i=>({data:String(i.data||""), descricao:String(i.descricao||""), valor:num(i.valor), pagamento:String(i.pagamento||"Outro")}));
+    const arr = readArray(IN_KEY); arr.push({data, descricao, valor, pagamento, tipo:'avulsa'}); writeArray(IN_KEY, arr);
+    incomes = arr.map(i=>({data:String(i.data||''), descricao:String(i.descricao||''), valor:num(i.valor), pagamento:String(i.pagamento||'Outro'), tipo:String(i.tipo||'avulsa')}));
     modalEntrada.hide(); render();
   });
 
-  $('btnAddSaida').addEventListener('click', ()=>{
-    tipoGasto='saida';
-    $('gTitle').textContent='Adicionar Saída';
-    $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value='';
-    modalGasto.show();
+  // Mão de obra avulsa
+  $('btnAddMO').addEventListener('click', ()=>{ $('moData').value=todayISO(); $('moDesc').value=''; $('moValor').value=''; $('moFP').value='Dinheiro'; modalMO.show(); });
+  $('saveMO').addEventListener('click', ()=>{
+    const data=$('moData').value, descricao=$('moDesc').value.trim(), valor=num($('moValor').value), pagamento=$('moFP').value;
+    if(!data || !valor){ alert('Informe data e valor.'); return; }
+    const arr = readArray(IN_MO_KEY); arr.push({data, descricao, valor, pagamento}); writeArray(IN_MO_KEY, arr);
+    incomesMO = arr.map(i=>({data:String(i.data||''), descricao:String(i.descricao||''), valor:num(i.valor), pagamento:String(i.pagamento||'Outro'), tipo:'mo'}));
+    modalMO.hide(); render();
   });
-  $('btnAddDesp').addEventListener('click', ()=>{
-    tipoGasto='despesa';
-    $('gTitle').textContent='Adicionar Despesa';
-    $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value='';
-    modalGasto.show();
+
+  // Serviço Extra avulso
+  $('btnAddExtra').addEventListener('click', ()=>{ $('sxData').value=todayISO(); $('sxNome').value=''; $('sxValor').value=''; $('sxFP').value='Dinheiro'; fillExtrasDatalist(); modalExtra.show(); });
+  $('saveExtra').addEventListener('click', ()=>{
+    const data=$('sxData').value, nome=$('sxNome').value.trim(), valor=num($('sxValor').value), pagamento=$('sxFP').value;
+    if(!data || !valor || !nome){ alert('Informe data, serviço e valor.'); return; }
+    const arr = readArray(IN_EX_KEY); arr.push({data, nome, valor, pagamento}); writeArray(IN_EX_KEY, arr);
+    incomesEX = arr.map(i=>({data:String(i.data||''), nome:String(i.nome||''), valor:num(i.valor), pagamento:String(i.pagamento||'Outro'), tipo:'extra'}));
+    modalExtra.hide(); render();
   });
+
+  // Saídas / Despesas
+  $('btnAddSaida').addEventListener('click', ()=>{ tipoGasto='saida'; $('gTitle').textContent='Adicionar Saída'; $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value=''; modalGasto.show(); });
+  $('btnAddDesp').addEventListener('click', ()=>{ tipoGasto='despesa'; $('gTitle').textContent='Adicionar Despesa'; $('gData').value=todayISO(); $('gCat').value=''; $('gDesc').value=''; $('gValor').value=''; modalGasto.show(); });
   $('saveGasto').addEventListener('click', ()=>{
     const data=$('gData').value, categoria=$('gCat').value.trim(), descricao=$('gDesc').value.trim(), valor=num($('gValor').value);
     if(!data || !valor){ alert('Informe data e valor.'); return; }
-    const key = expStore.key || EXP_KEYS[0];
-    const arr = readArray(key);
-    arr.push({data, categoria, descricao, valor, tipo:tipoGasto});
-    writeArray(key, arr);
-    expenses = arr.map(e=>({data:String(e.data||""), descricao:String(e.descricao||""), categoria:String(e.categoria||""), valor:Math.abs(num(e.valor)), tipo:(e.tipo||"saida")}));
+    const key = expStore.key || EXP_KEYS[0]; const arr = readArray(key);
+    arr.push({data, categoria, descricao, valor, tipo:tipoGasto}); writeArray(key, arr);
+    expenses = arr.map(e=>({data:String(e.data||''), descricao:String(e.descricao||''), categoria:String(e.categoria||''), valor:Math.abs(num(e.valor)), tipo:(e.tipo||'saida')}));
     modalGasto.hide(); render();
   });
 
-  /* ===== Eventos gerais ===== */
+  // Período e eventos
+  $('btnMAtual').addEventListener('click', e=>{e.preventDefault(); setMesAtual(); render();});
+  $('btn7d').addEventListener('click', e=>{e.preventDefault(); setUltimos7(); render();});
   $('fDe').addEventListener('input', render);
   $('fAte').addEventListener('input', render);
-  $('exAll').addEventListener('click', ()=> exportPDF('all'));
-  $('exIn').addEventListener('click',  ()=> exportPDF('in'));
-  $('exOut').addEventListener('click', ()=> exportPDF('out'));
-  $('exMO').addEventListener('click',  ()=> exportPDF('mo'));
 
-  // Período padrão: mês atual
-  const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0');
-  $('fDe').value=`${y}-${m}-01`; $('fAte').value=todayISO();
+  // utils
+  function escapeHTML(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
+  // init
+  setMesAtual();
   render();
 })();
 </script>

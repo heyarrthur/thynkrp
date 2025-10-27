@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rota Motos — Backup de Cookies & LocalStorage</title>
+
+  <!-- Bootstrap 5.3 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --rm-sidebar-w: 280px;
+      --rm-sidebar-w-collapsed: 84px;
+      --rm-border: rgba(0,0,0,.08);
+      --rm-soft: #f6f8fb;
+      --rm-soft-2: #f1f5f9;
+      --rm-muted: #6b7280;
+      --rm-brand: #111827;
+    }
+
+    /* ===== Sidebar (branca, colapsável p/ ícones) ===== */
+.sidebar{
+  position:fixed; inset:0 auto 0 0; width:var(--side-w);
+  background:var(--sidebar); color:var(--side-txt);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:1030;
+  transition:width .25s ease; box-shadow:var(--shadow);
+  will-change: width;
+}
+.brand{ display:flex; align-items:center; gap:.6rem; padding:16px 16px 14px; font-weight:800 }
+.brand .logo{ width:36px; height:36px; border-radius:10px; background:#111; color:#fff; display:grid; place-items:center }
+.nav-scroll{flex:1; overflow:auto; padding:8px 8px 16px}
+.side-group{margin:8px 8px 14px}
+.side-divider{height:1px; background:var(--border); margin:6px 10px 8px; border-radius:99px}
+.side-sub{font-size:.8rem; color:var(--side-dim); margin:8px 10px 6px}
+.side-item{
+  display:flex; align-items:center; gap:.7rem; color:var(--side-txt); text-decoration:none;
+  padding:10px 12px; border-radius:12px; font-weight:600;
+  transition:transform .1s ease, background .2s ease, box-shadow .2s ease;
+}
+.side-item:hover{ background:rgba(15,23,42,.05); transform:translateY(-1px) }
+.side-item.active{ background:#fff7ed; box-shadow:inset 0 0 0 2px #fde68a; color:#7c2d12 }
+.side-toggle{
+  display:flex; align-items:center; justify-content:center;
+  margin:10px; border:1px solid var(--border); border-radius:12px; height:44px;
+  background:#fff; color:#111; width:calc(100% - 20px);
+  box-shadow:var(--shadow); transition:transform .1s ease, box-shadow .2s ease;
+}
+.side-toggle:hover{ transform:translateY(-1px); box-shadow:var(--shadow-strong) }
+
+
+
+ :root{
+  --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b;
+  --bg:#f6f8fb; --card:#fff;
+  --sidebar:#ffffff; --side-txt:#0f172a; --side-dim:#6b7280;
+  --side-w:260px; --side-collapsed:74px;
+  --shadow:0 10px 30px rgba(2,6,23,.06); --shadow-strong:0 14px 40px rgba(2,6,23,.12);
+}
+*{box-sizing:border-box}
+html,body{height:100%; overflow-x:hidden} /* evita rolagem p/ os lados */
+body{
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg); color:var(--ink); margin:0;
+  overflow-y:overlay; /* só vertical */
+  transition:padding .25s ease;
+  padding-left:var(--side-w);
+}
+    body { background: var(--rm-soft); overflow-x: hidden; }
+    .rm-main{ padding:24px; }
+    .rm-page{ background:#fff; border:1px solid var(--rm-border); border-radius:16px; box-shadow:0 .75rem 2rem rgba(0,0,0,.05); overflow:hidden; }
+    .rm-header{ background:linear-gradient(180deg,#fff,#f8fafc); border-bottom:1px solid var(--rm-border); padding:18px 20px; }
+    .rm-header .title{ margin:0; font-weight:800; letter-spacing:.2px; }
+    .rm-subtitle{ color:var(--rm-muted); margin:0; }
+    .rm-body{ padding:20px; }
+    .rm-kbd{ padding:.15rem .4rem; border:1px solid rgba(0,0,0,.15); border-radius:.25rem; background:#fff; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.85em; }
+    pre{ max-height:320px; overflow:auto; background:#f7f9fc; border:1px solid var(--rm-border); border-radius:.5rem; padding:.75rem; font-size:.9rem; }
+</style>
+</head>
+<body>
+  <div class="rm-app">
+   <!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">RM</span>
+    <div class="hide-on-collapse">Rota Motos</div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="side-divider"></div>
+
+    <div class="side-group">
+      <div class="side-sub">Estoque</div>
+      <a class="side-item" href="index.html"><i class="bi bi-box-seam"></i><span class="hide-on-collapse">Gerenciar</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Mecânica</div>
+      <a class="side-item" href="oficina.html"><i class="bi bi-wrench-adjustable"></i><span class="hide-on-collapse">Oficina</span></a>
+      <a class="side-item" href="oficinaextras.html"><i class="bi bi-gear-wide-connected"></i><span class="hide-on-collapse">Serviços Extras</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Financeiro</div>
+      <a class="side-item" href="financeiro.html"><i class="bi bi-currency-dollar"></i><span class="hide-on-collapse">Faturamento</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Vendas</div>
+      <a class="side-item" href="vendas.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Vendas</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Configurações</div>
+      <a class="side-item active" href="backup.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Backups</span></a>
+    </div>
+  </div>
+
+  <button id="btnToggleSide" class="side-toggle">
+    <i class="bi bi-chevron-left"></i>
+    <span class="hide-on-collapse ms-2">Recolher</span>
+    <i class="bi bi-chevron-right show-on-collapse"></i>
+  </button>
+</aside>
+
+    <!-- MAIN -->
+    <main class="rm-main">
+      <section class="rm-page">
+        <header class="rm-header">
+          <span class="badge text-bg-warning-subtle border border-warning-subtle"><i class="bi bi-shield-lock"></i> Backup seguro (domínio atual)</span>
+          <h1 class="h4 title mt-2">Backup de Cookies e LocalStorage</h1>
+          <p class="rm-subtitle">Colete/importe dados do <strong>domínio atual</strong> e salve em JSON na pasta <span class="rm-kbd">thynkBackups</span>.</p>
+        </header>
+
+        <div class="rm-body">
+          <div class="row g-3">
+            <!-- Coleta / Salvar -->
+            <div class="col-12 col-xxl-7">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <h2 class="h6 fw-bold mb-3">Backup atual</h2>
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <button id="btn-coletar" class="btn btn-primary"><i class="bi bi-cloud-arrow-down"></i> Fazer backup (coletar dados)</button>
+                    <button id="btn-salvar" class="btn btn-success" disabled><i class="bi bi-folder-plus"></i> Criar pasta e salvar</button>
+                    <button id="btn-baixar" class="btn btn-outline-secondary" disabled><i class="bi bi-download"></i> Baixar .json (fallback)</button>
+                  </div>
+
+                  <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                      <div class="p-3 rounded-3 border" style="background:#f8fafc;border-color:var(--rm-border)!important">
+                        <div class="text-muted small">Domínio</div>
+                        <div class="fw-semibold"><code id="host">—</code></div>
+                        <div class="mt-2 text-muted small">Hora da coleta: <span id="ts">—</span></div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="p-3 rounded-3 border" style="background:#f8fafc;border-color:var(--rm-border)!important">
+                        <div class="d-flex align-items-center gap-3">
+                          <div><div class="text-muted small">Cookies</div><div class="fw-semibold" id="qtd-cookies">0</div></div>
+                          <div><div class="text-muted small">localStorage</div><div class="fw-semibold" id="qtd-ls">0</div></div>
+                        </div>
+                        <div class="mt-2 small text-muted" id="status">Aguardando coleta…</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-info mt-3 mb-0">
+                    <strong>Observações:</strong>
+                    <ul class="mb-0">
+                      <li>Somente cookies <em>não-HttpOnly</em> são legíveis/restauráveis por JavaScript.</li>
+                      <li>Leitura/restore limitados ao <strong>mesmo domínio</strong>.</li>
+                      <li>Para salvar direto na pasta use um navegador com <em>File System Access API</em>.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Importar / Restaurar -->
+            <div class="col-12 col-xxl-5">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <h2 class="h6 fw-bold mb-3">Carregar backup</h2>
+
+                  <div class="mb-2">
+                    <label class="form-label">Arquivo JSON do backup</label>
+                    <input id="file-input" class="form-control" type="file" accept="application/json,.json">
+                  </div>
+
+                  <div class="row g-2 mb-2">
+                    <div class="col-sm-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="opt-clear-ls">
+                        <label class="form-check-label" for="opt-clear-ls">Limpar localStorage antes</label>
+                      </div>
+                    </div>
+                    <div class="col-sm-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="opt-overwrite-cookies">
+                        <label class="form-check-label" for="opt-overwrite-cookies">Sobrescrever cookies existentes</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button id="btn-restore-ls" class="btn btn-outline-primary" disabled><i class="bi bi-box-arrow-in-down"></i> Restaurar localStorage</button>
+                    <button id="btn-restore-cookies" class="btn btn-outline-warning" disabled><i class="bi bi-box-arrow-in-down"></i> Restaurar cookies</button>
+                    <button id="btn-restore-all" class="btn btn-primary" disabled><i class="bi bi-arrow-repeat"></i> Restaurar tudo</button>
+                  </div>
+
+                  <div class="small text-muted mb-2" id="import-status">Selecione um arquivo de backup para pré-visualizar e habilitar a restauração.</div>
+                  <h3 class="h6 fw-semibold mb-2">Pré-visualização do backup importado</h3>
+                  <pre id="preview-import">{}</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pré-visualização do backup atual -->
+            <div class="col-12">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <h2 class="h6 fw-bold mb-3">Pré-visualização do JSON (coleta atual)</h2>
+                  <pre id="preview">{}</pre>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <script>
+    /* ===== Sidebar: recolher/expandir ===== */
+    (function(){
+      const KEY='rm_sidebar_collapsed';
+      const btn=document.getElementById('btn-toggle');
+      if (localStorage.getItem(KEY)==='1') document.body.classList.add('sidebar-collapsed');
+      function sync(){ const i=btn.querySelector('.bi'); const t=btn.querySelector('.txt');
+        if (document.body.classList.contains('sidebar-collapsed')){ i.classList.remove('bi-chevron-left'); i.classList.add('bi-chevron-right'); if(t) t.textContent='Expandir'; }
+        else { i.classList.add('bi-chevron-left'); i.classList.remove('bi-chevron-right'); if(t) t.textContent='Recolher'; } }
+      sync();
+      btn.addEventListener('click',()=>{ document.body.classList.toggle('sidebar-collapsed'); localStorage.setItem(KEY,document.body.classList.contains('sidebar-collapsed')?'1':'0'); sync(); });
+      document.querySelectorAll('.rm-item').forEach(a=>a.addEventListener('click',()=>{ document.querySelectorAll('.rm-item').forEach(x=>x.classList.remove('active')); a.classList.add('active'); }));
+    })();
+
+    /* ===== Utilidades ===== */
+    const pad = n => String(n).padStart(2,'0');
+    const nowISO = () => { const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`; };
+    const backupBlob = data => new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const filename = () => `backup-${location.hostname || 'dominio'}-${nowISO()}.json`;
+
+    /* ===== Leitura atual ===== */
+    const ui = {
+      host: document.getElementById('host'),
+      qtdCookies: document.getElementById('qtd-cookies'),
+      qtdLS: document.getElementById('qtd-ls'),
+      ts: document.getElementById('ts'),
+      status: document.getElementById('status'),
+      preview: document.getElementById('preview'),
+      btnColetar: document.getElementById('btn-coletar'),
+      btnSalvar: document.getElementById('btn-salvar'),
+      btnBaixar: document.getElementById('btn-baixar'),
+
+      fileInput: document.getElementById('file-input'),
+      importStatus: document.getElementById('import-status'),
+      previewImport: document.getElementById('preview-import'),
+      optClearLS: document.getElementById('opt-clear-ls'),
+      optOverwriteCookies: document.getElementById('opt-overwrite-cookies'),
+      btnRestoreLS: document.getElementById('btn-restore-ls'),
+      btnRestoreCookies: document.getElementById('btn-restore-cookies'),
+      btnRestoreAll: document.getElementById('btn-restore-all'),
+    };
+
+    let lastBackup = null;       // coleta atual
+    let importedBackup = null;   // backup carregado
+
+    ui.host.textContent = location.hostname || '(sem host)';
+
+    function readCookies() {
+      const raw=document.cookie||''; if (!raw.trim()) return [];
+      return raw.split(';').map(s=>s.trim()).filter(Boolean).map(p=>{
+        const i=p.indexOf('='); const name=i>=0?p.slice(0,i):p; const value=i>=0?p.slice(i+1):'';
+        let nv=name, vv=value; try{nv=decodeURIComponent(name);}catch{}; try{vv=decodeURIComponent(value);}catch{};
+        return {name:nv, value:vv};
+      });
+    }
+    function readLocalStorage(){
+      const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); out.push({key:k, value: localStorage.getItem(k)});} }catch(e){ console.warn('localStorage error',e); }
+      return out;
+    }
+    function buildBackup(){
+      return { meta:{domain:location.hostname, origin:location.origin, collected_at:new Date().toISOString(), ua:navigator.userAgent},
+               cookies: readCookies(), localStorage: readLocalStorage() };
+    }
+    function updateUI(b){
+      ui.qtdCookies.textContent = b.cookies.length;
+      ui.qtdLS.textContent = b.localStorage.length;
+      ui.ts.textContent = new Date(b.meta.collected_at).toLocaleString();
+      ui.preview.textContent = JSON.stringify(b,null,2);
+      ui.status.textContent = 'Dados coletados. Você pode salvar agora.';
+      ui.btnSalvar.disabled = false; ui.btnBaixar.disabled = false;
+    }
+
+    async function saveWithFSA(backup){
+      if (!('showDirectoryPicker' in window)) return false;
+      try{
+        ui.status.textContent='Escolha/Crie a pasta thynkBackups…';
+        const baseDir=await window.showDirectoryPicker({mode:'readwrite'});
+        const dir=await baseDir.getDirectoryHandle('thynkBackups',{create:true});
+        const file=await dir.getFileHandle(filename(),{create:true});
+        const w=await file.createWritable(); await w.write(backupBlob(backup)); await w.close();
+        ui.status.textContent='Backup salvo com sucesso na pasta thynkBackups.'; return true;
+      }catch(e){ console.error(e); ui.status.textContent='Falha ao salvar com a API de arquivos. Use "Baixar .json (fallback)".'; return false; }
+    }
+    function downloadFallback(backup){
+      const a=document.createElement('a'); a.download=filename(); a.href=URL.createObjectURL(backupBlob(backup));
+      document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},800);
+      ui.status.textContent='Backup baixado (.json).';
+    }
+
+    ui.btnColetar.addEventListener('click',()=>{ try{ lastBackup=buildBackup(); updateUI(lastBackup);}catch(e){ console.error(e); ui.status.textContent='Falha ao coletar dados.'; }});
+    ui.btnSalvar.addEventListener('click', async()=>{ if(!lastBackup) return ui.status.textContent='Faça a coleta primeiro.'; const ok=await saveWithFSA(lastBackup); if(!ok) downloadFallback(lastBackup); });
+    ui.btnBaixar.addEventListener('click',()=>{ if(!lastBackup) return ui.status.textContent='Faça a coleta primeiro.'; downloadFallback(lastBackup); });
+
+    /* ===== Importar / Restaurar ===== */
+    function enableRestore(enabled){
+      ui.btnRestoreLS.disabled = !enabled;
+      ui.btnRestoreCookies.disabled = !enabled;
+      ui.btnRestoreAll.disabled = !enabled;
+    }
+    enableRestore(false);
+
+    ui.fileInput.addEventListener('change', async (e)=>{
+      const file=e.target.files?.[0];
+      if(!file){ importedBackup=null; enableRestore(false); ui.previewImport.textContent='{}'; ui.importStatus.textContent='Nenhum arquivo selecionado.'; return; }
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+        // validação simples
+        if (!data || typeof data!=='object' || !('cookies' in data) || !('localStorage' in data)) {
+          throw new Error('Formato inválido. Esperado chaves "cookies" e "localStorage".');
+        }
+        importedBackup = data;
+        ui.previewImport.textContent = JSON.stringify(data,null,2);
+        ui.importStatus.textContent = `Backup carregado. Cookies: ${data.cookies?.length||0} • localStorage: ${data.localStorage?.length||0}`;
+        enableRestore(true);
+      }catch(err){
+        console.error(err);
+        importedBackup=null; enableRestore(false);
+        ui.previewImport.textContent='{}';
+        ui.importStatus.textContent='Falha ao ler o arquivo: ' + (err.message || err);
+      }
+    });
+
+    function setCookie(name, value, days=365){
+      const encName = encodeURIComponent(name);
+      const encValue = encodeURIComponent(value ?? '');
+      const maxAge = days * 24 * 60 * 60;
+      document.cookie = `${encName}=${encValue}; path=/; max-age=${maxAge}; samesite=lax`;
+    }
+
+    function restoreLocalStorage(data, clearBefore){
+      try{
+        if (clearBefore) localStorage.clear();
+        (data.localStorage||[]).forEach(({key,value})=>{
+          try{ localStorage.setItem(key, value); }catch(e){ console.warn('LS set error for key:', key, e); }
+        });
+        return true;
+      }catch(e){ console.error(e); return false; }
+    }
+
+    function restoreCookies(data, overwrite){
+      try{
+        const currentNames = new Set(readCookies().map(c=>c.name));
+        (data.cookies||[]).forEach(({name,value})=>{
+          if (!overwrite && currentNames.has(name)) return; // pula se já existe e não deve sobrescrever
+          setCookie(name, value);
+        });
+        return true;
+      }catch(e){ console.error(e); return false; }
+    }
+
+    function confirmAction(text){ return window.confirm(text); }
+
+    ui.btnRestoreLS.addEventListener('click', ()=>{
+      if(!importedBackup) return;
+      if (!confirmAction('Deseja restaurar o localStorage a partir do backup selecionado?')) return;
+      const ok = restoreLocalStorage(importedBackup, ui.optClearLS.checked);
+      ui.importStatus.textContent = ok ? 'localStorage restaurado.' : 'Falha ao restaurar localStorage.';
+    });
+
+    ui.btnRestoreCookies.addEventListener('click', ()=>{
+      if(!importedBackup) return;
+      if (!confirmAction('Deseja restaurar os cookies a partir do backup selecionado?')) return;
+      const ok = restoreCookies(importedBackup, ui.optOverwriteCookies.checked);
+      ui.importStatus.textContent = ok ? 'Cookies restaurados (apenas não-HttpOnly).' : 'Falha ao restaurar cookies.';
+    });
+
+    ui.btnRestoreAll.addEventListener('click', ()=>{
+      if(!importedBackup) return;
+      if (!confirmAction('Deseja restaurar cookies e localStorage a partir do backup selecionado?')) return;
+      const ok1 = restoreLocalStorage(importedBackup, ui.optClearLS.checked);
+      const ok2 = restoreCookies(importedBackup, ui.optOverwriteCookies.checked);
+      ui.importStatus.textContent = (ok1 && ok2) ? 'Tudo restaurado com sucesso.' : 'Falha em alguma etapa da restauração.';
+    });
+  </script>
+</body>
+</html>

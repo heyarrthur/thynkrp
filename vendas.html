@@ -1,107 +1,535 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rota Motos — Vendas (Adicionar/Alterar sem retirar dados)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rota Motos — Vendas</title>
 
   <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Fonte -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{ --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b; --nav-h:64px; }
-    body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
-    .container{max-width:1180px}
+    :root {
+      --ink: #0f172a;
+      --muted: #6b7280;
+      --border: #e6e8ef;
+      --accent: #f59e0b;
+      --bg: #f6f8fb;
+      --card: #fff;
+      --side-w: 260px;
+      --side-collapsed: 74px;
+      --shadow: 0 12px 28px rgba(2, 6, 23, .08);
+    }
 
-    /* NAVBAR */
-    .navbar{background:#fff;border-bottom:1px solid var(--border)}
-    .brand{display:flex;align-items:center;gap:.5rem;font-weight:700}
-    .brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800}
-    .nav-link{color:var(--ink);font-weight:600;border-radius:8px;padding:.5rem .75rem}
-    .nav-link:hover{background:#f2f4f8}
-    .nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
+    * {
+      box-sizing: border-box
+    }
 
-    /* ALERTAS */
-    #safeWarn{display:none}
-    #lsWarn{display:none}
+    html,
+    body {
+      overflow-x: hidden
+    }
 
-    /* CARDS */
-    .card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
-    .metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
-    .metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
-    .i-orders{background:#0ea5e9}.i-items{background:#6366f1}.i-revenue{background:#059669}.i-profit{background:#f59e0b}
-    .metric .label{color:var(--muted);font-size:.9rem}
-    .metric .value{font-weight:800;font-size:1.35rem}
+    body {
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color: var(--ink);
+      margin: 0;
+      padding-left: var(--side-w);
+      transition: padding .25s ease;
+    }
 
-    /* TOOLBAR */
-    .toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
-    .input-icon{position:relative}
-    .input-icon i{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#9aa1ad}
-    .input-icon input{padding-left:2.1rem}
-    .form-control,.form-select{border-radius:10px;border-color:var(--border)}
-    .form-control:focus,.form-select:focus{box-shadow:0 0 0 .25rem rgba(245,158,11,.16);border-color:#fcd34d}
-    .btn-ghost{background:#fff;border:1px solid var(--border);font-weight:600}
-    .btn-ghost:hover{background:#f9fafb}
-    .btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
+    body.collapsed {
+      padding-left: var(--side-collapsed)
+    }
 
-    /* TABELA */
-    .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700;position:sticky;top:0;z-index:2;border-bottom:1px solid #e5e7eb}
-    .nowrap{white-space:nowrap}
-    .empty{color:#6b7280;text-align:center;padding:2rem 0}
-    .badge-status{font-weight:700;border:1px solid #e5e7eb}
-    .st-agu{background:#fef9c3;color:#854d0e;border-color:#fde68a}
-    .st-sep{background:#e0f2fe;color:#075985;border-color:#bae6fd}
-    .st-conc{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+    .container {
+      max-width: 1180px
+    }
 
-    /* MODAL – produtos & carrinho */
-    .parts-panel,.cart-panel{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem}
-    .parts-list{max-height:36vh;overflow:auto}
-    .cart-list{max-height:48vh;overflow:auto}
-    .cart-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .25rem;border-bottom:1px dashed #e5e7eb}
-    .cart-row:last-child{border-bottom:0}
+    /* ===== Sidebar fixa (BRANCA) ===== */
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--side-w);
+      background: var(--sidebar);
+      color: var(--side-txt);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1030;
+      transition: width .25s ease, box-shadow .25s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: 16px 16px 14px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .brand .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #111;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+    }
+
+    .nav-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 8px 8px 16px
+    }
+
+    .side-group {
+      margin: 8px 8px 14px
+    }
+
+    .side-title {
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--side-dim);
+      padding: 10px 10px 6px;
+    }
+
+    .side-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 10px 8px;
+      border-radius: 99px
+    }
+
+    .side-sub {
+      font-size: .8rem;
+      color: var(--side-dim);
+      margin: 8px 10px 6px
+    }
+
+    .side-item {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      color: var(--side-txt);
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      position: relative;
+      transition: transform .1s ease, background .2s ease, box-shadow .2s ease;
+    }
+
+    .side-item i {
+      font-size: 1.05rem
+    }
+
+    .side-item:hover {
+      background: rgba(15, 23, 42, .05);
+      transform: translateY(-1px)
+    }
+
+    .side-item.active {
+      background: #fff7ed;
+      box-shadow: inset 0 0 0 2px #fde68a;
+      color: #7c2d12;
+    }
+
+    .side-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      height: 44px;
+      background: #fff;
+      color: var(--side-txt);
+      width: calc(100% - 20px);
+      box-shadow: var(--shadow);
+      transition: transform .1s ease, box-shadow .2s ease;
+    }
+
+    .side-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-strong);
+    }
+
+    /* Colapsar = apenas ícones */
+    body.collapsed {
+      padding-left: var(--side-collapsed)
+    }
+
+    body.collapsed .sidebar {
+      width: var(--side-collapsed)
+    }
+
+    .hide-on-collapse {
+      transition: opacity .15s ease
+    }
+
+    body.collapsed .hide-on-collapse {
+      opacity: 0;
+      pointer-events: none;
+      width: 0 !important;
+      display: none !important
+    }
+
+    .show-on-collapse {
+      display: none
+    }
+
+    body.collapsed .show-on-collapse {
+      display: flex
+    }
+
+    /* ===== Topbar ===== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 1010;
+      padding: 12px 0;
+      margin-bottom: 8px;
+      background: linear-gradient(180deg, #ffffffcc, #ffffffaa 60%, #ffffff00);
+      backdrop-filter: saturate(1.2) blur(6px);
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn .25s ease both;
+    }
+
+    /* ===== Micro animações ===== */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    [data-anim] {
+      animation: fadeInUp .28s ease both
+    }
+
+    [data-anim-delay="1"] {
+      animation-delay: .04s
+    }
+
+    [data-anim-delay="2"] {
+      animation-delay: .08s
+    }
+
+    [data-anim-delay="3"] {
+      animation-delay: .12s
+    }
+
+    /* ===== Cards / Métricas ===== */
+    .card-soft {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow)
+    }
+
+    .metric {
+      display: flex;
+      gap: .8rem;
+      align-items: center;
+      padding: 1rem
+    }
+
+    .metric .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #fff
+    }
+
+    .i-orders {
+      background: #0ea5e9
+    }
+
+    .i-items {
+      background: #6366f1
+    }
+
+    .i-revenue {
+      background: #059669
+    }
+
+    .i-profit {
+      background: #f59e0b
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: .9rem
+    }
+
+    .metric .value {
+      font-weight: 800;
+      font-size: 1.35rem
+    }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      overflow: visible
+    }
+
+    .input-icon {
+      position: relative
+    }
+
+    .input-icon i {
+      position: absolute;
+      left: .65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9aa1ad
+    }
+
+    .input-icon input {
+      padding-left: 2.1rem
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 10px;
+      border-color: var(--border)
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      box-shadow: 0 0 0 .25rem rgba(245, 158, 11, .16);
+      border-color: #fcd34d
+    }
+
+    .btn-ghost {
+      background: #fff;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      border-radius: 12px
+    }
+
+    .btn-ghost:hover {
+      background: #f9fafb
+    }
+
+    .btn-primary-clean {
+      background: var(--accent);
+      color: #111;
+      border: 1px solid #fbbf24;
+      font-weight: 700;
+      border-radius: 12px
+    }
+
+    /* ===== Tabela ===== */
+    .table thead th {
+      background: #eef2ff;
+      color: #1e1b4b;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 1px solid #e5e7eb
+    }
+
+    .nowrap {
+      white-space: nowrap
+    }
+
+    .empty {
+      color: #6b7280;
+      text-align: center;
+      padding: 2rem 0
+    }
+
+    .badge-status {
+      font-weight: 700;
+      border: 1px solid #e5e7eb
+    }
+
+    .st-agu {
+      background: #fef9c3;
+      color: #854d0e;
+      border-color: #fde68a
+    }
+
+    .st-sep {
+      background: #e0f2fe;
+      color: #075985;
+      border-color: #bae6fd
+    }
+
+    .st-conc {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0
+    }
+
+    /* ===== Modal – Produtos & Carrinho ===== */
+    .parts-panel,
+    .cart-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem
+    }
+
+    .parts-list {
+      max-height: 36vh;
+      overflow: auto
+    }
+
+    .cart-list {
+      max-height: 48vh;
+      overflow: auto
+    }
+
+    .cart-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      padding: .45rem .25rem;
+      border-bottom: 1px dashed #e5e7eb
+    }
+
+    .cart-row:last-child {
+      border-bottom: 0
+    }
+
+    /* Sem barras horizontais */
+    .table-responsive {
+      overflow-x: auto
+    }
+
+    .modal-dialog {
+      max-width: 1100px
+    }
   </style>
 </head>
+
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container">
-      <a class="navbar-brand brand" href="rotamotos.jpg"><span class="logo">RM</span><span>Rota Motos</span></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="topnav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html">Estoque</a></li>
-          <li class="nav-item"><a class="nav-link" href="oficina.html">Oficina</a></li>
-          <li class="nav-item"><a class="nav-link active" href="vendas.html">Vendas</a></li>
-          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
-        </ul>
+
+<!-- SIDEBAR (BRANCA) -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">RM</span>
+    <div class="hide-on-collapse">Rota Motos</div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="side-divider"></div>
+
+    <div class="side-group">
+      <div class="side-sub">Estoque</div>
+      <a class="side-item" href="index.html"><i class="bi bi-box-seam"></i><span class="hide-on-collapse">Gerenciar</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Mecânica</div>
+      <a class="side-item" href="oficina.html"><i class="bi bi-wrench-adjustable"></i><span class="hide-on-collapse">Oficina</span></a>
+      <a class="side-item" href="oficinaextras.html"><i class="bi bi-gear-wide-connected"></i><span class="hide-on-collapse">Serviços Extras</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Financeiro</div>
+      <a class="side-item" href="financeiro.html"><i class="bi bi-currency-dollar"></i><span class="hide-on-collapse">Faturamento</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Vendas</div>
+      <a class="side-item active" href="vendas.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Vendas</span></a>
+    </div>
+
+    <div class="side-group">
+      <div class="side-sub">Configurações</div>
+      <a class="side-item" href="backup.html"><i class="bi bi-receipt"></i><span class="hide-on-collapse">Backups</span></a>
+    </div>
+  </div>
+
+  <button id="btnToggleSide" class="side-toggle">
+    <i class="bi bi-chevron-left"></i>
+    <span class="hide-on-collapse ms-2">Recolher</span>
+    <i class="bi bi-chevron-right show-on-collapse"></i>
+  </button>
+</aside>
+
+  <!-- ===== Conteúdo ===== -->
+  <main class="container py-4">
+
+    <!-- Métricas -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-3">
+        <div class="card-soft metric">
+          <div class="icon i-orders"><i class="bi bi-receipt"></i></div>
+          <div>
+            <div class="label">Pedidos</div>
+            <div id="mPedidos" class="value">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card-soft metric">
+          <div class="icon i-items"><i class="bi bi-box-seam"></i></div>
+          <div>
+            <div class="label">Itens Vendidos</div>
+            <div id="mItens" class="value">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card-soft metric">
+          <div class="icon i-revenue"><i class="bi bi-cash-coin"></i></div>
+          <div>
+            <div class="label">Receita Bruta</div>
+            <div id="mReceita" class="value">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card-soft metric">
+          <div class="icon i-profit"><i class="bi bi-graph-up"></i></div>
+          <div>
+            <div class="label">Lucro Estimado</div>
+            <div id="mLucro" class="value">R$ 0,00</div>
+          </div>
+        </div>
       </div>
     </div>
-  </nav>
 
-  <div class="container py-4">
-    <!-- ALERTAS -->
-    <div id="safeWarn" class="alert alert-warning border-0 shadow-sm" role="alert">
-      🛡️ <strong>Modo Seguro</strong>: você pode <em>adicionar</em> e <em>alterar</em> pedidos. A exclusão está desativada e o estoque não é reduzido automaticamente, para que nada “suma” do que já existia.
-    </div>
-    <div id="lsWarn" class="alert alert-danger border-0 shadow-sm" role="alert">
-      ⚠️ Não foi possível acessar o armazenamento do navegador. Ative cookies/armazenamento do site
-      ou abra esta página via <strong>https://seu-usuario.github.io/</strong>.
-    </div>
-
-    <!-- MÉTRICAS -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-orders"><i class="bi bi-receipt"></i></div><div><div class="label">Pedidos</div><div id="mPedidos" class="value">0</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-items"><i class="bi bi-box-seam"></i></div><div><div class="label">Itens Vendidos</div><div id="mItens" class="value">0</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-revenue"><i class="bi bi-cash-coin"></i></div><div><div class="label">Receita Bruta</div><div id="mReceita" class="value">R$ 0,00</div></div></div></div>
-      <div class="col-md-3"><div class="card-soft metric"><div class="icon i-profit"><i class="bi bi-graph-up"></i></div><div><div class="label">Lucro Estimado</div><div id="mLucro" class="value">R$ 0,00</div></div></div></div>
-    </div>
-
-    <!-- TOOLBAR -->
+    <!-- Toolbar -->
     <div class="toolbar mb-3">
       <div class="row g-3 align-items-center">
         <div class="col-xl-6 col-lg-7">
@@ -120,13 +548,10 @@
             <option>Concluído</option>
           </select>
         </div>
-        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
+        <div class="col-xl-4 col-lg-12 d-grid d-xl-flex gap-2 justify-content-xl-end">
           <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalVenda">
             <i class="bi bi-plus-lg"></i> Adicionar pedido
           </button>
-        </div>
-        <!-- Botão Backup -->
-        <div class="col-xl-2 col-lg-12 d-grid d-xl-flex justify-content-xl-end">
           <button id="btnBackup" class="btn btn-ghost">
             <i class="bi bi-cloud-download"></i> Backup
           </button>
@@ -134,14 +559,17 @@
       </div>
     </div>
 
-    <!-- TABELA -->
+    <!-- Tabela -->
     <div class="card-soft p-0">
       <div class="table-responsive" style="max-height:60vh;">
         <table class="table align-middle mb-0">
           <thead>
             <tr>
-              <th>Cliente</th><th class="nowrap">CPF/CNPJ</th><th>Vendedor</th>
-              <th class="nowrap">Data</th><th>Status</th>
+              <th>Cliente</th>
+              <th class="nowrap">CPF/CNPJ</th>
+              <th>Vendedor</th>
+              <th class="nowrap">Data</th>
+              <th>Status</th>
               <th class="text-end nowrap">Subtotal</th>
               <th class="text-end nowrap">Desconto</th>
               <th class="text-end nowrap">Total</th>
@@ -153,9 +581,9 @@
         <div id="empty" class="empty">Nenhum pedido.</div>
       </div>
     </div>
-  </div>
+  </main>
 
-  <!-- MODAL VENDA -->
+  <!-- Modal Venda -->
   <div class="modal fade" id="modalVenda" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
@@ -168,7 +596,8 @@
             <!-- Form + Produtos -->
             <div class="col-lg-7">
               <form id="formVenda" class="row g-3" novalidate>
-                <div class="col-md-5"><label class="form-label">Nome Cliente</label><input id="vCliente" class="form-control" required></div>
+                <div class="col-md-5"><label class="form-label">Nome Cliente</label><input id="vCliente"
+                    class="form-control" required></div>
                 <div class="col-md-3">
                   <label class="form-label">Doc.</label>
                   <div class="input-group">
@@ -179,9 +608,11 @@
                     <input id="vDocNum" class="form-control" inputmode="numeric" placeholder="000.000.000-00">
                   </div>
                 </div>
-                <div class="col-md-4"><label class="form-label">Vendedor</label><input id="vVendedor" class="form-control"></div>
+                <div class="col-md-4"><label class="form-label">Vendedor</label><input id="vVendedor"
+                    class="form-control"></div>
 
-                <div class="col-md-3"><label class="form-label">Data</label><input id="vData" type="date" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">Data</label><input id="vData" type="date"
+                    class="form-control" required></div>
                 <div class="col-md-4">
                   <label class="form-label">Forma de Pagamento</label>
                   <select id="vPagamento" class="form-select">
@@ -189,6 +620,7 @@
                     <option>PIX</option>
                     <option>Cartão de Débito</option>
                     <option>Cartão de Crédito</option>
+                    <option>Outro</option>
                   </select>
                 </div>
                 <div class="col-md-3">
@@ -199,7 +631,8 @@
                     <option>Concluído</option>
                   </select>
                 </div>
-                <div class="col-md-2"><label class="form-label">Desconto</label><input id="vDesc" type="number" step="0.01" class="form-control" value="0"></div>
+                <div class="col-md-2"><label class="form-label">Desconto</label><input id="vDesc" type="number"
+                    step="0.01" class="form-control" value="0"></div>
               </form>
 
               <div class="parts-panel mt-1">
@@ -215,7 +648,9 @@
                     </div>
                   </div>
                   <div class="col-4">
-                    <select id="sCategoria" class="form-select"><option value="">Todas as categorias</option></select>
+                    <select id="sCategoria" class="form-select">
+                      <option value="">Todas as categorias</option>
+                    </select>
                   </div>
                 </div>
                 <div class="parts-list" id="prodList"></div>
@@ -227,13 +662,16 @@
               <div class="cart-panel">
                 <h5 class="fw-bold mb-2">Carrinho</h5>
                 <div id="cartList" class="cart-list mb-2"></div>
-                <div class="d-flex justify-content-between"><span class="text-secondary">Subtotal</span><strong id="cSubtotal">R$ 0,00</strong></div>
+                <div class="d-flex justify-content-between"><span class="text-secondary">Subtotal</span><strong
+                    id="cSubtotal">R$ 0,00</strong></div>
                 <div class="d-flex align-items-center justify-content-between mt-2">
                   <label class="text-secondary m-0" for="vDesc">Desconto</label>
                   <input id="vDescMirror" type="number" step="0.01" class="form-control" style="width:140px" value="0">
                 </div>
-                <div class="d-flex justify-content-between mt-2"><span class="text-secondary">Total</span><strong id="cTotal">R$ 0,00</strong></div>
-                <div class="d-grid mt-3"><button id="btnSalvar" class="btn btn-primary-clean" type="button">Salvar Pedido</button></div>
+                <div class="d-flex justify-content-between mt-2"><span class="text-secondary">Total</span><strong
+                    id="cTotal">R$ 0,00</strong></div>
+                <div class="d-grid mt-3"><button id="btnSalvar" class="btn btn-primary-clean" type="button">Salvar
+                    Pedido</button></div>
               </div>
             </div>
           </div>
@@ -242,437 +680,408 @@
     </div>
   </div>
 
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-  (function(){
-    /* ===== Helpers ===== */
-    const BRL = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-    const $ = id => document.getElementById(id);
-    const money = n => BRL.format(+n||0);
-    const todayISO = () => { const d=new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); };
-    const safeId = s => String(s).replace(/[^a-zA-Z0-9_-]/g,"_");
-    const onlyDigits = s => String(s||"").replace(/\D+/g,"");
-    const priceOf = it => { const p=+it.preco||0, c=+it.custo||0; return p>0 ? p : c; };
-    const itemTotal = it => priceOf(it) * (+it.qtd||0);
-
-    function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
-    addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
-
-    /* ===== Impressão (DOM + iframe invisível) ===== */
-    function buildReceipt(d, p){
-      const style = d.createElement("style");
-      style.textContent = "@page{size:80mm auto;margin:4mm}body{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}"
-        +".wrap{max-width:72mm;margin:0 auto}.ctr{text-align:center}.sep{text-align:center;letter-spacing:1px}.mt{margin-top:6px}";
-      d.head.appendChild(style);
-
-      const wrap = d.createElement("div"); wrap.className="wrap"; d.body.appendChild(wrap);
-      const nf = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-      const subtotal = p.items.reduce((s,x)=> s + itemTotal(x), 0);
-      const total = Math.max(0, subtotal - (+p.desconto||0));
-
-      function line(text,cls){ const el=d.createElement("div"); el.textContent=String(text==null?"":text); if(cls) el.className=cls; wrap.appendChild(el); }
-      function sep(){ line("-----------------------------------------------","sep"); }
-
-      line("Rota Motos","ctr");
-      line("CNPJ 60.469.425/0001-76","ctr");
-      line("Pedido de Venda","ctr");
-      sep();
-
-      line("Dados do Cliente","ctr mt");
-      line("Nome Cliente: " + (p.cliente||"-"));
-      line((p.docTipo||"Doc.") + ": " + (p.docNumFmt||"-"));
-      line("Data: " + (p.data||"-"));
-      sep();
-
-      line("Dados do Vendedor","ctr mt");
-      line("Vendedor: " + (p.vendedor||"-"));
-      sep();
-
-      line("Itens","ctr mt");
-      if(p.items.length){
-        p.items.forEach((it,i)=> line("Item " + (i+1) + ": " + it.nome + " • Qtd: " + it.qtd + " • Preço: " + nf.format(priceOf(it))));
-      } else {
-        line("Sem itens.");
-      }
-      line("Forma de Pagamento: " + (p.pagamento||"-"));
-      line("Status: " + (p.status||"-"));
-      line("Subtotal: " + nf.format(subtotal));
-      line("Descontos: " + nf.format(+p.desconto||0));
-      line("Valor Total: " + nf.format(total));
-      sep();
-
-      line("Observações","ctr mt");
-      line("Observações: CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!");
-    }
-
-    function printOrder(pedido){
-      const iframe = document.createElement("iframe");
-      iframe.style.position="fixed"; iframe.style.right="0"; iframe.style.bottom="0";
-      iframe.style.width="0"; iframe.style.height="0"; iframe.style.border="0";
-      document.body.appendChild(iframe);
-
-      iframe.onload = function(){
-        const d = iframe.contentDocument || iframe.contentWindow.document;
-        while(d.head.firstChild) d.head.removeChild(d.head.firstChild);
-        while(d.body.firstChild) d.body.removeChild(d.body.firstChild);
-        buildReceipt(d, pedido);
-        setTimeout(function(){
-          try{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }catch(e){}
-          setTimeout(()=> iframe.remove(), 1200);
-        }, 60);
-      };
-      try{ iframe.src = "about:blank"; }catch(e){ const d=iframe.contentDocument||iframe.contentWindow.document; d.open(); d.close(); iframe.onload && iframe.onload(); }
-    }
-
-    /* ===== Estoque (somente leitura para não “retirar”) ===== */
-    const STOCK_KEYS=["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
-    function loadStock(){
-      for(const k of STOCK_KEYS){
-        try{ const raw=localStorage.getItem(k); if(raw){ const arr=JSON.parse(raw)||[]; return {key:k, items:Array.isArray(arr)?arr:[]}; } }
-        catch(e){}
-      }
-      return {key:null, items:[]};
-    }
-    function saveStockNoop(){ /* intencionalmente não salva estoque */ }
-    let estoque = loadStock();
-    estoque.items = (estoque.items||[]).map(it=>({
-      sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""),
-      qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0),
-      custo:Number(it.custo??0), local:String(it.local??"")
-    }));
-
-    /* ===== Vendas (localStorage) ===== */
-    const SALE_KEY="vendas.orders.v1";
-    const SALE_HISTORY_KEY="vendas.orders.history.v1"; // trilha de alterações (append only)
-
-    function loadPedidos(){
-      try{ const j=JSON.parse(localStorage.getItem(SALE_KEY)); return Array.isArray(j)?j:[]; }catch(e){ return []; }
-    }
-    let pedidos = loadPedidos();
-
-    // salva de forma NÃO destrutiva:
-    // - adiciona snapshot no histórico
-    // - faz merge com o que está no storage (atualiza por id ou push)
-    function savePedidoNonDestructive(pedido){
-      try{
-        const histRaw = localStorage.getItem(SALE_HISTORY_KEY);
-        const hist = histRaw ? JSON.parse(histRaw) : [];
-        hist.push({ saved_at: new Date().toISOString(), order: pedido });
-        localStorage.setItem(SALE_HISTORY_KEY, JSON.stringify(hist));
-      }catch(e){ console.warn('Falha ao salvar histórico de vendas:', e); }
-
-      let current = loadPedidos();
-      const idx = current.findIndex(p=>p.id===pedido.id);
-      if(idx>=0) current[idx]=pedido; else current.push(pedido);
-      try{
-        localStorage.setItem(SALE_KEY, JSON.stringify(current));
-        pedidos = current;
-        return true;
-      }catch(e){
-        console.error('Falha ao salvar pedido:', e);
-        return false;
-      }
-    }
-
-    /* ===== Backup ===== */
-    function fileTimestamp(){
-      const d = new Date(); const p = n => String(n).padStart(2,'0');
-      return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
-    }
-    function downloadJSON(filename, obj){
-      const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
-    }
-    function buildBackupPayload(){
-      const stockDump = {};
-      for(const k of STOCK_KEYS){
-        try{ const raw = localStorage.getItem(k); if(raw!=null) stockDump[k] = JSON.parse(raw); }catch(e){}
-      }
-      let salesDump = loadPedidos();
-      let historyDump = [];
-      try{ const raw = localStorage.getItem(SALE_HISTORY_KEY); if(raw!=null) historyDump = JSON.parse(raw)||[]; }catch(e){}
-      return {
-        meta: { app:'Rota Motos', module:'Vendas', type:'backup', version:'1.0', created_at:new Date().toISOString(), origin:location.href, user_agent:navigator.userAgent },
-        resumo: {
-          estoque_chaves: Object.keys(stockDump),
-          itens_estoque_estimado: Object.values(stockDump).reduce((s,v)=> s + (Array.isArray(v)?v.length:0), 0),
-          pedidos: Array.isArray(salesDump)? salesDump.length : 0,
-          historico_registros: Array.isArray(historyDump)? historyDump.length : 0
-        },
-        dados: { estoque: stockDump, vendas: salesDump, historico_vendas: historyDump }
-      };
-    }
-
-    /* ===== Estado ===== */
-    let editingId=null, cart=[];
-
-    /* ===== UI ===== */
-    function badgeStatus(s){
-      if(s==="Concluído") return '<span class="badge badge-status st-conc">Concluído</span>';
-      if(s==="Separado") return '<span class="badge badge-status st-sep">Separado</span>';
-      return '<span class="badge badge-status st-agu">Aguardando Pagamento</span>';
-    }
-    function filterRows(list){
-      const q=($("search").value||"").toLowerCase(), fs=$("fStatus").value;
-      return list.filter(r=>{
-        const mQ=!q||[r.cliente,r.vendedor,r.status,r.docNum].join(" ").toLowerCase().includes(q);
-        const mS=!fs || r.status===fs;
-        return mQ && mS;
+    (function () {
+      /* ===== Sidebar toggle ===== */
+      document.getElementById('btnToggleSide')?.addEventListener('click', () => {
+        document.body.classList.toggle('collapsed');
       });
-    }
-    function metrics(){
-      const itensVendidos = pedidos.reduce((s,p)=> s + p.items.reduce((a,b)=>a+(+b.qtd||0),0), 0);
-      const receita = pedidos.reduce((s,p)=> s + Math.max(0, p.items.reduce((t,x)=>t+itemTotal(x),0) - (+p.desconto||0)), 0);
-      const custo = pedidos.reduce((s,p)=> s + p.items.reduce((t,x)=> t + (+x.qtd||0)*(+x.custo||0), 0), 0);
-      $("mPedidos").textContent = pedidos.length;
-      $("mItens").textContent = itensVendidos;
-      $("mReceita").textContent = money(receita);
-      $("mLucro").textContent = money(receita - custo);
-    }
-    function renderTable(){
-      metrics();
-      const data=filterRows(pedidos);
-      const tbody=$("tbody"), empty=$("empty");
-      if(!data.length){ tbody.innerHTML=""; empty.style.display="block"; return; }
-      empty.style.display="none";
-      tbody.innerHTML=data.map(p=>{
-        const subtotal=p.items.reduce((s,x)=>s+itemTotal(x),0);
-        const total=Math.max(0, subtotal - (+p.desconto||0));
-        return '<tr>'+
-          '<td>'+ (p.cliente||"") +'</td>'+
-          '<td class="nowrap">'+ (p.docNumFmt||"") +'</td>'+
-          '<td>'+ (p.vendedor||"") +'</td>'+
-          '<td class="nowrap">'+ (p.data||"") +'</td>'+
-          '<td>'+ badgeStatus(p.status) +'</td>'+
-          '<td class="text-end nowrap">'+ money(subtotal) +'</td>'+
-          '<td class="text-end nowrap">'+ money(+p.desconto||0) +'</td>'+
-          '<td class="text-end nowrap">'+ money(total) +'</td>'+
-          '<td class="text-end nowrap">'+
-            '<div class="btn-group btn-group-sm">'+
-              '<button class="btn btn-outline-secondary" data-action="print" data-id="'+p.id+'" title="Imprimir"><i class="bi bi-printer"></i></button>'+
-              '<button class="btn btn-outline-secondary" data-action="edit"  data-id="'+p.id+'" title="Editar"><i class="bi bi-pencil-square"></i></button>'+
-              '<button class="btn btn-outline-danger"    data-action="del"   data-id="'+p.id+'" title="Excluir" disabled><i class="bi bi-trash"></i></button>'+
-            '</div>'+
-          '</td>'+
-        '</tr>';
-      }).join("");
-    }
 
-    /* ===== Produtos (modal) ===== */
-    function rebuildCats(){
-      const sel=$("sCategoria"); const cats=[...new Set(estoque.items.map(i=>i.categoria).filter(Boolean))].sort();
-      sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>"<option>"+c+"</option>").join("");
-    }
-    function renderProducts(){
-      const q=($("sSearch").value||"").toLowerCase(), cat=$("sCategoria").value;
-      const reserved=new Map(cart.map(x=>[x.sku,x.qtd]));
-      const items=estoque.items.filter(it=>{
-        const mQ=!q||[it.sku,it.nome,it.categoria].join(" ").toLowerCase().includes(q);
-        const mC=!cat || (it.categoria||"")===cat; return mQ&&mC;
-      }).slice(0,80);
+      /* ===== Helpers ===== */
+      const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+      const $ = id => document.getElementById(id);
+      const money = n => BRL.format(+n || 0);
+      const todayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().slice(0, 10); };
+      const onlyDigits = s => String(s || "").replace(/\D+/g, "");
+      const priceOf = it => { const p = +it.preco || 0, c = +it.custo || 0; return p > 0 ? p : c; };
+      const itemTotal = it => priceOf(it) * (+it.qtd || 0);
 
-      $("prodList").innerHTML = items.map(it=>{
-        const disp=Math.max(0,(+it.qtd||0)-(reserved.get(it.sku)||0));
-        const qid="q_"+safeId(it.sku);
-        const precoExib = priceOf(it);
-        return '<div class="d-flex align-items-center justify-content-between py-1 border-bottom">'+
-          '<div class="small">'+
-            '<div class="fw-semibold">'+(it.nome||"")+'</div>'+
-            '<div class="text-secondary">SKU: '+(it.sku||"")+' • Cat: '+(it.categoria||"-")+' • Em estoque: <strong>'+disp+'</strong> • Preço: <strong>'+money(precoExib)+'</strong> • Custo: '+money(+it.custo||0)+'</div>'+
-          '</div>'+
-          '<div class="d-flex align-items-center gap-2">'+
-            '<input id="'+qid+'" type="number" min="1" step="1" value="1" class="form-control form-control-sm" style="width:80px">'+
-            '<button class="btn btn-ghost btn-sm" data-action="addProd" data-sku="'+encodeURIComponent(it.sku)+'" data-qid="'+qid+'"><i class="bi bi-plus-lg"></i> Adicionar</button>'+
-          '</div>'+
-        '</div>';
-      }).join("") || '<div class="text-secondary text-center py-3">Nada encontrado…</div>';
-    }
+      /* ===== Impressão (80mm, página única) ===== */
+      function buildReceipt(d, p) {
+        d.head.innerHTML = ''; d.body.innerHTML = '';
+        const st = d.createElement('style');
+        st.textContent = `
+        @media print { @page { size: 80mm auto; margin: 0; } html,body{ margin:0 !important; } }
+        *{box-sizing:border-box}
+        body{ margin:0; padding:14px; font-size:12px; line-height:1.35; font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace }
+        .c{text-align:center}.b{font-weight:700}.ln{border-top:1px dashed #999;margin:8px 0}
+        .row{display:flex;justify-content:space-between;align-items:baseline}
+      `;
+        d.head.appendChild(st);
+        const add = (tag, txt, cls) => { const el = d.createElement(tag); if (cls) el.className = cls; el.textContent = txt; d.body.appendChild(el); return el; };
 
-    /* ===== Carrinho ===== */
-    function renderCart(){
-      $("cartList").innerHTML = cart.map((it,i)=>{
-        const pUnit = priceOf(it);
-        return '<div class="cart-row">'+
-          '<div class="small"><div class="fw-semibold">'+it.nome+'</div><div class="text-secondary">SKU: '+it.sku+' • Preço: '+money(pUnit)+' • Custo: '+money(+it.custo||0)+'</div></div>'+
-          '<div class="d-flex align-items-center gap-2">'+
-            '<input class="form-control form-control-sm" type="number" min="1" step="1" value="'+it.qtd+'" style="width:64px" data-action="changeQty" data-idx="'+i+'">'+
-            '<div class="text-end" style="width:110px">'+money(itemTotal(it))+'</div>'+
-            '<button class="btn btn-outline-danger btn-sm" data-action="removeItem" data-idx="'+i+'"><i class="bi bi-x-lg"></i></button>'+
-          '</div>'+
-        '</div>';
-      }).join("") || '<div class="text-secondary text-center py-3">Carrinho vazio…</div>';
+        const subtotal = p.items.reduce((s, x) => s + itemTotal(x), 0);
+        const total = Math.max(0, subtotal - (+p.desconto || 0));
+        const NF = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
-      const subtotal=cart.reduce((s,x)=>s+itemTotal(x),0);
-      $("cSubtotal").textContent=money(subtotal);
+        add('div', 'Rota Motos', 'c b');
+        add('div', 'CNPJ 60.469.425/0001-76', 'c');
+        add('div', 'Pedido de Venda', 'c b');
+        add('div', '', 'ln');
 
-      const desconto = +$("vDesc").value || +$("vDescMirror").value || 0;
-      $("vDesc").value = desconto;
-      $("vDescMirror").value = desconto;
+        add('div', 'Dados do Cliente', 'c b');
+        add('div', 'Nome Cliente: ' + (p.cliente || '-'));
+        add('div', (p.docTipo || 'Doc.') + ': ' + (p.docNumFmt || '-'));
+        add('div', 'Data: ' + (p.data || '-'));
+        add('div', '', 'ln');
 
-      const total=Math.max(0, subtotal - desconto);
-      $("cTotal").textContent=money(total);
-    }
+        add('div', 'Dados do Vendedor', 'c b');
+        add('div', 'Vendedor: ' + (p.vendedor || '-'));
+        add('div', '', 'ln');
 
-    /* ===== Modal helpers ===== */
-    function resetModal(){
-      editingId=null; cart=[]; $("formVenda").reset();
-      $("vData").value=todayISO(); $("vStatus").value="Aguardando Pagamento"; $("vPagamento").value="Dinheiro";
-      $("vDocTipo").value="CPF"; $("vDocNum").placeholder="000.000.000-00";
-      estoque = loadStock(); // somente leitura
-      estoque.items = (estoque.items||[]).map(it=>({ sku:String(it.sku??""), nome:String(it.nome??""), categoria:String(it.categoria??""), qtd:Number(it.qtd??0), alerta:Number(it.alerta??0), preco:Number(it.preco??0), custo:Number(it.custo??0), local:String(it.local??"") }));
-      rebuildCats(); renderProducts(); renderCart();
-    }
-    function formatDoc(tipo, digits){
-      const d = onlyDigits(digits);
-      if(tipo==="CNPJ" && d.length===14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");
-      if(tipo==="CPF" && d.length===11)  return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4");
-      return digits||"";
-    }
+        add('div', 'Itens', 'c b');
+        if (p.items.length) {
+          p.items.forEach((it, i) => {
+            add('div', `Item ${i + 1}: ${it.nome} • Qtde: ${it.qtd} • Preço: ${NF.format(priceOf(it))}`);
+          });
+        } else {
+          add('div', 'Sem itens.');
+        }
 
-    /* ===== Verificação de storage e avisos ===== */
-    function storageOK(){
-      try{ const k='__rm_test__'+Date.now(); localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
-      catch(e){ console.error('localStorage bloqueado:', e); return false; }
-    }
-    (function(){
-      if(!storageOK()) $('lsWarn').style.display='block';
-      $('safeWarn').style.display='block';
+        add('div', '', 'ln');
+        add('div', 'Forma de Pagamento: ' + (p.pagamento || '-'));
+        const row = (l, v, b) => { const r = d.createElement('div'); r.className = 'row'; const L = d.createElement('div'); L.textContent = l; const R = d.createElement('div'); R.textContent = NF.format(v); if (b) R.className = 'b'; r.appendChild(L); r.appendChild(R); d.body.appendChild(r); };
+        row('Subtotal:', subtotal, false);
+        row('Descontos:', +p.desconto || 0, false);
+        row('Valor Total:', total, true);
+
+        add('div', '', 'ln');
+        add('div', 'Observações', 'c b');
+        add('div', 'CONFIRA A EMBALAGEM E ITENS ANTES DE ABRIR OU UTILIZAR OS MESMOS! ROTA MOTOS Agradece!');
+      }
+      function printOrder(pedido) {
+        const iframe = document.createElement("iframe");
+        Object.assign(iframe.style, { position: "fixed", right: "-9999px", bottom: "0", width: "0", height: "0", border: "0" });
+        document.body.appendChild(iframe);
+        const onload = () => {
+          const d = iframe.contentDocument || iframe.contentWindow.document;
+          buildReceipt(d, pedido);
+          setTimeout(() => { try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { } setTimeout(() => iframe.remove(), 900); }, 80);
+        };
+        if (iframe.contentDocument) { onload(); } else { iframe.addEventListener('load', onload); iframe.src = 'about:blank'; }
+      }
+
+      /* ===== Estoque (somente leitura) ===== */
+      const STOCK_KEYS = ["estoque.ui.v2", "estoque.clean.color.v1", "estoque.clean.v1", "estoque.visualclean.v1", "estoque"];
+      function loadStock() {
+        for (const k of STOCK_KEYS) {
+          try { const raw = localStorage.getItem(k); if (raw) { const arr = JSON.parse(raw) || []; return { key: k, items: Array.isArray(arr) ? arr : [] }; } }
+          catch (e) { }
+        }
+        return { key: null, items: [] };
+      }
+      let estoque = loadStock();
+      estoque.items = (estoque.items || []).map(it => ({
+        sku: String(it.sku ?? ""), nome: String(it.nome ?? ""), categoria: String(it.categoria ?? ""),
+        qtd: Number(it.qtd ?? 0), alerta: Number(it.alerta ?? 0),
+        preco: Number(it.preco ?? 0), custo: Number(it.custo ?? 0), local: String(it.local ?? "")
+      }));
+
+      /* ===== Vendas (localStorage, não destrutivo) ===== */
+      const SALE_KEY = "vendas.orders.v1";
+      const SALE_HISTORY_KEY = "vendas.orders.history.v1";
+      function loadPedidos() { try { const j = JSON.parse(localStorage.getItem(SALE_KEY) || '[]'); return Array.isArray(j) ? j : []; } catch (e) { return []; } }
+      let pedidos = loadPedidos();
+
+      function savePedidoNonDestructive(pedido) {
+        try {
+          const histRaw = localStorage.getItem(SALE_HISTORY_KEY);
+          const hist = histRaw ? JSON.parse(histRaw) : [];
+          hist.push({ saved_at: new Date().toISOString(), order: pedido });
+          localStorage.setItem(SALE_HISTORY_KEY, JSON.stringify(hist));
+        } catch (e) { console.warn('Falha ao salvar histórico de vendas:', e); }
+
+        let current = loadPedidos();
+        const idx = current.findIndex(p => p.id === pedido.id);
+        if (idx >= 0) current[idx] = pedido; else current.push(pedido);
+        try {
+          localStorage.setItem(SALE_KEY, JSON.stringify(current));
+          pedidos = current;
+          return true;
+        } catch (e) {
+          console.error('Falha ao salvar pedido:', e);
+          return false;
+        }
+      }
+
+      /* ===== Backup ===== */
+      function fileTimestamp() { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()); }
+      function downloadJSON(filename, obj) { const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200); }
+      function buildBackupPayload() {
+        const stockDump = {}; for (const k of STOCK_KEYS) { try { const raw = localStorage.getItem(k); if (raw != null) stockDump[k] = JSON.parse(raw); } catch (e) { } }
+        let salesDump = loadPedidos(); let historyDump = []; try { const raw = localStorage.getItem(SALE_HISTORY_KEY); if (raw != null) historyDump = JSON.parse(raw) || []; } catch (e) { }
+        return {
+          meta: { app: 'Rota Motos', module: 'Vendas', type: 'backup', version: '1.0', created_at: new Date().toISOString(), origin: location.href, user_agent: navigator.userAgent },
+          resumo: { estoque_chaves: Object.keys(stockDump), itens_estoque_estimado: Object.values(stockDump).reduce((s, v) => s + (Array.isArray(v) ? v.length : 0), 0), pedidos: Array.isArray(salesDump) ? salesDump.length : 0, historico_registros: Array.isArray(historyDump) ? historyDump.length : 0 },
+          dados: { estoque: stockDump, vendas: salesDump, historico_vendas: historyDump }
+        };
+      }
+
+      /* ===== Estado Modal/Carrinho ===== */
+      let editingId = null, cart = [];
+
+      /* ===== UI ===== */
+      function badgeStatus(s) {
+        if (s === "Concluído") return '<span class="badge badge-status st-conc">Concluído</span>';
+        if (s === "Separado") return '<span class="badge badge-status st-sep">Separado</span>';
+        return '<span class="badge badge-status st-agu">Aguardando Pagamento</span>';
+      }
+      function filterRows(list) {
+        const q = ($("search").value || "").toLowerCase(), fs = $("fStatus").value;
+        return list.filter(r => {
+          const mQ = !q || [r.cliente, r.vendedor, r.status, r.docNum].join(" ").toLowerCase().includes(q);
+          const mS = !fs || r.status === fs;
+          return mQ && mS;
+        });
+      }
+      function metrics() {
+        const itensVendidos = pedidos.reduce((s, p) => s + p.items.reduce((a, b) => a + (+b.qtd || 0), 0), 0);
+        const receita = pedidos.reduce((s, p) => s + Math.max(0, p.items.reduce((t, x) => t + itemTotal(x), 0) - (+p.desconto || 0)), 0);
+        const custo = pedidos.reduce((s, p) => s + p.items.reduce((t, x) => t + (+x.qtd || 0) * (+x.custo || 0), 0), 0);
+        $("mPedidos").textContent = pedidos.length;
+        $("mItens").textContent = itensVendidos;
+        $("mReceita").textContent = money(receita);
+        $("mLucro").textContent = money(receita - custo);
+      }
+      function renderTable() {
+        metrics();
+        const data = filterRows(pedidos);
+        const tbody = $("tbody"), empty = $("empty");
+        if (!data.length) { tbody.innerHTML = ""; empty.style.display = "block"; return; }
+        empty.style.display = "none";
+        tbody.innerHTML = data.map(p => {
+          const subtotal = p.items.reduce((s, x) => s + itemTotal(x), 0);
+          const total = Math.max(0, subtotal - (+p.desconto || 0));
+          return `<tr>
+          <td>${p.cliente || ""}</td>
+          <td class="nowrap">${p.docNumFmt || ""}</td>
+          <td>${p.vendedor || ""}</td>
+          <td class="nowrap">${p.data || ""}</td>
+          <td>${badgeStatus(p.status)}</td>
+          <td class="text-end nowrap">${money(subtotal)}</td>
+          <td class="text-end nowrap">${money(+p.desconto || 0)}</td>
+          <td class="text-end nowrap">${money(total)}</td>
+          <td class="text-end nowrap">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary" data-action="print" data-id="${p.id}" title="Imprimir"><i class="bi bi-printer"></i></button>
+              <button class="btn btn-outline-secondary" data-action="edit"  data-id="${p.id}" title="Editar"><i class="bi bi-pencil-square"></i></button>
+              <button class="btn btn-outline-danger"    data-action="del"   data-id="${p.id}" title="Excluir" disabled><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>`;
+        }).join("");
+      }
+
+      /* ===== Produtos (modal) ===== */
+      function rebuildCats() {
+        const sel = $("sCategoria"); const cats = [...new Set(estoque.items.map(i => i.categoria).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(c => `<option>${c}</option>`).join("");
+      }
+      function renderProducts() {
+        const q = ($("sSearch").value || "").toLowerCase(), cat = $("sCategoria").value;
+        const reserved = new Map(cart.map(x => [x.sku, x.qtd]));
+        const items = estoque.items.filter(it => {
+          const mQ = !q || [it.sku, it.nome, it.categoria].join(" ").toLowerCase().includes(q);
+          const mC = !cat || (it.categoria || "") === cat; return mQ && mC;
+        }).slice(0, 120);
+
+        $("prodList").innerHTML = items.map(it => {
+          const disp = Math.max(0, (+it.qtd || 0) - (reserved.get(it.sku) || 0));
+          const qid = "q_" + String(it.sku).replace(/[^a-z0-9_-]/gi, '_');
+          const precoExib = priceOf(it);
+          return `
+          <div class="d-flex align-items-center justify-content-between py-1 border-bottom">
+            <div class="small">
+              <div class="fw-semibold">${it.nome || ""}</div>
+              <div class="text-secondary">SKU: ${it.sku || ""} • Cat: ${it.categoria || "-"} • Em estoque: <strong>${disp}</strong> • Preço: <strong>${money(precoExib)}</strong> • Custo: ${money(+it.custo || 0)}</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <input id="${qid}" type="number" min="1" step="1" value="1" class="form-control form-control-sm" style="width:80px">
+              <button class="btn btn-ghost btn-sm" data-action="addProd" data-sku="${encodeURIComponent(it.sku)}" data-qid="${qid}">
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>`;
+        }).join("") || '<div class="text-secondary text-center py-3">Nada encontrado…</div>';
+      }
+
+      /* ===== Carrinho ===== */
+      const cartList = $("cartList");
+      function renderCart() {
+        cartList.innerHTML = cart.map((it, i) => {
+          const pUnit = priceOf(it);
+          return `
+          <div class="cart-row">
+            <div class="small">
+              <div class="fw-semibold">${it.nome}</div>
+              <div class="text-secondary">SKU: ${it.sku} • Preço: ${money(pUnit)} • Custo: ${money(+it.custo || 0)}</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <input class="form-control form-control-sm" type="number" min="1" step="1" value="${it.qtd}" style="width:64px" data-action="changeQty" data-idx="${i}">
+              <div class="text-end" style="width:110px">${money(itemTotal(it))}</div>
+              <button class="btn btn-outline-danger btn-sm" data-action="removeItem" data-idx="${i}"><i class="bi bi-x-lg"></i></button>
+            </div>
+          </div>`;
+        }).join("") || '<div class="text-secondary text-center py-3">Carrinho vazio…</div>';
+
+        const subtotal = cart.reduce((s, x) => s + itemTotal(x), 0);
+        $("cSubtotal").textContent = money(subtotal);
+
+        const desconto = +$("vDesc").value || +$("vDescMirror").value || 0;
+        $("vDesc").value = desconto;
+        $("vDescMirror").value = desconto;
+
+        const total = Math.max(0, subtotal - desconto);
+        $("cTotal").textContent = money(total);
+      }
+
+      /* ===== Modal helpers ===== */
+      function resetModal() {
+        editingId = null; cart = []; $("formVenda").reset();
+        $("vData").value = todayISO(); $("vStatus").value = "Aguardando Pagamento"; $("vPagamento").value = "Dinheiro";
+        $("vDocTipo").value = "CPF"; $("vDocNum").placeholder = "000.000.000-00";
+        estoque = loadStock();
+        estoque.items = (estoque.items || []).map(it => ({ sku: String(it.sku ?? ""), nome: String(it.nome ?? ""), categoria: String(it.categoria ?? ""), qtd: Number(it.qtd ?? 0), alerta: Number(it.alerta ?? 0), preco: Number(it.preco ?? 0), custo: Number(it.custo ?? 0), local: String(it.local ?? "") }));
+        rebuildCats(); renderProducts(); renderCart();
+      }
+      function formatDoc(tipo, digits) {
+        const d = onlyDigits(digits);
+        if (tipo === "CNPJ" && d.length === 14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+        if (tipo === "CPF" && d.length === 11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+        return digits || "";
+      }
+
+      /* ===== Eventos ===== */
+      // Abrir modal
+      $("btnNovo").addEventListener("click", resetModal);
+
+      // Filtros / busca
+      $("search").addEventListener("input", renderTable);
+      $("fStatus").addEventListener("change", renderTable);
+
+      // Doc tipo -> placeholder
+      $("vDocTipo").addEventListener("change", () => { $("vDocNum").placeholder = $("vDocTipo").value === "CNPJ" ? "00.000.000/0000-00" : "000.000.000-00"; });
+
+      // Mirror de desconto (carrinho)
+      $("vDesc").addEventListener("input", renderCart);
+      $("vDescMirror").addEventListener("input", renderCart);
+
+      // Produtos (delegação)
+      $("sSearch").addEventListener("input", renderProducts);
+      $("sCategoria").addEventListener("change", renderProducts);
+      $("prodList").addEventListener("click", function (ev) {
+        const btn = ev.target.closest("[data-action='addProd']"); if (!btn) return;
+        const sku = decodeURIComponent(btn.dataset.sku), qid = btn.dataset.qid;
+        const it = estoque.items.find(x => x.sku === sku); if (!it) { alert("Produto não encontrado no estoque."); return; }
+        let q = Math.max(1, parseInt((document.getElementById(qid) || {}).value || "1", 10));
+        const reserved = cart.find(x => x.sku === sku)?.qtd || 0;
+        const disp = Math.max(0, (+it.qtd || 0) - reserved);  // não ultrapassa o que está listado
+        if (q > disp) q = disp;
+        if (q <= 0) { alert("Sem quantidade disponível."); return; }
+        const precoFinal = priceOf(it);
+        const i = cart.findIndex(x => x.sku === sku);
+        if (i >= 0) { cart[i].qtd += q; if (!(cart[i].preco > 0)) cart[i].preco = precoFinal; }
+        else { cart.push({ sku, nome: it.nome, preco: precoFinal, custo: +it.custo || 0, qtd: q }); }
+        renderCart(); renderProducts();
+      });
+
+      // Carrinho (delegação)
+      $("cartList").addEventListener("input", function (ev) {
+        if (ev.target.dataset.action !== "changeQty") return;
+        const i = +ev.target.dataset.idx;
+        let q = Math.max(1, parseInt(ev.target.value || "1", 10));
+        const sku = cart[i].sku, stock = +(estoque.items.find(x => x.sku === sku)?.qtd || 0);
+        const others = cart.filter((_, idx) => idx !== i && _.sku === sku).reduce((s, x) => s + x.qtd, 0);
+        const disp = Math.max(0, stock - others);
+        if (q > disp) q = disp;
+        cart[i].qtd = q; renderCart(); renderProducts();
+      });
+      $("cartList").addEventListener("click", function (ev) {
+        const btn = ev.target.closest("[data-action='removeItem']"); if (!btn) return;
+        cart.splice(+btn.dataset.idx, 1); renderCart(); renderProducts();
+      });
+
+      // Salvar Pedido (não reduz estoque; não remove dados)
+      $("btnSalvar").addEventListener("click", function () {
+        if (!$("formVenda").reportValidity()) { $("formVenda").classList.add("was-validated"); return; }
+
+        const pedido = {
+          id: editingId || String(Date.now()),
+          cliente: $("vCliente").value.trim(),
+          docTipo: $("vDocTipo").value,
+          docNum: onlyDigits($("vDocNum").value),
+          docNumFmt: formatDoc($("vDocTipo").value, $("vDocNum").value),
+          vendedor: $("vVendedor").value.trim(),
+          data: $("vData").value,
+          pagamento: $("vPagamento").value,
+          status: $("vStatus").value,
+          desconto: +$("vDesc").value || 0,
+          items: cart.map(x => ({ sku: x.sku, nome: x.nome, preco: priceOf(x), custo: +x.custo || 0, qtd: +x.qtd || 0 }))
+        };
+
+        const ok = savePedidoNonDestructive(pedido);
+        if (!ok) { alert("Erro ao salvar. Veja o console."); return; }
+
+        renderTable();
+        bootstrap.Modal.getInstance(document.getElementById("modalVenda"))?.hide();
+        resetModal();
+      });
+
+      // Ações tabela
+      $("tbody").addEventListener("click", function (ev) {
+        const btn = ev.target.closest("[data-action]"); if (!btn) return;
+        const id = btn.dataset.id, act = btn.dataset.action;
+
+        if (act === "edit") {
+          const p = pedidos.find(x => x.id === id); if (!p) return;
+          editingId = p.id; $("modalTitle").textContent = "Editar Pedido";
+          $("vCliente").value = p.cliente || "";
+          $("vDocTipo").value = p.docTipo || "CPF";
+          $("vDocNum").value = p.docNumFmt || p.docNum || "";
+          $("vVendedor").value = p.vendedor || "";
+          $("vData").value = p.data || todayISO();
+          $("vPagamento").value = p.pagamento || "Dinheiro";
+          $("vStatus").value = p.status || "Aguardando Pagamento";
+          $("vDesc").value = +p.desconto || 0; $("vDescMirror").value = +p.desconto || 0;
+
+          cart = (p.items || []).map(i => ({ ...i }));
+          renderCart(); rebuildCats(); renderProducts();
+          new bootstrap.Modal(document.getElementById("modalVenda")).show();
+        }
+
+        if (act === "del") {
+          alert("🛡️ Exclusão desativada para proteger seus dados. Use Backup para exportar.");
+          return;
+        }
+
+        if (act === "print") {
+          const p = pedidos.find(x => x.id === id); if (!p) return;
+          printOrder(p);
+        }
+      });
+
+      /* ===== Botão Backup ===== */
+      $("btnBackup").addEventListener("click", () => {
+        try {
+          const payload = buildBackupPayload();
+          const fname = `rota-motos-vendas-backup-${fileTimestamp()}.json`;
+          downloadJSON(fname, payload);
+        } catch (e) {
+          console.error('Erro ao gerar backup:', e);
+          alert('Não foi possível gerar o backup. Veja o console para detalhes.');
+        }
+      });
+
+      /* ===== Init ===== */
+      (function init() {
+        // pagina sem avisos "modo seguro" – removidos por solicitação
+        $("vData").value = todayISO();
+        rebuildCats(); renderProducts(); renderCart(); renderTable();
+      })();
     })();
-
-    /* ===== Eventos ===== */
-    (function(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav){ document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); } })();
-
-    // Abrir modal
-    $("btnNovo").addEventListener("click", resetModal);
-
-    // Filtros / busca
-    $("search").addEventListener("input", renderTable);
-    $("fStatus").addEventListener("change", renderTable);
-
-    // Doc tipo -> placeholder
-    $("vDocTipo").addEventListener("change", ()=>{ $("vDocNum").placeholder = $("vDocTipo").value==="CNPJ" ? "00.000.000/0000-00" : "000.000.000-00"; });
-
-    // Mirror de desconto (carrinho)
-    $("vDesc").addEventListener("input", renderCart);
-    $("vDescMirror").addEventListener("input", renderCart);
-
-    // Produtos (delegação)
-    $("sSearch").addEventListener("input", renderProducts);
-    $("sCategoria").addEventListener("change", renderProducts);
-    $("prodList").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action='addProd']"); if(!btn) return;
-      const sku=decodeURIComponent(btn.dataset.sku), qid=btn.dataset.qid;
-      const it=estoque.items.find(x=>x.sku===sku); if(!it){ alert("Produto não encontrado no estoque."); return; }
-      let q=Math.max(1, parseInt((document.getElementById(qid)||{}).value||"1",10));
-      const reserved=cart.find(x=>x.sku===sku)?.qtd||0;
-      const disp=Math.max(0,(+it.qtd||0)-reserved);  // apenas para não ultrapassar estoque visível
-      if(q>disp) q=disp;
-      if(q<=0){ alert("Sem quantidade disponível."); return; }
-      const precoFinal = priceOf(it);
-      const i=cart.findIndex(x=>x.sku===sku);
-      if(i>=0){ cart[i].qtd+=q; if(!(cart[i].preco>0)) cart[i].preco = precoFinal; }
-      else { cart.push({sku, nome:it.nome, preco:precoFinal, custo:+it.custo||0, qtd:q}); }
-      renderCart(); renderProducts();
-    });
-
-    // Carrinho (delegação)
-    $("cartList").addEventListener("input", function(ev){
-      if(ev.target.dataset.action!=="changeQty") return;
-      const i=+ev.target.dataset.idx;
-      let q=Math.max(1, parseInt(ev.target.value||"1",10));
-      const sku=cart[i].sku, stock=+(estoque.items.find(x=>x.sku===sku)?.qtd||0);
-      const others=cart.filter((_,idx)=>idx!==i && _.sku===sku).reduce((s,x)=>s+x.qtd,0);
-      const disp=Math.max(0, stock-others);
-      if(q>disp) q=disp;
-      cart[i].qtd=q; renderCart(); renderProducts();
-    });
-    $("cartList").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action='removeItem']"); if(!btn) return;
-      cart.splice(+btn.dataset.idx,1); renderCart(); renderProducts();
-    });
-
-    // Salvar Pedido (não reduz estoque; não remove dados)
-    $("btnSalvar").addEventListener("click", function(){
-      if(!$("formVenda").reportValidity()){ $("formVenda").classList.add("was-validated"); return; }
-
-      const pedido={
-        id: editingId || String(Date.now()),
-        cliente:$("vCliente").value.trim(),
-        docTipo:$("vDocTipo").value,
-        docNum:onlyDigits($("vDocNum").value),
-        docNumFmt:formatDoc($("vDocTipo").value, $("vDocNum").value),
-        vendedor:$("vVendedor").value.trim(),
-        data:$("vData").value,
-        pagamento:$("vPagamento").value,
-        status:$("vStatus").value,
-        desconto:+$("vDesc").value||0,
-        items:cart.map(x=>({sku:x.sku,nome:x.nome,preco:priceOf(x),custo:+x.custo||0,qtd:+x.qtd||0}))
-      };
-
-      // NÃO altera estoque (saveStockNoop)
-      const ok = savePedidoNonDestructive(pedido);
-      if(!ok){ alert("Erro ao salvar. Veja o console."); return; }
-
-      renderTable();
-      bootstrap.Modal.getInstance(document.getElementById("modalVenda"))?.hide();
-      resetModal();
-    });
-
-    // Ações tabela
-    $("tbody").addEventListener("click", function(ev){
-      const btn=ev.target.closest("[data-action]"); if(!btn) return;
-      const id=btn.dataset.id, act=btn.dataset.action;
-
-      if(act==="edit"){
-        const p=pedidos.find(x=>x.id===id); if(!p) return;
-        editingId=p.id; $("modalTitle").textContent="Editar Pedido";
-        $("vCliente").value=p.cliente||"";
-        $("vDocTipo").value=p.docTipo||"CPF";
-        $("vDocNum").value=p.docNumFmt||p.docNum||"";
-        $("vVendedor").value=p.vendedor||"";
-        $("vData").value=p.data||todayISO();
-        $("vPagamento").value=p.pagamento||"Dinheiro";
-        $("vStatus").value=p.status||"Aguardando Pagamento";
-        $("vDesc").value=+p.desconto||0; $("vDescMirror").value=+p.desconto||0;
-
-        cart=(p.items||[]).map(i=>({...i}));
-        renderCart(); rebuildCats(); renderProducts();
-        new bootstrap.Modal(document.getElementById("modalVenda")).show();
-      }
-
-      if(act==="del"){
-        // Exclusão desativada para não remover dados anteriores
-        alert("🛡️ Exclusão desativada para proteger seus dados. Use Backup para exportar.");
-        return;
-      }
-
-      if(act==="print"){
-        const p=pedidos.find(x=>x.id===id); if(!p) return;
-        printOrder(p);
-      }
-    });
-
-    /* ===== Botão Backup ===== */
-    $("btnBackup").addEventListener("click", ()=>{
-      try{
-        const payload = buildBackupPayload();
-        const fname = `rota-motos-vendas-backup-${fileTimestamp()}.json`;
-        downloadJSON(fname, payload);
-      }catch(e){
-        console.error('Erro ao gerar backup:', e);
-        alert('Não foi possível gerar o backup. Veja o console para detalhes.');
-      }
-    });
-
-    /* ===== Init ===== */
-    (function init(){
-      $("vData").value=todayISO();
-      rebuildCats(); renderProducts(); renderCart(); renderTable();
-    })();
-  })();
   </script>
 </body>
+
 </html>
