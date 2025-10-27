@@ -22,19 +22,107 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{ --ink:#0f172a; --muted:#6b7280; --border:#e6e8ef; --accent:#f59e0b; --nav-h:64px; }
-    body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;color:var(--ink);padding-top:var(--nav-h)}
+    /* ====== Paleta e base ====== */
+    :root{
+      --ink:#0f172a;
+      --muted:#6b7280;
+      --border:#e6e8ef;
+      --accent:#ffc107;       /* amarelo */
+      --accent-2:#ffb300;
+      --bg:#ffffff;
+      --bg-2:#f6f8fb;
+      --shadow:0 8px 24px rgba(0,0,0,.08);
+      --sidebar-w:280px;
+      --sidebar-w-collapsed:84px;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg-2);
+      color:var(--ink);
+      display:flex;
+      transition: margin-left .18s ease;
+    }
+
+    /* ====== Sidebar fixa à esquerda ====== */
+    .sidebar{
+      position:fixed; inset:0 auto 0 0;
+      width:var(--sidebar-w);
+      background:var(--bg);
+      border-right:1px solid var(--border);
+      box-shadow:var(--shadow);
+      display:flex; flex-direction:column;
+      padding:16px 12px;
+      z-index:1000;
+      transition: width .18s ease;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; font-weight:800; letter-spacing:.2px;
+      user-select:none;
+    }
+    .brand .dot{
+      width:12px; height:12px; border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 0 4px rgba(255,193,7,.25)
+    }
+    .brand .text{white-space:nowrap}
+    .divider{height:1px; background:var(--border); margin:12px 8px}
+
+    .nav{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px}
+    .nav-sub{
+      margin:16px 10px 6px; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:#8a8f98;
+      transition: opacity .18s ease;
+    }
+    .nav a{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:12px;
+      color:inherit; text-decoration:none;
+      transition: transform .12s ease, background-color .12s ease, box-shadow .12s ease;
+      outline: none;
+      white-space:nowrap;
+    }
+    .nav a:hover{ background:#fff7e0; box-shadow:0 2px 10px rgba(255,193,7,.2) }
+    .nav a:focus-visible{ box-shadow:0 0 0 3px rgba(255,193,7,.45) }
+    .nav a.active{
+      background:linear-gradient(180deg,#fff7e0,#fff);
+      box-shadow:0 8px 22px rgba(255,193,7,.25);
+    }
+    .nav a .bullet{width:8px; height:8px; border-radius:50%; background:var(--accent); opacity:.9}
+    .nav a .label{overflow:hidden; text-overflow:ellipsis}
+    .nav a .bi{font-size:1.05rem; width:22px; text-align:center}
+
+    .badge{margin-left:auto; font-size:.72rem; padding:.12rem .5rem; border-radius:999px; background:var(--accent); color:#000; font-weight:700}
+
+    /* Botões da base da sidebar */
+    .sidebar-actions{
+      margin-top:auto; display:flex; gap:8px; padding:8px;
+    }
+    .btn-icon{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:10px; border:1px solid var(--border);
+      background:#fff; cursor:pointer;
+      transition: transform .1s ease, box-shadow .1s ease, background-color .1s ease;
+    }
+    .btn-icon:hover{ transform: translateY(-1px); box-shadow: var(--shadow) }
+    .btn-icon:active{ transform: translateY(0) }
+
+    /* ====== Conteúdo ====== */
+    .content{
+      margin-left:var(--sidebar-w);
+      width:calc(100% - var(--sidebar-w));
+      padding:28px; min-height:100%;
+      display:flex; flex-direction:column; gap:18px;
+      transition: margin-left .18s ease, width .18s ease;
+    }
+    .page-head{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+    .pill{padding:.35rem .7rem; border-radius:999px; border:1px dashed var(--accent-2); color:#000; background:#fff7e0; font-weight:700}
+
+    /* ====== Seus estilos (cards/toolbar/tabela) ====== */
     .container{max-width:1180px}
-
-    /* NAVBAR */
-    .navbar{background:#fff;border-bottom:1px solid var(--border)}
-    .brand{display:flex;align-items:center;gap:.5rem;font-weight:700}
-    .brand .logo{width:32px;height:32px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800}
-    .nav-link{color:var(--ink);font-weight:600;border-radius:8px;padding:.5rem .75rem}
-    .nav-link:hover{background:#f2f4f8}
-    .nav-link.active{background:#fff7ed;border:1px solid #fcd34d}
-
-    /* CARDS */
     .card-soft{background:#fff;border:1px solid var(--border);border-radius:12px}
     .metric{display:flex;gap:.8rem;align-items:center;padding:1rem}
     .metric .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
@@ -42,7 +130,6 @@
     .metric .label{color:var(--muted);font-size:.9rem}
     .metric .value{font-weight:800;font-size:1.35rem}
 
-    /* TOOLBAR */
     .toolbar{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem}
     .input-icon{position:relative}
     .input-icon i{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#9aa1ad}
@@ -53,123 +140,194 @@
     .btn-ghost:hover{background:#f9fafb}
     .btn-primary-clean{background:var(--accent);color:#111;border:1px solid #fbbf24;font-weight:700}
 
-    /* TABELA */
     .table thead th{background:#eef2ff;color:#1e1b4b;font-weight:700;position:sticky;top:0;z-index:2;border-bottom:1px solid #e5e7eb}
     .nowrap{white-space:nowrap}
     .empty{color:#6b7280;text-align:center;padding:2rem 0}
-
-    /* ALERTA VISUAL (somente UI) */
     .table tbody tr.is-alert { background:#ffe1e1 !important; }
     .table tbody tr.is-alert td { border-top-color:#f7bdbd !important; }
+    .badge-cat{display:inline-block;padding:.22rem .6rem;border-radius:9999px;background:#f1f5f9;border:1px solid #e5e7eb;color:#0f172a;font-weight:700;font-size:.78rem;line-height:1;}
+    .table tbody tr.is-alert .badge-cat{background:#ffe8e8;border-color:#f7bdbd;color:#7f1d1d;}
 
-    /* Badge da categoria com texto escuro (sem Bootstrap .badge) */
-    .badge-cat{
-      display:inline-block;
-      padding:.22rem .6rem;
-      border-radius:9999px;
-      background:#f1f5f9;
-      border:1px solid #e5e7eb;
-      color:#0f172a;
-      font-weight:700;
-      font-size:.78rem;
-      line-height:1;
+    /* ====== Responsivo / mobile ====== */
+    .toggle{display:none}
+    @media (max-width: 991.98px){ /* breakpoint Bootstrap lg */
+      :root{ --sidebar-w:88vw }
+      .content{ margin-left:0; width:100% }
+      .toggle{
+        position:fixed; top:14px; left:14px; z-index:1100;
+        display:inline-flex; gap:8px; align-items:center;
+        background:#000; color:#fff; border:none; border-radius:999px; padding:10px 14px; box-shadow:var(--shadow)
+      }
+      .sidebar{ transform:translateX(-100%); transition: transform .18s ease }
+      body.nav-open .sidebar{ transform:none }
     }
-    .table tbody tr.is-alert .badge-cat{
-      background:#ffe8e8;
-      border-color:#f7bdbd;
-      color:#7f1d1d;
+
+    /* ====== Estado recolhido (desktop) ====== */
+    body.sidebar-collapsed .sidebar{ width:var(--sidebar-w-collapsed) }
+    body.sidebar-collapsed .content{
+      margin-left:var(--sidebar-w-collapsed);
+      width:calc(100% - var(--sidebar-w-collapsed));
     }
+    body.sidebar-collapsed .nav-sub{ opacity:0; pointer-events:none; height:0; margin:0 }
+    body.sidebar-collapsed .nav a{ gap:12px; justify-content:center }
+    body.sidebar-collapsed .nav a .label,
+    body.sidebar-collapsed .brand .text,
+    body.sidebar-collapsed .badge{ display:none }
   </style>
 </head>
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container">
-      <a class="navbar-brand brand" href="#"><span class="logo">RM</span><span>Rota Motos</span></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="topnav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="index.html">Estoque</a></li>
-          <li class="nav-item"><a class="nav-link" href="oficina.html">Oficina</a></li>
-          <li class="nav-item"><a class="nav-link" href="vendas.html">Vendas</a></li>
-          <li class="nav-item"><a class="nav-link" href="financeiro.html">Financeiro</a></li>
-        </ul>
+  <!-- Botão mobile (abre/fecha a sidebar no <991px) -->
+  <button class="toggle btn btn-dark btn-sm" id="toggleNav" aria-expanded="false" aria-controls="sidebar">
+    <i class="bi bi-list"></i> Menu
+  </button>
+
+  <!-- ====== SIDEBAR FIXA ====== -->
+  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+    <div class="brand" aria-current="page">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="text">Rota Motos</span>
+    </div>
+    <div class="divider" role="separator" aria-hidden="true"></div>
+
+    <nav>
+      <p class="nav-sub">Estoque</p>
+      <ul class="nav" role="list">
+        <li>
+          <a href="index.html" class="active" aria-current="page">
+            <i class="bi bi-box-seam"></i>
+            <span class="label">Gerenciar</span>
+            <span class="badge">Atual</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="nav-sub">Mecânica</p>
+      <ul class="nav" role="list">
+        <li>
+          <a href="oficina.html">
+            <i class="bi bi-wrench"></i>
+            <span class="label">Oficina</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="nav-sub">Faturamento</p>
+      <ul class="nav" role="list">
+        <li>
+          <a href="financeiro.html">
+            <i class="bi bi-wallet2"></i>
+            <span class="label">Financeiro</span>
+          </a>
+        </li>
+        <li>
+          <a href="vendas.html">
+            <i class="bi bi-cart2"></i>
+            <span class="label">Vendas</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="nav-sub">Configurações</p>
+      <ul class="nav" role="list">
+        <li>
+          <a href="servicos.html">
+            <i class="bi bi-gear-wide-connected"></i>
+            <span class="label">Serviços</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Ações da base da sidebar -->
+    <div class="sidebar-actions">
+      <button class="btn-icon" id="collapseNav" type="button" title="Recolher / expandir sidebar" aria-label="Recolher / expandir sidebar">
+        <i class="bi bi-layout-sidebar-inset"></i>
+      </button>
+      <!-- você pode colocar outros botões aqui se quiser -->
+    </div>
+  </aside>
+
+  <!-- ====== CONTEÚDO ====== -->
+  <main class="content" id="conteudo" tabindex="-1">
+    <header class="page-head">
+      <h1 class="m-0 h3 fw-bold">Estoque — Gerenciar</h1>
+      <span class="pill">Visual atualizado</span>
+    </header>
+
+    <div class="container py-2">
+
+      <!-- MÉTRICAS -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card-soft metric"><div class="icon i-items"><i class="bi bi-box-seam"></i></div><div><div class="label">Itens cadastrados</div><div id="mItens" class="value">0</div></div></div></div>
+        <div class="col-md-4"><div class="card-soft metric"><div class="icon i-low"><i class="bi bi-exclamation-triangle"></i></div><div><div class="label">Itens em alerta</div><div id="mLow" class="value">0</div></div></div></div>
+        <div class="col-md-4"><div class="card-soft metric"><div class="icon i-value"><i class="bi bi-cash-coin"></i></div><div><div class="label">Valor em estoque (Preço)</div><div id="mValor" class="value">R$ 0,00</div></div></div></div>
       </div>
-    </div>
-  </nav>
 
-  <div class="container py-4">
-
-    <!-- MÉTRICAS -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-4"><div class="card-soft metric"><div class="icon i-items"><i class="bi bi-box-seam"></i></div><div><div class="label">Itens cadastrados</div><div id="mItens" class="value">0</div></div></div></div>
-      <div class="col-md-4"><div class="card-soft metric"><div class="icon i-low"><i class="bi bi-exclamation-triangle"></i></div><div><div class="label">Itens em alerta</div><div id="mLow" class="value">0</div></div></div></div>
-      <div class="col-md-4"><div class="card-soft metric"><div class="icon i-value"><i class="bi bi-cash-coin"></i></div><div><div class="label">Valor em estoque (Preço)</div><div id="mValor" class="value">R$ 0,00</div></div></div></div>
-    </div>
-
-    <!-- TOOLBAR -->
-    <div class="toolbar mb-3">
-      <div class="row g-3 align-items-end">
-        <div class="col-lg-4">
-          <label class="form-label mb-1">Buscar</label>
-          <div class="input-icon">
-            <i class="bi bi-search"></i>
-            <input id="search" class="form-control" placeholder="SKU, nome, categoria, local...">
+      <!-- TOOLBAR -->
+      <div class="toolbar mb-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-4">
+            <label class="form-label mb-1">Buscar</label>
+            <div class="input-icon">
+              <i class="bi bi-search"></i>
+              <input id="search" class="form-control" placeholder="SKU, nome, categoria, local...">
+            </div>
           </div>
-        </div>
-        <div class="col-lg-3">
-          <label class="form-label mb-1">Categoria</label>
-          <select id="fCategoria" class="form-select"><option value="">Todas</option></select>
-        </div>
-        <div class="col-lg-5 d-grid d-lg-flex gap-2 justify-content-lg-end">
-          <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalItem">
-            <i class="bi bi-plus-lg"></i> Novo item
-          </button>
-
-          <!-- Dropdown Ferramentas -->
-          <div class="btn-group">
-            <button class="btn btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-tools"></i> Ferramentas
+          <div class="col-lg-3">
+            <label class="form-label mb-1">Categoria</label>
+            <select id="fCategoria" class="form-select"><option value="">Todas</option></select>
+          </div>
+          <div class="col-lg-5 d-grid d-lg-flex gap-2 justify-content-lg-end">
+            <button id="btnNovo" class="btn btn-primary-clean" data-bs-toggle="modal" data-bs-target="#modalItem">
+              <i class="bi bi-plus-lg"></i> Novo item
             </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><h6 class="dropdown-header">Importar / Exportar</h6></li>
-              <li><a class="dropdown-item" id="btnImportXLSX"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Excel</a></li>
-              <li><a class="dropdown-item" id="btnImportXML"><i class="bi bi-filetype-xml me-2"></i>Importar XML</a></li>
-              <li><a class="dropdown-item" id="btnExportXLSX"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Excel</a></li>
-              <li><a class="dropdown-item" id="btnExportXML"><i class="bi bi-filetype-xml me-2"></i>Exportar XML</a></li>
-              <li><a class="dropdown-item" id="btnExportPDF"><i class="bi bi-filetype-pdf me-2"></i>Exportar PDF (listados)</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" id="btnMerge"><i class="bi bi-collection me-2"></i>Somar itens repetidos (SKU)</a></li>
-            </ul>
+
+            <!-- Dropdown Ferramentas -->
+            <div class="btn-group">
+              <button class="btn btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-tools"></i> Ferramentas
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Importar / Exportar</h6></li>
+                <li><a class="dropdown-item" id="btnImportXLSX"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Excel</a></li>
+                <li><a class="dropdown-item" id="btnImportXML"><i class="bi bi-filetype-xml me-2"></i>Importar XML</a></li>
+                <li><a class="dropdown-item" id="btnExportXLSX"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Excel</a></li>
+                <li><a class="dropdown-item" id="btnExportXML"><i class="bi bi-filetype-xml me-2"></i>Exportar XML</a></li>
+                <li><a class="dropdown-item" id="btnExportPDF"><i class="bi bi-filetype-pdf me-2"></i>Exportar PDF (listados)</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" id="btnMerge"><i class="bi bi-collection me-2"></i>Somar itens repetidos (SKU)</a></li>
+                <!-- “Gerar backup (site)” permanece removido -->
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TABELA -->
-    <div class="card-soft p-0">
-      <div class="table-responsive" style="max-height:60vh;">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th class="nowrap">SKU</th>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th>Local</th>
-              <th class="text-end nowrap">Qtd</th>
-              <th class="text-end nowrap">Alerta</th>
-              <th class="text-end nowrap">Preço</th>
-              <th class="text-end nowrap">Custo</th>
-              <th class="text-end nowrap">Total (Preço)</th>
-              <th class="text-end nowrap">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-        <div id="empty" class="empty">Nenhum item encontrado.</div>
+      <!-- TABELA -->
+      <div class="card-soft p-0">
+        <div class="table-responsive" style="max-height:60vh;">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th class="nowrap">SKU</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Local</th>
+                <th class="text-end nowrap">Qtd</th>
+                <th class="text-end nowrap">Alerta</th>
+                <th class="text-end nowrap">Preço</th>
+                <th class="text-end nowrap">Custo</th>
+                <th class="text-end nowrap">Total (Preço)</th>
+                <th class="text-end nowrap">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Nenhum item encontrado.</div>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- MODAL ITEM -->
   <div class="modal fade" id="modalItem" tabindex="-1" aria-hidden="true">
@@ -198,6 +356,35 @@
   <input id="fileXML"  type="file" accept=".xml" style="display:none">
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ====== JS DE UI (sidebar mobile + recolher) ====== -->
+  <script>
+  (function(){
+    // Mobile: abre/fecha sidebar
+    const btn = document.getElementById('toggleNav');
+    if(btn){
+      btn.addEventListener('click', () => {
+        const open = document.body.classList.toggle('nav-open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    }
+    // Desktop: recolher/expandir (sem usar localStorage)
+    const collapseBtn = document.getElementById('collapseNav');
+    if(collapseBtn){
+      collapseBtn.addEventListener('click', ()=>{
+        document.body.classList.toggle('sidebar-collapsed');
+      });
+    }
+    // Remover qualquer resquício antigo de "backup"
+    const nodes = Array.from(document.querySelectorAll('button, a, [data-action], [id], [name]'));
+    nodes.forEach(el=>{
+      const txt = (el.textContent||'') + ' ' + (el.id||'') + ' ' + (el.getAttribute('data-action')||'');
+      if(/backup/i.test(txt)) el.remove();
+    });
+  })();
+  </script>
+
+  <!-- ====== JS DA APLICAÇÃO (mantido; LocalStorage inalterado) ====== -->
   <script>
   (function(){
     /* ===== Helpers ===== */
@@ -207,40 +394,18 @@
     const safe = s => String(s??"");
     const toNum = (v) => {
       if (v === null || v === undefined || v === "") return 0;
-      let s = String(v).trim();
-      // mantém só dígitos, ponto, vírgula e sinal
-      s = s.replace(/[^\d.,-]/g, "");
-      const lastComma = s.lastIndexOf(",");
-      const lastDot   = s.lastIndexOf(".");
+      let s = String(v).trim().replace(/[^\d.,-]/g, "");
+      const lastComma = s.lastIndexOf(","), lastDot = s.lastIndexOf(".");
       let norm;
-      if (lastComma !== -1 && lastDot !== -1) {
-        // Os dois existem: o último é o separador decimal
-        if (lastComma > lastDot) {
-          // vírgula é decimal => remove pontos (milhar) e troca vírgula por ponto
-          norm = s.replace(/\./g, "").replace(",", ".");
-        } else {
-          // ponto é decimal => remove vírgulas (milhar)
-          norm = s.replace(/,/g, "");
-        }
-      } else if (lastComma !== -1) {
-        // só vírgula => decimal
-        norm = s.replace(",", ".");
-      } else if (lastDot !== -1) {
-        // só ponto => decimal; se houver vários pontos, mantém só o último
-        const parts = s.split(".");
-        norm = parts.length > 2 ? parts.slice(0, -1).join("") + "." + parts.at(-1) : s;
-      } else {
-        norm = s; // só dígitos
-      }
-      const n = Number(norm);
-      return Number.isFinite(n) ? n : 0;
+      if (lastComma !== -1 && lastDot !== -1) norm = lastComma > lastDot ? s.replace(/\./g,"").replace(",",".") : s.replace(/,/g,"");
+      else if (lastComma !== -1) norm = s.replace(",",".");
+      else if (lastDot !== -1){ const parts = s.split("."); norm = parts.length>2 ? parts.slice(0,-1).join("") + "." + parts.at(-1) : s; }
+      else norm = s;
+      const n = Number(norm); return Number.isFinite(n)?n:0;
     };
-    const isAlert = (it) => (+it.qtd || 0) <= (+it.alerta || 0); // somente efeito visual
+    const isAlert = (it) => (+it.qtd || 0) <= (+it.alerta || 0);
 
-    function fitNav(){ const nav=document.querySelector(".navbar.fixed-top"); if(nav) document.documentElement.style.setProperty("--nav-h", nav.offsetHeight+"px"); }
-    addEventListener("resize", fitNav); document.addEventListener("DOMContentLoaded", fitNav);
-
-    /* ===== Storage ===== */
+    /* ===== Storage (mantido) ===== */
     const STOCK_KEYS = ["estoque.ui.v2","estoque.clean.color.v1","estoque.clean.v1","estoque.visualclean.v1","estoque"];
     function loadStock(){
       for(const k of STOCK_KEYS){
@@ -250,18 +415,11 @@
       return {key:"estoque.ui.v2", items:[]};
     }
     function saveStock(){ localStorage.setItem(estoque.key, JSON.stringify(estoque.items)); }
-
-    // Backup rápido antes de operações destrutivas
     function backupStock(){
-      try{
-        localStorage.setItem("estoque.backup.last", JSON.stringify({
-          ts: Date.now(), key: estoque.key, items: estoque.items
-        }));
-      }catch(e){}
+      try{ localStorage.setItem("estoque.backup.last", JSON.stringify({ ts: Date.now(), key: estoque.key, items: estoque.items })); }catch(e){}
     }
 
     let estoque = loadStock();
-    // normaliza campos
     estoque.items = (estoque.items||[]).map(it=>({
       sku: safe(it.sku).trim(),
       nome: safe(it.nome),
@@ -318,11 +476,9 @@
           '</tr>';
         }).join('');
       }
-
-      // métricas
       $('mItens').textContent = String(estoque.items.length||0);
       $('mLow').textContent = String(estoque.items.filter(x=> isAlert(x)).length);
-      const valor = estoque.items.reduce((s,x)=> s + (+x.preco||0) * (+x.qtd||0), 0);
+      const valor = estoque.items.reduce((s,x)=> s + (x.preco||0) * (+x.qtd||0), 0);
       $('mValor').textContent = money(valor);
     }
 
@@ -361,7 +517,6 @@
       bootstrap.Modal.getInstance(document.getElementById('modalItem'))?.hide();
     });
 
-    // ações da tabela
     $('tbody').addEventListener('click', (ev)=>{
       const btn = ev.target.closest('[data-action]'); if(!btn) return;
       const act = btn.dataset.action; const sku = decodeURIComponent(btn.dataset.sku||'');
@@ -370,17 +525,11 @@
       if(act==='edit' && it){
         editingSku = it.sku;
         $('modalTitle').textContent = "Editar item";
-        $('iSku').value = it.sku;
-        $('iNome').value = it.nome;
-        $('iCat').value = it.categoria;
-        $('iLoc').value = it.local;
-        $('iQtd').value = it.qtd;
-        $('iAlerta').value = it.alerta;
-        $('iPreco').value = it.preco;
-        $('iCusto').value = it.custo;
+        $('iSku').value = it.sku; $('iNome').value = it.nome; $('iCat').value = it.categoria;
+        $('iLoc').value = it.local; $('iQtd').value = it.qtd; $('iAlerta').value = it.alerta;
+        $('iPreco').value = it.preco; $('iCusto').value = it.custo;
         new bootstrap.Modal(document.getElementById('modalItem')).show();
       }
-
       if(act==='del' && it){
         if(!confirm('Excluir este item?')) return;
         estoque.items = estoque.items.filter(x=>x.sku!==sku);
@@ -435,7 +584,7 @@
       XLSX.writeFile(wb, "estoque.xlsx");
     });
 
-    /* ===== Importar XML ROBUSTO ===== */
+    /* ===== Importar XML ===== */
     $('btnImportXML').addEventListener('click', ()=> $('fileXML').click());
     $('fileXML').addEventListener('change', function(){
       const f=this.files[0]; if(!f) return;
@@ -444,40 +593,28 @@
         try{
           const xmlStr = e.target.result;
           const doc = new DOMParser().parseFromString(xmlStr, 'application/xml');
+          if (doc.getElementsByTagName('parsererror').length) throw new Error('XML inválido (erro de parser).');
 
-          // Verifica erro de parser
-          if (doc.getElementsByTagName('parsererror').length) {
-            throw new Error('XML inválido (erro de parser).');
-          }
-
-          // ===== utilitários independentes de namespace =====
           const byLocal = (node, tag) => {
             const out=[]; const all = node.getElementsByTagName('*');
             for(let i=0;i<all.length;i++){ if((all[i].localName||'').toLowerCase()===tag.toLowerCase()) out.push(all[i]); }
             return out;
           };
-          const firstText = (node, tag) => {
-            const el = byLocal(node, tag)[0];
-            return (el ? el.textContent : '').trim();
-          };
+          const firstText = (node, tag) => (byLocal(node, tag)[0]?.textContent||"").trim();
 
-          // ===== 1) NF-e <det><prod> =====
+          // 1) NF-e
           let dets = byLocal(doc, 'det');
           if (dets.length) {
             const tot = byLocal(doc, 'ICMSTot')[0] || byLocal(doc,'icmstot')[0];
             const vTot = (t) => toNum(tot ? firstText(tot, t) : 0);
-            const freteTot = vTot('vFrete');
-            const descTot  = vTot('vDesc');
-            const outroTot = vTot('vOutro');
-            const segTot   = vTot('vSeg');
+            const freteTot = vTot('vFrete'), descTot = vTot('vDesc'), outroTot = vTot('vOutro'), segTot = vTot('vSeg');
 
             const itens = dets.map(det=>{
-              const prod = byLocal(det,'prod')[0];
-              if(!prod) return null;
-              const sku   = firstText(prod,'cProd') || firstText(prod,'codigo') || firstText(prod,'cod') || firstText(prod,'sku');
-              const nome  = firstText(prod,'xProd') || firstText(prod,'nome') || firstText(prod,'descricao');
-              const ncm   = firstText(prod,'NCM')   || firstText(prod,'ncm') || '';
-              const qCom  = toNum(firstText(prod,'qCom') || firstText(prod,'quantidade') || firstText(prod,'qtd'));
+              const prod = byLocal(det,'prod')[0]; if(!prod) return null;
+              const sku = firstText(prod,'cProd') || firstText(prod,'codigo') || firstText(prod,'cod') || firstText(prod,'sku');
+              const nome= firstText(prod,'xProd') || firstText(prod,'nome') || firstText(prod,'descricao');
+              const ncm = firstText(prod,'NCM')   || firstText(prod,'ncm') || '';
+              const qCom= toNum(firstText(prod,'qCom') || firstText(prod,'quantidade') || firstText(prod,'qtd'));
               const vUnCom= toNum(firstText(prod,'vUnCom'));
               const vProd = toNum(firstText(prod,'vProd')) || (vUnCom*qCom);
               const vFreteItem = toNum(firstText(prod,'vFrete'));
@@ -498,27 +635,17 @@
               const descUnit  = (it.vDescItem>0  ? it.vDescItem  : descTot  * fator) / (it.qCom||1);
               const custoUnit = toNum(it.vUnCom + freteUnit + outroUnit + segUnit - descUnit);
 
-              const obj = {
-                sku: safe(it.sku),
-                nome: safe(it.nome),
-                categoria: safe(it.ncm),
-                local: "",
-                qtd: it.qCom,
-                alerta: 0,
-                preco: 0,           // sem valor de venda
-                custo: custoUnit    // custo correto
-              };
+              const obj = { sku: safe(it.sku), nome: safe(it.nome), categoria: safe(it.ncm), local: "", qtd: it.qCom, alerta: 0, preco: 0, custo: custoUnit };
               const i = estoque.items.findIndex(x=>x.sku===obj.sku);
               if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
               imported++;
             }
             if(imported===0) throw new Error('Nenhum item válido encontrado na NF-e.');
             saveStock(); rebuildCats(); render();
-            alert(`Importação NF-e concluída: ${imported} item(ns).`);
-            $('fileXML').value=""; return;
+            alert(`Importação NF-e concluída: ${imported} item(ns).`); $('fileXML').value=""; return;
           }
 
-          // ===== 2) Fallback BR: <estoque><item> ... =====
+          // 2) <estoque><item>
           let items = byLocal(doc,'item');
           if(items.length){
             items.forEach(n=>{
@@ -530,7 +657,7 @@
                 local: get('local') || '',
                 qtd: toNum(get('quantidade') || get('qtd') || get('qCom')),
                 alerta: toNum(get('alerta')),
-                preco: 0, // zera venda
+                preco: 0,
                 custo: toNum(get('custo') || get('vUnCom') || get('precoCusto'))
               };
               if(!obj.sku || !obj.nome) return;
@@ -538,44 +665,33 @@
               if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
             });
             saveStock(); rebuildCats(); render();
-            alert('Importação XML simples concluída.');
-            $('fileXML').value=""; return;
+            alert('Importação XML simples concluída.'); $('fileXML').value=""; return;
           }
 
-          // ===== 3) Fallback genérico: <produto> / <product> =====
+          // 3) Formatos genéricos <produto>/<product>
           const candidatos = ['produto','product'];
           for(const tag of candidatos){
             const arr = byLocal(doc, tag);
             if(!arr.length) continue;
             arr.forEach(n=>{
-              const lowerMap = {};
-              Array.from(n.children||[]).forEach(ch=> lowerMap[(ch.localName||ch.tagName||'').toLowerCase()] = ch.textContent.trim());
-
-              const pick = (...keys)=>{
-                for(const k of keys){ if(lowerMap[k] && lowerMap[k]!=="-") return lowerMap[k]; }
-                return '';
-              };
-
+              const map = {}; Array.from(n.children||[]).forEach(ch=> map[(ch.localName||ch.tagName||'').toLowerCase()] = ch.textContent.trim());
+              const pick = (...keys)=>{ for(const k of keys){ if(map[k] && map[k]!=="-") return map[k]; } return ''; };
               const sku  = pick('cprod','sku','codigo','cod','code','id');
               const nome = pick('xprod','nome','descricao','description','name','produto','title');
               const ncm  = pick('ncm','categoria','category');
               const qtd  = toNum(pick('qcom','quantidade','qtd','qty','quantity','amount'));
               let custo  = toNum(pick('vuncom','custo','cost','preco_custo','unitcost'));
-              const vprod = toNum(pick('vprod','valor_total','totalvalue'));
-              if(!custo && vprod && qtd>0) custo = vprod / qtd; // fallback razoável
-
+              const vprod = toNum(pick('vprod','valor_total','totalvalue')); if(!custo && vprod && qtd>0) custo = vprod / qtd;
               const obj = { sku: safe(sku), nome: safe(nome), categoria: safe(ncm), local: "", qtd, alerta:0, preco:0, custo };
               if(!obj.sku || !obj.nome || !(obj.qtd>0)) return;
               const i = estoque.items.findIndex(x=>x.sku===obj.sku);
               if(i>=0) estoque.items[i]=obj; else estoque.items.push(obj);
             });
             saveStock(); rebuildCats(); render();
-            alert('Importação genérica concluída.');
-            $('fileXML').value=""; return;
+            alert('Importação genérica concluída.'); $('fileXML').value=""; return;
           }
 
-          // Caso nenhum formato tenha sido reconhecido
-          alert('Não foi possível reconhecer o formato do XML. Tente enviar uma NF-e ou um XML com <item>, <produto> ou <product>.');
+          alert('Não foi possível reconhecer o formato do XML.');
         }catch(err){
           alert('Falha ao ler XML: '+ err.message);
         } finally {
@@ -601,7 +717,8 @@
   </item>`).join('\n');
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<estoque>\n${body}\n</estoque>`;
       const blob = new Blob([xml], {type:'application/xml;charset=utf-8'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='estoque.xml'; a.click(); URL.revokeObjectURL(a.href);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='estoque.xml'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 0);
     });
 
     /* ===== Exportar PDF (itens listados) ===== */
@@ -609,55 +726,23 @@
       const data = getFiltered();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
-
       const now = new Date();
-      doc.setFont('helvetica','bold'); doc.setFontSize(16);
-      doc.text("Rota Motos — Estoque (Itens listados)", 40, 40);
-      doc.setFont('helvetica','normal'); doc.setFontSize(10);
-      doc.text(now.toLocaleString('pt-BR'), 40, 58);
-
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text("Rota Motos — Estoque (Itens listados)", 40, 40);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(now.toLocaleString('pt-BR'), 40, 58);
       const head = [['SKU','Nome','Categoria','Local','Qtd','Alerta','Preço','Custo','Total (Preço)']];
-      const body = data.map(x=>[
-        x.sku, x.nome, x.categoria||'-', x.local||'-',
-        String(x.qtd||0), String(x.alerta||0),
-        toBRL(x.preco), toBRL(x.custo), toBRL((x.preco||0)*(x.qtd||0))
-      ]);
-
-      const totalItens = data.length;
-      const totalValor = data.reduce((s,x)=> s + (x.preco||0)*(x.qtd||0), 0);
-      const totalLow = data.filter(x=> isAlert(x)).length;
-
-      doc.autoTable({
-        head, body, startY: 72,
-        styles: { font:'helvetica', fontSize:9, cellPadding:4, overflow:'linebreak' },
-        headStyles: { fillColor:[238,242,255], textColor:[30,27,75] },
-        columnStyles: {
-          4:{ halign:'right', cellWidth:50 },
-          5:{ halign:'right', cellWidth:60 },
-          6:{ halign:'right', cellWidth:70 },
-          7:{ halign:'right', cellWidth:70 },
-          8:{ halign:'right', cellWidth:90 }
-        },
-        didParseCell: function(dataCell){
-          if(dataCell.section==='body'){
-            const row = data[dataCell.row.index];
-            if(isAlert(row)){
-              dataCell.cell.styles.fillColor = [255, 226, 226];
-            }
-          }
-        }
+      const body = data.map(x=>[ x.sku, x.nome, x.categoria||'-', x.local||'-', String(x.qtd||0), String(x.alerta||0), toBRL(x.preco), toBRL(x.custo), toBRL((x.preco||0)*(x.qtd||0)) ]);
+      const totalItens = data.length, totalValor = data.reduce((s,x)=> s + (x.preco||0)*(x.qtd||0), 0), totalLow = data.filter(x=> isAlert(x)).length;
+      doc.autoTable({ head, body, startY: 72, styles: { font:'helvetica', fontSize:9, cellPadding:4, overflow:'linebreak' }, headStyles: { fillColor:[238,242,255], textColor:[30,27,75] },
+        columnStyles: { 4:{ halign:'right', cellWidth:50 }, 5:{ halign:'right', cellWidth:60 }, 6:{ halign:'right', cellWidth:70 }, 7:{ halign:'right', cellWidth:70 }, 8:{ halign:'right', cellWidth:90 } },
+        didParseCell: function(dc){ if(dc.section==='body'){ const row = data[dc.row.index]; if(isAlert(row)) dc.cell.styles.fillColor = [255,226,226]; } }
       });
-
       const y = doc.lastAutoTable.finalY + 18;
-      doc.setFont('helvetica','bold'); doc.setFontSize(11);
-      doc.text('Resumo', 40, y);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('Resumo', 40, y);
       doc.setFont('helvetica','normal'); doc.setFontSize(10);
       doc.text(`Itens exibidos: ${totalItens}`, 40, y+18);
       doc.text(`Itens em alerta: ${totalLow}`, 40, y+34);
       doc.text(`Valor total (Preço): ${toBRL(totalValor)}`, 40, y+50);
-
       doc.save('estoque_listado.pdf');
-
       function toBRL(n){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(+n||0); }
     });
 
@@ -665,22 +750,11 @@
     function mergeDuplicatesBySKU(){
       if(!estoque.items.length){ alert("Não há itens para mesclar."); return; }
       backupStock();
-      const order=[], map=new Map();
-      const norm = s => safe(s).trim().toUpperCase();
+      const order=[], map=new Map(), norm = s => safe(s).trim().toUpperCase();
       for(const it of estoque.items){
-        const key = norm(it.sku);
-        if(!key){ continue; }
+        const key = norm(it.sku); if(!key) continue;
         if(!map.has(key)){
-          map.set(key, {
-            sku: safe(it.sku).trim(),
-            nome: safe(it.nome),
-            categoria: safe(it.categoria),
-            local: safe(it.local),
-            qtd: toNum(it.qtd),
-            alerta: toNum(it.alerta),
-            preco: toNum(it.preco),
-            custo: toNum(it.custo)
-          });
+          map.set(key, { sku: safe(it.sku).trim(), nome: safe(it.nome), categoria: safe(it.categoria), local: safe(it.local), qtd: toNum(it.qtd), alerta: toNum(it.alerta), preco: toNum(it.preco), custo: toNum(it.custo) });
           order.push(key);
         } else {
           const base = map.get(key);
@@ -695,20 +769,14 @@
       }
       const merged = order.map(k=>map.get(k));
       const before = estoque.items.length, after = merged.length, removed = before - after;
-      estoque.items = merged;
-      saveStock(); rebuildCats(); render();
+      estoque.items = merged; saveStock(); rebuildCats(); render();
       alert(`Mesclagem concluída.\nSKU únicos: ${after}\nItens removidos (duplicados): ${removed}`);
     }
-    $('btnMerge').addEventListener('click', ()=>{
-      if(confirm('Somar quantidades de itens com o mesmo SKU?\n(Um backup será salvo: "estoque.backup.last")')){
-        mergeDuplicatesBySKU();
-      }
-    });
+    $('btnMerge').addEventListener('click', ()=>{ if(confirm('Somar quantidades de itens com o mesmo SKU?\n(Um backup será salvo: "estoque.backup.last")')) mergeDuplicatesBySKU(); });
 
     /* ===== Init ===== */
     function init(){
       rebuildCats(); render();
-      document.documentElement.style.setProperty("--nav-h", (document.querySelector(".navbar.fixed-top")?.offsetHeight||64)+"px");
     }
     init();
   })();
